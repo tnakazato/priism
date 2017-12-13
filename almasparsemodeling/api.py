@@ -214,7 +214,7 @@ class AlmaSparseModeling(AlmaSparseModelingCore):
             or isinstance(self.imparam.start, int):
             # TODO: we need LSRK frequency
             start = self.imparam.start
-            spw = int(self.visparams[0].spw)
+            spw = int(self.visparams[0].as_msindex()['spw'][0])
             print 'Use Freuquency for channel {0} spw {1}'.format(start, spw)
             cf, cw = core.ImageWriter.frequency_setup_for_spw(vis=vis, 
                                                               spw_id=spw,
