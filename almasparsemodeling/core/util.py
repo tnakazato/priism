@@ -141,8 +141,8 @@ class ImageConfigurationHelper(object):
         dl = 1.0 / (2 * umax) * rad2arcsec # rad -> arcsec
         dm = 1.0 / (2 * vmax) * rad2arcsec # rad -> arcsec
         
-        M = int(numpy.ceil(primary_beam / dl)) + 6
-        N = int(numpy.ceil(primary_beam / dm)) + 6 
+        M = int(numpy.ceil(primary_beam / dl)) + 12
+        N = int(numpy.ceil(primary_beam / dm)) + 12
         
         suggested = {'cell': ['{}arcsec'.format(dl), '{}arcsec'.format(dm)],
                      'imsize': [M, N]}
