@@ -442,12 +442,16 @@ class SparseImagingExecutor(object):
     
 
 # utility
-def plot_inputs(inputs, interpolation='nearest'):
+def plot_inputs(inputs, interpolation='nearest', coverage=False):
     areal = numpy.zeros((inputs.nx, inputs.ny,), dtype=numpy.float)
     aimag = numpy.zeros_like(areal)
     for i in xrange(inputs.m):
         areal[inputs.u[i], inputs.v[i]] = inputs.yreal[i]
         aimag[inputs.u[i], inputs.v[i]] = inputs.yimag[i]
+        
+    if coverage:
+        areal[areal.nonzero()] = 1.0
+        aimag[areal.nonzero()] = 1.0
     
     import pylab as pl
     pl.figure('REAL')
