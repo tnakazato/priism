@@ -9,6 +9,7 @@
 #     2. You have installed OpenBLAS
 #     3. You have installed cmake
 #     4. You have installed Eigen3
+#     5. You have installed doxygen
 #
 # Version Information:
 #     2017/12/12 Takeshi Nakazato  preliminary version
