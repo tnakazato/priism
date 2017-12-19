@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 
 import numpy
+import scipy
+import itertools
 
 import almasparsemodeling.external.sakura as sakura
 from . import util
@@ -65,8 +67,8 @@ class GriddedVisibilitySubsetHandler(object):
         nv = self.uvgrid.nv
         assert gdata_shape[0] == nv
         assert gdata_shape[1] == nu
-        u[:] = uid % nu * cellu - offsetu
-        v[:] = vid / nu * cellv - offsetv
+        u[:] = (uid % nu - offsetu) * cellu
+        v[:] = (vid / nu - offsetv) * cellv
         
         # visibility data to be cached
         # here, we assume npol == 1 (Stokes visibility I_v) and nchan == 1
@@ -103,13 +105,53 @@ class MeanSquareErrorEvaluator(object):
         self.mse_storage = numpy.empty(100, dtype=numpy.float64)
         self.num_mse = 0
         
-    def evaluate_and_accumulate(self, visibility_cache, image):
+    def _evaluate_mse(self, visibility_cache, image, imageparam):
+        # UV grid configuration parameters
+        uvgrid = imageparam.uvgridconfig
+        offsetu = uvgrid.offsetu
+        offsetv = uvgrid.offsetv
+        nu = uvgrid.nu
+        nv = uvgrid.nv
+        cellu = uvgrid.cellu
+        cellv = uvgrid.cellv
+        
+        # Obtain visibility from image array
+        shifted_image = numpy.fft.fftshift(image)
+        shifted_imagefft = numpy.fft2(shifted_image, norm='ortho')
+        imagefft = numpy.fft.fftshift(shifted_imagefft)
+        rmodel = numpy.flipud(imagefft.real.transpose())
+        imodel = numpy.flipud(imagefft.imag.transpose())
+        
+        # Compute MSE
+        mse = 0.0
+        num_mse = 0
+        rinterp = scipy.interpolate.interp2d(numpy.arange(nv), numpy.arange(nu), rmodel)
+        iinterp = scipy.interpolate.interp2d(numpy.arange(nv), numpy.arange(nu), imodel)
+        for ws in visibility_cache:
+            u = ws.u
+            v = ws.v
+            rdata = ws.rdata
+            idata = ws.idata
+            pu = u / cellu + offsetu
+            pv = v / cellv + offsetv
+            for p, q, x, y in itertools.izip(pu, pv, rdata, idata):
+                a = rinterp(q, p)
+                b = iinterp(q, p)
+                dx = x - a
+                dy = y - b
+                mse += dx * dx + dy * dy
+                num_mse += 1
+        mse /= num_mse
+        return mse
+            
+        
+    def evaluate_and_accumulate(self, visibility_cache, image, imageparam):
         """
         Evaluate MSE (Mean Square Error) from image which is a solution of MFISTA
         and visibility_cache provided as a set of GridderWorkingSet instance.
         """
         # TODO: evaluate MSE
-        mse = 0.0
+        mse = self._evaluate_mse(visibility_cache, image, imageparam)
         
         # register it
         if self.num_mse <= len(self.mse_storage):
