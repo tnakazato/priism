@@ -202,7 +202,16 @@ class ImageMetaInfoContainer(object):
         """
         Construct ImageMetaInfoContainer instance from visibility data (MS).
         """
-        return ImageMetaInfoContainer()
+        with casa.OpenMSMetaData(vis) as msmd:
+            observers = msmd.observers()
+            observatories = msmd.observatorynames()
+            observingdate = msmd.timerangeforobs(0)
+            position = msmd.observatoryposition(0)
+            restfreqs = msmd.restfreqs()
+        return ImageMetaInfoContainer(observer=observers[0], 
+                                      telescope=observatories[0],
+                                      telescope_position=position,
+                                      observing_date=observingdate['begin'])
     
     def __init__(self, observer='', observing_date='', telescope='ALMA', telescope_position=None, 
                  rest_frequency=''):

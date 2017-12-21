@@ -223,7 +223,8 @@ class AlmaSparseModeling(AlmaSparseModelingCore):
                                                               chan=start)
             self.imparam.start = cf
             self.imparam.width = cw
-        writer = core.ImageWriter(self.imparam, self.imagearray)
+        imagemeta = core.ImageMetaInfoContainer.fromvis(vis)
+        writer = core.ImageWriter(self.imparam, self.imagearray, imagemeta)
         writer.write(overwrite=overwrite)
 
     def computecv(self, num_fold=10):
