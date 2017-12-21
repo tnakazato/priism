@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 
+import numpy
+
 import almasparsemodeling.external.sakura as sakura
 import almasparsemodeling.core as core
 
@@ -261,11 +263,13 @@ class AlmaSparseModeling(AlmaSparseModelingCore):
         
         return mean_mse
     
-    def computegridcv(self, num_fold=10):
+    def computegridcv(self, l1, ltsv, num_fold=10):
         """
         Compute cross validation on resulting image.
         Cross validation is evaluated based on gridded visibility.
         """
+        mfistaparam = core.ParamContainer.CreateContainer(core.MfistaParamContainer, 
+                                                          l1=l1, ltsv=ltsv)
         assert self.griddedvis is not None
         real_data = self.griddedvis.real
         active = numpy.flatnonzero(real_data)
@@ -282,12 +286,13 @@ class AlmaSparseModeling(AlmaSparseModelingCore):
             
             try:            
                 # run MFISTA
-                imagearray = self._mfista(self.mfistaparam, 
+                imagearray = self._mfista(mfistaparam, 
                                           subset_handler.visibility_active)
 
                 # evaluate MSE (Mean Square Error)
                 mse = evaluator.evaluate_and_accumulate(subset_handler.visibility_cache, 
-                                                        imagearray)
+                                                        imagearray,
+                                                        self.uvgridconfig)
 
             finally:
                 # restore zero-ed pixels
