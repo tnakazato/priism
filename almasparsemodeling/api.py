@@ -204,10 +204,10 @@ class AlmaSparseModeling(AlmaSparseModelingCore):
             raise RuntimeError('You don\'t have an image array!')
         
         # convert phasecenter if it is given as FIELD_ID
+        vis = self.visparams[0].vis
         if isinstance(self.imparam.phasecenter, str) and self.imparam.phasecenter.isdigit():
             print 'Use PHASE_DIR for FIELD {0}'.format(self.imparam.phasecenter)
             # take first MS
-            vis = self.visparams[0].vis
             field_id = int(self.imparam.phasecenter)
             phase_direction = core.ImageWriter.phase_direction_for_field(vis=vis, 
                                                                          field_id=field_id)
