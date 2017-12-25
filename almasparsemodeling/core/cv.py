@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import numpy
 import scipy
 import itertools
+import contextlib
 
 import almasparsemodeling.external.sakura as sakura
 from . import gridder
@@ -58,6 +59,7 @@ class GriddedVisibilitySubsetHandler(object):
         # random index 
         #self.index_generator = util.RandomIndexGenerator(num_active, self.num_fold)
       
+    @contextlib.contextmanager
     def generate_subset(self, subset_id):
         self.subset_id = subset_id
         
@@ -124,10 +126,10 @@ class GriddedVisibilitySubsetHandler(object):
                                                            u=u,
                                                            v=v)]
         
-#         try:
-#             yield self.visibility_active
-#         finally:
-#             self.restore_visibility()
+        try:
+            yield self
+        finally:
+            self.restore_visibility()
         
     def restore_visibility(self):
         if self.visibility_active is not None and self.visibility_cache is not None:

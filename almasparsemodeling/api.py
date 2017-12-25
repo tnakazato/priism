@@ -293,21 +293,16 @@ class AlmaSparseModeling(AlmaSparseModelingCore):
         
         for i in xrange(num_fold):
             # pick up subset for cross validation
-            subset_handler.generate_subset(subset_id=i)
+            with subset_handler.generate_subset(subset_id=i) as subset:
             
-            try:
                 # run MFISTA
                 imagearray = self._mfista(mfistaparam, 
-                                          subset_handler.visibility_active)
+                                          subset.visibility_active)
 
                 # evaluate MSE (Mean Square Error)
-                mse = evaluator.evaluate_and_accumulate(subset_handler.visibility_cache, 
+                mse = evaluator.evaluate_and_accumulate(subset.visibility_cache, 
                                                         imagearray,
                                                         self.uvgridconfig)
-
-            finally:
-                # restore zero-ed pixels
-                subset_handler.restore_visibility()
              
         mean_mse = evaluator.get_mean_mse()
         
