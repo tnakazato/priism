@@ -264,7 +264,16 @@ class AlmaSparseModeling(AlmaSparseModelingCore):
         
         return mean_mse
     
-    def computegridcv(self, l1, ltsv, num_fold=10):
+    def initializecv(self, num_fold=10):
+        assert self.griddedvis is not None
+        
+        if (not hasattr(self, 'visset')) or self.visset is None:
+            self.visset = core.VisibilitySubsetGenerator(self.griddedvis, num_fold) 
+    
+    def finalizecv(self):
+        self.visset = None
+    
+    def computegridcv(self, l1, ltsv):
         """
         Compute cross validation on resulting image.
         Cross validation is evaluated based on gridded visibility.
@@ -272,20 +281,21 @@ class AlmaSparseModeling(AlmaSparseModelingCore):
         mfistaparam = core.ParamContainer.CreateContainer(core.MfistaParamContainer, 
                                                           l1=l1, ltsv=ltsv)
         assert self.griddedvis is not None
-        real_data = self.griddedvis.real
-        active = numpy.flatnonzero(real_data)
-        num_active = len(active)
+        #real_data = self.griddedvis.real
+        #active = numpy.flatnonzero(real_data)
+        #num_active = len(active)
         
         evaluator = core.MeanSquareErrorEvaluator()
-        subset_handler = core.GriddedVisibilitySubsetHandler(self.griddedvis, 
-                                                           self.uvgridconfig, 
-                                                           num_fold)
+        #visset = core.VisibilitySubsetGenerator(self.griddedvis, num_fold)
+        num_fold = self.visset.num_fold
+        subset_handler = core.GriddedVisibilitySubsetHandler(self.visset, 
+                                                             self.uvgridconfig)
         
         for i in xrange(num_fold):
             # pick up subset for cross validation
             subset_handler.generate_subset(subset_id=i)
             
-            try:            
+            try:
                 # run MFISTA
                 imagearray = self._mfista(mfistaparam, 
                                           subset_handler.visibility_active)

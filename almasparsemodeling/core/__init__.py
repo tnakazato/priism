@@ -25,6 +25,7 @@ from .mfista import MfistaSolver
 from .mfista import MfistaSolverExternal
 
 # cross validation tools
+from .cv import VisibilitySubsetGenerator
 from .cv import MeanSquareErrorEvaluator
 from .cv import GriddedVisibilitySubsetHandler
 from .cv import ApproximateCrossValidationEvaluator

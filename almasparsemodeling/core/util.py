@@ -5,7 +5,7 @@ import numpy
 
 import almasparsemodeling.external.casa as casa
 
-class VisibilitySubsetGenerator(object):
+class RandomIndexGenerator(object):
     def __init__(self, num_ws, num_fold=10):
         self.num_ws = num_ws
         self.num_fold = num_fold
