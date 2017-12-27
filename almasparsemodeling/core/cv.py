@@ -159,9 +159,9 @@ class MeanSquareErrorEvaluator(object):
         cellv = uvgrid.cellv
         
         # Obtain visibility from image array
-        shifted_image = numpy.fft.fftshift(image)
+        shifted_image = numpy.fft.fftshift(image[:,:,0,0])
         shifted_imagefft = numpy.fft.fft2(shifted_image, norm='ortho')
-        imagefft = numpy.fft.fftshift(shifted_imagefft)
+        imagefft = numpy.fft.ifftshift(shifted_imagefft)
         rmodel = numpy.flipud(imagefft.real.transpose())
         imodel = numpy.flipud(imagefft.imag.transpose())
         
@@ -182,8 +182,8 @@ class MeanSquareErrorEvaluator(object):
             uid.append(pu)
             vid.append(pv)
             for p, q, x, y in itertools.izip(pu, pv, rdata, idata):
-                a = rinterp(q, p)
-                b = iinterp(q, p)
+                a = rinterp(p, q) # please take care about index order
+                b = iinterp(p, q)
                 dx = x - a
                 dy = y - b
                 mse += dx * dx + dy * dy
