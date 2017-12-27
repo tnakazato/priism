@@ -1,0 +1,138 @@
+###
+# Install instruction for almasparsemodeling
+#
+# Target:
+#     RHEL6 with casa 5.0 or later
+#
+# Precondition:
+#     1. You have installed fftw3
+#     2. You have installed OpenBLAS
+#     3. You have installed cmake
+#     4. You have installed Eigen3
+#     5. You have installed doxygen
+#     6. You have installed c++11 compativle compiler 
+#        (the easiest way may be to install devtoolset)
+#
+#
+# Version Information:
+#     2017/12/12 Takeshi Nakazato  preliminary version
+#     2017/12/13 TN                include downloading code and test data
+#     2017/12/25 TN                update for RHEL6
+###
+
+
+# Create root directory for installation
+$ mkdir aspm_root
+
+# Enter the root directory
+$ cd aspm_root
+
+# Store location of aspm_root to environment variable
+$ export ASPM_ROOT=$PWD
+
+# Create install location for some libraries
+$ mkdir lib
+
+###
+# Step 1 -- install casa
+###
+$ cd $ASPM_ROOT
+$ mkdir casa
+$ cd casa
+# This is the latest CASA release for RHEL 6
+# Link may change depending on when you download, and what OS
+# you want to install CASA
+$ wget https://alma-dl.mtk.nao.ac.jp/ftp/casa/distro/linux/release/el6/casa-release-5.1.1-5.el6.tar.gz
+# Extract tar-ball
+$ tar zxvf casa-release-5.1.1-5.el6.tar.gz
+# Add casa path to PATH
+$ export PATH=$PWD/casa-release-5.1.1-5.el6/bin:$PATH
+
+###
+# Step 2 -- build sparseimaging library
+###
+# Go to https://github.com/ikeda46/sparseimaging (you may need to sign in)
+# Press "Clone or download" button
+# Press "Download ZIP" button
+# You will get sparseimaging-master.zip in your download directory
+# (e.g., ~/Downloads)
+$ cd $ASPM_ROOT
+# NB: your download directory may be different
+$ unzip ~/Downloads/sparseimaging-master.zip 
+$ cd sparseimaging-master/c
+# Edit makefile
+# In the line defining CLIBS:
+#     - put -L/path/to/OpenBLAS before "-lopenblas"
+# In the line next to the target libmfista_fft:
+#     - append -Xlinker -rpath -Xlinker /path/to/OpenBLAS
+# Example editted makefile will be provided as a separate file
+# Then, compile the code to generate libmfista_fft.so
+$ make libmfista_fft
+# Copy libmfista_fft.so to $ASPM_ROOT/lib
+$ cp libmfista_fft.so $ASPM_ROOT/lib
+
+###
+# Step 3 -- build Sakura library
+###
+$ cd $ASPM_ROOT
+# Download libsakura
+$ wget http://alma-intweb.mtk.nao.ac.jp/~nakazato/libsakura/libsakura-5.0.0.tgz
+$ tar zxvf libsakura-5.0.0.tgz
+$ cd libsakura
+# Download googletest
+# Go to https://github.com/google/googletest
+# Press "Clone or download" button
+# Press "Download ZIP" button
+# You will get googletest-master.zip in your download directory
+# (e.g., ~/Downloads)
+$ unzip ~/Downloads/googletest-master.zip
+$ ln -s googletest-master/googletest/ gtest
+$ mkdir build
+$ cd build
+# Provide include path for Eigen3
+$ EIGEN_INCLUDE_DIR=/path/to/eigen3
+# Path to compiler supporting C++11 feature (e.g. gcc 4.8.3 or later)
+# CC=/path/to/c/compiler
+# CXX=/path/to/c++/compiler
+$ cmake .. -DCMAKE_C_COMPILER=CC -DCMAKE_CXX_COMPILER=CXX -DCMAKE_INSTALL_PREFIX=$ASPM_ROOT -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DCMAKE_MODULE_PATH=../cmake-modules -DSIMD_ARCH=NATIVE -DCMAKE_BUILD_TYPE=Release -DBUILD_DOC=ON -DPYTHON_ROOTDIR=$ASPM_ROOT/casa/casa-release-5.1.1-5.el7 -DEIGEN3_INCLUDE_DIR=$EIGEN_INCLUDE_DIR 2>&1 | tee -i cmake.logw
+$ make all apidoc
+$ make install/fast
+
+
+###
+# Step 4 -- install almasparsemodeling
+###
+$ cd $ASPM_ROOT
+# Download almasparsemodeling
+$ wget http://alma-intweb.mtk.nao.ac.jp/~nakazato/almasparsemodeling/almasparsemodeling.tgz
+$ tar zxvf almasparsemodeling.tgz
+
+###
+# Step 5 -- Prepare verification environment
+###
+# Move to your working directory
+# Download test data
+# Password will be provided separately
+$ wget --http-user="aspm" --http-password="***" http://alma-intweb.mtk.nao.ac.jp/~nakazato/almasparsemodeling/data/testdata.tgz
+$ tar zxvf testdata.tgz
+# Currently, we need to set LD_PRELOAD for loading Sakura library
+$ export LD_PRELOAD=$ASPM_ROOT/lib/libsakura.so.5
+
+###
+# Step 6 -- Launch CASA and initial setup
+###
+# at your working directory
+$ casa
+# for Sakura
+CASA <>: aspm_root = os.environ['ASPM_ROOT']
+CASA <>: sys.path.insert(0, '{0}/lib'.format(aspm_root))
+# for almasparsemodeling
+CASA <>: sys.path.insert(0, aspm_root)
+
+###
+# Step 7 -- verification of installation
+###
+# Run verification script, test.py
+# Edit libpath to suit your environment
+# E.g., libpath='{0}/lib'.format(aspm_root)
+CASA <>: execfile('test.py') 
