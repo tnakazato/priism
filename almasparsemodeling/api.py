@@ -233,6 +233,7 @@ class AlmaSparseModeling(AlmaSparseModelingCore):
         Cross validation is evaluated based on raw visibility 
         (i.e., prior to gridding).
         """
+        raise NotImplementedError('Computation of MSE from raw visibility is future development.')
         assert self.griddedvis is not None
         
         evaluator = core.MeanSquareErrorEvaluator()
@@ -312,6 +313,7 @@ class AlmaSparseModeling(AlmaSparseModelingCore):
         """
         Evaluate approximate cross validation on resulting image.
         """
+        raise NotImplementedError('Computation of Approximate CV value (LOOE) is not implemented yet.')
         assert griddedvis is not None
         evaluator = core.ApproximateCrossValidationEvaluator()
         
