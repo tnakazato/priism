@@ -227,11 +227,10 @@ class AlmaSparseModeling(AlmaSparseModelingCore):
         writer = core.ImageWriter(self.imparam, self.imagearray, imagemeta)
         writer.write(overwrite=overwrite)
 
-    def computecv(self, num_fold=10):
+    def computemse(self, num_fold=10):
         """
-        Compute cross validation on resulting image.
-        Cross validation is evaluated based on raw visibility 
-        (i.e., prior to gridding).
+        Compute mean-square-error (MSE) on resulting image.
+        MSE is evaluated from raw visibility (i.e., prior to gridding).
         """
         raise NotImplementedError('Computation of MSE from raw visibility is future development.')
         assert self.griddedvis is not None
@@ -274,10 +273,10 @@ class AlmaSparseModeling(AlmaSparseModelingCore):
     def finalizecv(self):
         self.visset = None
     
-    def computegridcv(self, l1, ltsv):
+    def computegridmse(self, l1, ltsv):
         """
-        Compute cross validation on resulting image.
-        Cross validation is evaluated based on gridded visibility.
+        Compute mean-square-error (MSE) on resulting image.
+        MSE is evaluated from gridded visibility.
         """
         mfistaparam = core.ParamContainer.CreateContainer(core.MfistaParamContainer, 
                                                           l1=l1, ltsv=ltsv)
@@ -309,11 +308,11 @@ class AlmaSparseModeling(AlmaSparseModelingCore):
         
         return mean_mse
     
-    def computeapproximatecv(self):
+    def computeapproximatemse(self):
         """
-        Evaluate approximate cross validation on resulting image.
+        Evaluate approximate mean-square-error (MSE) on resulting image.
         """
-        raise NotImplementedError('Computation of Approximate CV value (LOOE) is not implemented yet.')
+        raise NotImplementedError('Computation of Approximate MSE (LOOE) is not implemented yet.')
         assert griddedvis is not None
         evaluator = core.ApproximateCrossValidationEvaluator()
         
