@@ -15,4 +15,5 @@ from .casatools import OpenTableForReadWrite
 from .casatools import SelectTableForRead
 from .casatools import OpenMS
 from .casatools import OpenMSMetaData
+from .casatools import OpenImage
 

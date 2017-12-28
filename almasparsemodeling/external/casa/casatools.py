@@ -78,4 +78,13 @@ def OpenMSMetaData(vis):
         yield msmd
     finally:
         msmd.close()
+        
+@contextlib.contextmanager
+def OpenImage(imagename):
+    (ia,) = gentools(['ia'])
+    ia.open(imagename)
+    try:
+        yield ia
+    finally:
+        ia.close()
     
