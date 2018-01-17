@@ -15,15 +15,21 @@ class VisibilitySubsetGenerator(object):
         self.griddedvis = griddedvis
         self.num_fold = num_fold
         
-        # amplitude should be nonzero in active pixels
-        grid_real = griddedvis.real
-        grid_imag = griddedvis.imag
-        self.active_index = numpy.where(numpy.logical_and(grid_real != 0, grid_imag != 0))
-        self.num_active = len(self.active_index[0])
-        print 'num_active={0}'.format(self.num_active)
-    
-        # random index 
-        self.index_generator = util.RandomIndexGenerator(self.num_active, self.num_fold)
+        # Visibility subset is meaningful only when num_fold > 1
+        if self.num_fold > 1:
+            # amplitude should be nonzero in active pixels
+            grid_real = griddedvis.real
+            grid_imag = griddedvis.imag
+            self.active_index = numpy.where(numpy.logical_and(grid_real != 0, grid_imag != 0))
+            self.num_active = len(self.active_index[0])
+            print 'num_active={0}'.format(self.num_active)
+        
+            # random index 
+            self.index_generator = util.RandomIndexGenerator(self.num_active, self.num_fold)
+        else:
+            self.active_index = None
+            self.num_active = 0
+            self.index_generator = None
         
     def get_subset_index(self, subset_id):
         return self.index_generator.get_subset_index(subset_id)
@@ -38,6 +44,11 @@ class GriddedVisibilitySubsetHandler(object):
         self.active_index = visset.active_index
         self.uvgrid = uvgridconfig
         self.num_fold = visset.num_fold
+        
+        if self.num_fold <= 1:
+            # Visibility subset generator is not properly configured
+            raise RuntimeError('VisibilitySubsetGenerator is not properly configured. '
+                               + 'Number of visibility subsets is less than 2 ({0})'.format(self.num_fold))
         
         self._clear()
         
