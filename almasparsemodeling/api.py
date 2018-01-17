@@ -245,7 +245,7 @@ class AlmaSparseModeling(AlmaSparseModelingCore):
         writer = core.ImageWriter(self.imparam, self.imagearray, imagemeta)
         writer.write(overwrite=overwrite)
         
-    def cvforgridvis(self, l1_list, ltsv_list, imageprefix, imagepolicy='full', 
+    def cvforgridvis(self, l1_list, ltsv_list, num_fold=10, imageprefix='image', imagepolicy='full', 
                summarize=True, figfile=None, datafile=None):
         """
         Perform cross validation and search the best parameter for L1 and Ltsv from 
@@ -254,6 +254,7 @@ class AlmaSparseModeling(AlmaSparseModelingCore):
         Inputs:
             l1_list -- list of L1 values to examine
             ltsv_list -- List of Ltsv values to examine
+            num_fold -- number of visibility subsets for cross validation
             imageprefix -- prefix for output image
                            imageprefix is used for the best image (<imageprefix>.fits) 
             imagepolicy -- policy of output image ('full' or 'best')
@@ -309,7 +310,7 @@ class AlmaSparseModeling(AlmaSparseModelingCore):
         print >> f, '# L1, Ltsv, MSE'
         
         # initialize CV
-        self.initializecv(num_fold=10)
+        self.initializecv(num_fold=num_fold)
                 
         for i, L1 in enumerate(np_l1_list):
             for j, Ltsv in enumerate(np_ltsv_list):
@@ -347,7 +348,8 @@ class AlmaSparseModeling(AlmaSparseModelingCore):
         
         L1_index = np_l1_list.tolist().index(best_L1)
         Ltsv_index = np_ltsv_list.tolist().index(best_Ltsv)
-        plotter.mark_bestimage(L1_index, Ltsv_index)
+        if best_mse >= 0.0:
+            plotter.mark_bestimage(L1_index, Ltsv_index)
         
         plotter.draw()
         if figfile is not None:
@@ -355,10 +357,14 @@ class AlmaSparseModeling(AlmaSparseModelingCore):
         # completed
         end_time = time.time()
         
-        print 'Process completed. Optimal result is as follows'
-        print '    L1, Ltsv = 10^{0}, 10^{1}'.format(int(math.log10(best_L1)), int(math.log10(best_Ltsv)))
-        print '    MSE = {0}'.format(best_mse)
-        print '    imagename = {0}'.format(best_image)
+        if best_mse >= 0.0:
+            print 'Process completed. Optimal result is as follows'
+            print '    L1, Ltsv = 10^{0}, 10^{1}'.format(int(math.log10(best_L1)), int(math.log10(best_Ltsv)))
+            print '    MSE = {0}'.format(best_mse)
+            print '    imagename = {0}'.format(best_image)
+        else:
+            print 'Process completed. Cross-validation was not performed.'
+            print 'WARNING: Optimal solution will not be correct one since no CV was executed.'
         
         print 'Elapsed {0} sec'.format(end_time - start_time)
         
@@ -399,6 +405,11 @@ class AlmaSparseModeling(AlmaSparseModelingCore):
         
         evaluator = core.MeanSquareErrorEvaluator()
         num_fold = self.visset.num_fold
+        
+        if num_fold <= 1:
+            # CV is disabled
+            return -1.0
+        
         subset_handler = core.GriddedVisibilitySubsetHandler(self.visset, 
                                                              self.uvgridconfig)
         
@@ -513,7 +524,8 @@ class CVPlotter(object):
         nx, ny = data.shape
         a = pl.axes([left, bottom, width, height])
         a.imshow(numpy.flipud(data.transpose()))
-        a.text(nx-2, 5, '{:.5g}'.format(mse), ha='right', va='top', fontdict={'size': 'small', 'color': 'white'})
+        if mse >= 0.0:
+            a.text(nx-2, 5, '{:.5g}'.format(mse), ha='right', va='top', fontdict={'size': 'small', 'color': 'white'})
         a.xaxis.set_major_locator(matplotlib.ticker.NullLocator())
         a.yaxis.set_major_locator(matplotlib.ticker.NullLocator())
         self.axes_list[row][column] = a
