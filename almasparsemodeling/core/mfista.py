@@ -14,6 +14,7 @@ class MfistaSolver(object):
         Constructor
         """
         self.mfistaparam = mfistaparam
+        self.initialimage = None
         
     @property
     def l1(self):
@@ -57,7 +58,7 @@ class MfistaSolverExternal(MfistaSolver):
         super(MfistaSolverExternal, self).__init__(mfistaparam)
         self.libpath = libpath
         
-    def solve(self, grid_data):
+    def solve(self, grid_data, storeinitialimage=True, overwriteinitialimage=False):
         """
         Given complex visibility data, find the best image 
         under the condition of 
@@ -74,7 +75,12 @@ class MfistaSolverExternal(MfistaSolver):
         # TODO: define converter from gridded data to inputs
         inputs = pysparseimaging.SparseImagingInputs.from_gridder_result(grid_data)
 
-        result = executor.run(inputs)
+        result = executor.run(inputs, initialimage=self.initialimage)
+        
+        # keep output image as an initial image to next run if necessary
+        if storeinitialimage:
+            if self.initialimage is None or overwriteinitialimage:
+                self.initialimage = result.xout.copy()
         
         image = result.image
         # add degenerate axis (polarization and spectral)
