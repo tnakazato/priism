@@ -214,13 +214,20 @@ class SparseImagingResults(CTypesUtilMixIn):
                     ('comp_time', ctypes.c_double),
                     ('residual', ctypes.c_void_p)]
         
-    def __init__(self, nx, ny):
+    def __init__(self, nx, ny, initialimage=None):
         self.nx = nx
         self.ny = ny
         nn = nx * ny
         self.xinit = numpy.empty(nn, dtype=numpy.double)
-        # initially all pixels are 1.0
-        self.xinit[:] = 1.0
+        if initialimage is None:
+            # by default, initially all pixels are 1.0
+            self.xinit[:] = 1.0
+        else:
+            # initial image is set by the user
+            assert isinstance(initialimage, numpy.ndarray) or isinstance(initialimage, list)
+            assert len(initialimage) == nn
+            self.xinit[:] = initialimage
+            
         self.xout = numpy.empty_like(self.xinit)
         self.mfista_result = self.MFISTAResult()
         
@@ -255,7 +262,7 @@ class SparseImagingExecutor(object):
         _mfista_name = os.path.join(self.libpath, self.libname)
         self._mfista = cdll.LoadLibrary(_mfista_name)
     
-    def run(self, inputs):
+    def run(self, inputs, initialimage=None):
         """
         Run MFISTA routine to get an image
         
@@ -296,7 +303,7 @@ class SparseImagingExecutor(object):
         fftw_plan_flag = ctypes.c_uint(65) # FFTW_ESTIMATE | FFTW_DESTROY_INPUT
         
         # outputs
-        result = SparseImagingResults(inputs.nx, inputs.ny)
+        result = SparseImagingResults(inputs.nx, inputs.ny, initialimage=initialimage)
         xinit = ctypes.pointer(result.as_carray('xinit'))
         xout = ctypes.pointer(result.as_carray('xout'))
         mfista_result = ctypes.pointer(result.mfista_result)
@@ -309,14 +316,14 @@ class SparseImagingExecutor(object):
                                              mfista_result)
         
         # show IO filenames
-        self._show_io_info(inputs)
+        self._show_io_info(inputs, initialimage)
         
         # show result
         self._show_result(result.mfista_result)
         
         return result
         
-    def _show_io_info(self, inputs):
+    def _show_io_info(self, inputs, initialimage=None):
         # show IO filenames
         print ''
         print ''
@@ -324,7 +331,10 @@ class SparseImagingExecutor(object):
         print ''
         print ''
         print ' FFTW file:              {0}'.format(inputs.infile)
-        print ' x was initialized with 1.0'
+        if initialimage is None:
+            print ' x was initialized with 1.0'
+        else:
+            print ' x was initialize by the user'
         #print ' x is saved to:          xout'
         print ''
         
