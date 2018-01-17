@@ -51,9 +51,9 @@ class AlmaSparseModelingCore(object):
             libpath         (effective when external_solver is True)
                             library path to external solver
        """
-        self.__initialize()
         self.external_solver = external_solver
         self.libpath = libpath
+        self.__initialize()
         
     def selectdata(self, vis, field='', spw='', timerange='', uvrange='', antenna='', 
                   scan='', observation='', intent='', datacolumn='corrected'):
@@ -140,7 +140,7 @@ class AlmaSparseModelingCore(object):
                     visgridder.grid(working_set)
         self.griddedvis = visgridder.get_result()
     
-    def mfista(self, l1, ltsv):
+    def mfista(self, l1, ltsv, storeinitialimage=True, overwriteinitialimage=False):
         """
         Run MFISTA algorithm on gridded visibility data.
         gridvis must be executed beforehand.
@@ -150,17 +150,19 @@ class AlmaSparseModelingCore(object):
             ltsv   TSV regularization term
         """
         self.mfistaparam = core.ParamContainer.CreateContainer(core.MfistaParamContainer, 
-                                                               **locals())
-        self.imagearray = self._mfista(self.mfistaparam, self.griddedvis)
+                                                               l1=l1, ltsv=ltsv)
+        self.imagearray = self._mfista(self.mfistaparam, self.griddedvis,
+                                       storeinitialimage=True, overwriteinitialimage=False)
     
-    def _mfista(self, mfistaparam, griddedvis):
+    def _mfista(self, mfistaparam, griddedvis, storeinitialimage=True, overwriteinitialimage=False):
         assert griddedvis is not None
-        if not self.external_solver:
-            solver = core.MfistaSolver(mfistaparam)
-        else:
-            # using MFISTA solver by S. Ikeda
-            solver = core.MfistaSolverExternal(mfistaparam, libpath=self.libpath)
-        return solver.solve(griddedvis)
+#         if not self.external_solver:
+#             solver = core.MfistaSolver(mfistaparam)
+#         else:
+#             # using MFISTA solver by S. Ikeda
+#             solver = core.MfistaSolverExternal(mfistaparam, libpath=self.libpath)
+        self.solver.mfistaparam = mfistaparam
+        return self.solver.solve(griddedvis, storeinitialimage, overwriteinitialimage)
     
     def __initialize(self):
         # configuration
@@ -171,8 +173,16 @@ class AlmaSparseModelingCore(object):
         self.griddedvis = None
         self.imagearray = None
         
-        # optimize number of threads
+        # TODO: optimize number of threads
         self.num_threads = 2
+        
+        # create MFISTA instance with dummy parameter
+        mfistaparam = core.ParamContainer.CreateContainer(core.MfistaParamContainer, 
+                                                          l1=0.0, ltsv=0.0)
+        if not self.external_solver:
+            self.solver = core.MfistaSolver(mfistaparam)
+        else:
+            self.solver = core.MfistaSolverExternal(mfistaparam, libpath=self.libpath)
 
     
 class AlmaSparseModeling(AlmaSparseModelingCore):
@@ -308,7 +318,7 @@ class AlmaSparseModeling(AlmaSparseModelingCore):
                 mse = self.computegridmse(L1, Ltsv)
                 result_mse.append(mse)
                 imagename = 'L1_{0}_Ltsv_{1}.fits'.format(int(math.log10(L1)), int(math.log10(Ltsv)))
-                self.mfista(L1, Ltsv)
+                self.mfista(L1, Ltsv, storeinitialimage=True, overwriteinitialimage=False)
                 self.exportimage(imagename, overwrite=True)
                 result_image.append(imagename)
                 print 'L1 10^{0} Ltsv 10^{1}: MSE {2} FITS {3}'.format(int(math.log10(L1)),
