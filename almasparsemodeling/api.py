@@ -152,7 +152,7 @@ class AlmaSparseModelingCore(object):
         self.mfistaparam = core.ParamContainer.CreateContainer(core.MfistaParamContainer, 
                                                                l1=l1, ltsv=ltsv)
         self.imagearray = self._mfista(self.mfistaparam, self.griddedvis,
-                                       storeinitialimage=True, overwriteinitialimage=False)
+                                       storeinitialimage=storeinitialimage, overwriteinitialimage=overwriteinitialimage)
     
     def _mfista(self, mfistaparam, griddedvis, storeinitialimage=True, overwriteinitialimage=False):
         assert griddedvis is not None
@@ -296,12 +296,17 @@ class AlmaSparseModeling(AlmaSparseModelingCore):
         
         num_L1 = len(np_l1_list)
         num_Ltsv = len(np_ltsv_list)
+        L1_sort_index = numpy.argsort(np_l1_list)
+        Ltsv_sort_index = numpy.argsort(np_ltsv_list)
+        
+        sorted_l1_list = np_l1_list[L1_sort_index]
+        sorted_ltsv_list = np_ltsv_list[Ltsv_sort_index]
         
         if summarize is True:
             PlotterClass = CVPlotter
         else:
             PlotterClass = NullPlotter
-        plotter = PlotterClass(num_L1, num_Ltsv, np_l1_list, np_ltsv_list)
+        plotter = PlotterClass(num_L1, num_Ltsv, sorted_l1_list, sorted_ltsv_list)
             
         if datafile is not None:
             f = open('cvresult.dat', 'w')
@@ -312,16 +317,30 @@ class AlmaSparseModeling(AlmaSparseModelingCore):
         # initialize CV
         self.initializecv(num_fold=num_fold)
                 
-        for i, L1 in enumerate(np_l1_list):
-            for j, Ltsv in enumerate(np_ltsv_list):
+        #for j, Ltsv in enumerate(np_ltsv_list):
+        # loop Ltsv in ascending order
+        for j in xrange(num_Ltsv):
+            Ltsv = sorted_ltsv_list[j]
+            # trick to update initial image when Ltsv is changed
+            overwrite_initial = True
+            
+            #for i, L1 in enumerate(np_l1_list):
+            # loop L1 in descending order
+            for i in xrange(num_L1 - 1, -1, -1):
+                L1 = sorted_l1_list[i]
                 result_L1.append(L1)
                 result_Ltsv.append(Ltsv)
-                mse = self.computegridmse(L1, Ltsv)
-                result_mse.append(mse)
+                
+                # get full visibility image first
                 imagename = 'L1_{0}_Ltsv_{1}.fits'.format(int(math.log10(L1)), int(math.log10(Ltsv)))
-                self.mfista(L1, Ltsv, storeinitialimage=True, overwriteinitialimage=False)
+                self.mfista(L1, Ltsv, storeinitialimage=True, overwriteinitialimage=overwrite_initial)
                 self.exportimage(imagename, overwrite=True)
                 result_image.append(imagename)
+                
+                # then evaluate MSE
+                mse = self.computegridmse(L1, Ltsv)
+                result_mse.append(mse)
+                
                 print 'L1 10^{0} Ltsv 10^{1}: MSE {2} FITS {3}'.format(int(math.log10(L1)),
                                                                        int(math.log10(Ltsv)),
                                                                        mse,
@@ -334,6 +353,9 @@ class AlmaSparseModeling(AlmaSparseModelingCore):
                     data = numpy.squeeze(chunk) # data will be 2D
                     
                     plotter.plotimage(i, j, data, mse)
+                    
+                # As long as Ltsv is kept, initial image will not be updated
+                #overwrite_initial = False
                             
         # finalize CV
         self.finalizecv()
@@ -346,8 +368,10 @@ class AlmaSparseModeling(AlmaSparseModelingCore):
         best_L1 = result_L1[best_solution]
         best_Ltsv = result_Ltsv[best_solution]
         
-        L1_index = np_l1_list.tolist().index(best_L1)
-        Ltsv_index = np_ltsv_list.tolist().index(best_Ltsv)
+#         L1_index = np_l1_list.tolist().index(best_L1)
+#         Ltsv_index = np_ltsv_list.tolist().index(best_Ltsv)
+        L1_index = numpy.where(sorted_l1_list == best_L1)[0][0]
+        Ltsv_index = numpy.where(sorted_ltsv_list == best_Ltsv)[0][0]
         if best_mse >= 0.0:
             plotter.mark_bestimage(L1_index, Ltsv_index)
         
@@ -419,7 +443,8 @@ class AlmaSparseModeling(AlmaSparseModelingCore):
             
                 # run MFISTA
                 imagearray = self._mfista(mfistaparam, 
-                                          subset.visibility_active)
+                                          subset.visibility_active,
+                                          False, False)
 
                 # evaluate MSE (Mean Square Error)
                 mse = evaluator.evaluate_and_accumulate(subset.visibility_cache, 
