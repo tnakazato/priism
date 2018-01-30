@@ -6,9 +6,9 @@ import numpy
 import almasparsemodeling.core.util as util
 import almasparsemodeling.test.utils as testutils
 
-class VisibilitySubsetGeneratorTest(unittest.TestCase):
+class RandomIndexGeneratorTest(unittest.TestCase):
     """
-    Test VisibilitySubsetGenerator
+    Test RandomIndexGenerator
     
     test_too_few_ws            test num_ws < num_fold (raise AssertionError)
     test_negative_subset_id    test negative subset ID (raise AssertionError)
@@ -19,9 +19,9 @@ class VisibilitySubsetGeneratorTest(unittest.TestCase):
     """
     def _init_generator(self, num_ws, num_fold=None):
         if num_fold is None:
-            return util.VisibilitySubsetGenerator(num_ws)
+            return util.RandomIndexGenerator(num_ws)
         else:
-            return util.VisibilitySubsetGenerator(num_ws, num_fold)
+            return util.RandomIndexGenerator(num_ws, num_fold)
     
     def test_too_few_ws(self):
         """test_too_few_ws: test num_ws < num_fold (raise AssertionError)"""
@@ -117,6 +117,6 @@ def suite():
                   'test_random_index',
                   'test_random_index_with_mod',
                   'test_default_fold']
-    test_suite = testutils.generate_suite(VisibilitySubsetGeneratorTest,
+    test_suite = testutils.generate_suite(RandomIndexGeneratorTest,
                                           test_items)
     return test_suite
