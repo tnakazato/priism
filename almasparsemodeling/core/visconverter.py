@@ -63,7 +63,7 @@ class VisibilityConverter(object):
             real_out[:] = data_in.real.transpose((2,0,1))[:,:1,:]
             imag_out[:] = data_in.imag.transpose((2,0,1))[:,:1,:]
             flag_out[:] = flag_in.transpose((2,0,1))[:,:1,:]
-            print weight_in.shape
+            #print weight_in.shape
             for irow in xrange(nrow):
                 weight_out[irow] = weight_in[0, irow] * weight_factor
             return
@@ -324,10 +324,10 @@ class VisibilityConverter(object):
         # 2 * df * dt (which equals 2 * EFFECTIVE_BW[0] * INTEVAL) so that 
         # weight scaling factor is 1.0 by default
         weight_factor = 1.0
-        print 'LOG: SPW {0} chan_width * 2 = {1}, image_width = {2}'.format(
-            spwid, chan_width * 2, image_width)
+        #print 'LOG: SPW {0} chan_width * 2 = {1}, image_width = {2}'.format(
+        #    spwid, chan_width * 2, image_width)
         if abs(image_width) < 2.0 * abs(chan_width):
-            print 'LOG: do interpolation'
+            #print 'LOG: do interpolation'
             # interpolation
             # TODO: array shape (order) should be compatible with sakura gridding function
             ws_shape = (nrow, 1, nchan,)
@@ -341,8 +341,8 @@ class VisibilityConverter(object):
             channel_map[:] = numpy.arange(nchan, dtype=numpy.int32)
             
             # real, image: linear interpolation
-            print 'LOG: lsr_frequency length {0} real.shape {1}'.format(
-                len(lsr_frequency), chunk['data'].shape)
+            #print 'LOG: lsr_frequency length {0} real.shape {1}'.format(
+            #    len(lsr_frequency), chunk['data'].shape)
             if chunk['data'].shape[1] > 1:
                 data_interp = interpolate.interp1d(lsr_frequency, chunk['data'],
                                                    kind='linear', axis=1,
@@ -360,7 +360,7 @@ class VisibilityConverter(object):
             _weight = chunk['weight']
             self._to_stokesI(_data, _flag, _weight, weight_factor, real, imag, flag, weight)
         else:
-            print 'LOG: do channel mapping'
+            #print 'LOG: do channel mapping'
             # channel mapping
             # if chunk frequency for i goes into image frequency cell for k, 
             # i maps into k
@@ -548,11 +548,12 @@ class VisibilityConverter(object):
         # - all chunk entry should have same spw (mitigate in future?)
         assert numpy.all(chunk['data_desc_id'] == chunk['data_desc_id'][0])
             
-        print 'Chunk ID {0} is valid'.format(chunk['chunk_id'])
+        #print 'Chunk ID {0} is valid'.format(chunk['chunk_id'])
         
         # working set to be filled in
         chunk_id = chunk['chunk_id']
         working_set = gridder.GridderWorkingSet(data_id=chunk_id)
+        print 'LOG: generate working set for visibility chunk #{0}'.format(chunk_id)
             
         # 1. visibility frequency conversion 
         # get LSRK frequency at channel boundary
@@ -569,7 +570,7 @@ class VisibilityConverter(object):
         # 3~5. UVW manipulation
         self.fill_uvw(working_set, chunk, lsr_frequency)
         
-        print 'Working set data shape {0} polmap {1}'.format(working_set.rdata.shape,
-                                                             working_set.pol_map)
+        #print 'Working set data shape {0} polmap {1}'.format(working_set.rdata.shape,
+        #                                                     working_set.pol_map)
         
         return working_set

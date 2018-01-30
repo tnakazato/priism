@@ -346,6 +346,7 @@ class VisibilityGridder(object):
         """
         Accumulate data provided as working set onto grid.
         """
+        print 'LOG: accumulate visibility chunk #{0} onto grid'.format(ws.data_id)
         # shift uv (pixel) coordinates by convsupport to take into 
         # account margin pixels
         ws.u += self.convsupport
