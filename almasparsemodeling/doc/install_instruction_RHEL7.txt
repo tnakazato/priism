@@ -87,7 +87,7 @@ $ mkdir build
 $ cd build
 # Provide include path for Eigen3
 $ EIGEN_INCLUDE_DIR=/path/to/eigen3
-$ cmake .. -DCMAKE_INSTALL_PREFIX=$ASPM_ROOT -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DCMAKE_MODULE_PATH=../cmake-modules -DSIMD_ARCH=NATIVE -DCMAKE_BUILD_TYPE=Release -DBUILD_DOC=ON -DPYTHON_ROOTDIR=$ASPM_ROOT/casa/casa-release-5.1.1-5.el7 -DEIGEN3_INCLUDE_DIR=$EIGEN_INCLUDE_DIR 2>&1 | tee -i cmake.logw
+$ cmake .. -DCMAKE_INSTALL_PREFIX=$ASPM_ROOT -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DCMAKE_MODULE_PATH=../cmake-modules -DSIMD_ARCH=NATIVE -DCMAKE_BUILD_TYPE=Release -DBUILD_DOC=ON -DPYTHON_ROOTDIR=$ASPM_ROOT/casa/casa-release-5.1.1-5.el7 -DEIGEN3_INCLUDE_DIR=$EIGEN_INCLUDE_DIR 2>&1 | tee -i cmake.log
 $ make all apidoc
 $ make install/fast
 
