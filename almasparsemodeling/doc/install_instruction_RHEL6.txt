@@ -94,7 +94,7 @@ $ EIGEN_INCLUDE_DIR=/path/to/eigen3
 # Path to compiler supporting C++11 feature (e.g. gcc 4.8.3 or later)
 # CC=/path/to/c/compiler
 # CXX=/path/to/c++/compiler
-$ cmake .. -DCMAKE_C_COMPILER=CC -DCMAKE_CXX_COMPILER=CXX -DCMAKE_INSTALL_PREFIX=$ASPM_ROOT -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DCMAKE_MODULE_PATH=../cmake-modules -DSIMD_ARCH=NATIVE -DCMAKE_BUILD_TYPE=Release -DBUILD_DOC=ON -DPYTHON_ROOTDIR=$ASPM_ROOT/casa/casa-release-5.1.1-5.el7 -DEIGEN3_INCLUDE_DIR=$EIGEN_INCLUDE_DIR 2>&1 | tee -i cmake.log
+$ cmake .. -DCMAKE_C_COMPILER=$CC -DCMAKE_CXX_COMPILER=$CXX -DCMAKE_INSTALL_PREFIX=$ASPM_ROOT -DCMAKE_MODULE_PATH=../cmake-modules -DSIMD_ARCH=NATIVE -DCMAKE_BUILD_TYPE=Release -DBUILD_DOC=ON -DPYTHON_ROOTDIR=$ASPM_ROOT/casa/casa-release-5.1.1-5.el6 -DEIGEN3_INCLUDE_DIR=$EIGEN_INCLUDE_DIR 2>&1 | tee -i cmake.log
 $ make all apidoc
 $ make install/fast
 
