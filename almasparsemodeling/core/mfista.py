@@ -16,19 +16,35 @@ class MfistaSolver(object):
         self.mfistaparam = mfistaparam
         self.initialimage = None
         
+    def __from_param(self, name):
+        if hasattr(self, 'mfistaparam'):
+            return getattr(self.mfistaparam, name)
+        else:
+            None
+        
     @property
     def l1(self):
-        if hasattr(self, 'mfistaparam'):
-            return self.mfistaparam.l1
-        else:
-            return None
+        return self.__from_param('l1')
     
     @property
     def ltsv(self):
-        if hasattr(self, 'mfistaparam'):
-            return self.mfistaparam.ltsv
-        else:
-            return None
+        return self.__from_param('ltsv')
+
+    @property
+    def maxiter(self):
+        return self.__from_param('maxiter')
+    
+    @property
+    def eps(self):
+        return self.__from_param('eps')
+    
+    @property
+    def clean_box(self):
+        return self.__from_param('clean_box')
+    
+    @property
+    def box_flag(self):
+        return 0 if self.clean_box is None else 1
             
     def solve(self, grid_data):
         """

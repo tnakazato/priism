@@ -140,17 +140,25 @@ class AlmaSparseModelingCore(object):
                     visgridder.grid(working_set)
         self.griddedvis = visgridder.get_result()
     
-    def mfista(self, l1, ltsv, storeinitialimage=True, overwriteinitialimage=False):
+    def mfista(self, l1, ltsv, maxiter=50000, eps=1.0e-5, clean_box=None, 
+               storeinitialimage=True, overwriteinitialimage=False):
         """
         Run MFISTA algorithm on gridded visibility data.
         gridvis must be executed beforehand.
         
         Parameters:
-            l1      L1 regularization term
-            ltsv   TSV regularization term
+            l1 -- L1 regularization term
+            ltsv -- TSV regularization term
+            maxiter -- maximum number of iteration for MFISTA
+            eps -- threshold factor for MFISTA
+            clean_box -- clean box as a float array
+            storeinitialimage -- keep the result as an initial image for next run
+            overwriteinitialimage -- overwrite existing initial image
         """
         self.mfistaparam = core.ParamContainer.CreateContainer(core.MfistaParamContainer, 
-                                                               l1=l1, ltsv=ltsv)
+                                                               l1=l1, ltsv=ltsv,
+                                                               maxiter=maxiter, eps=eps,
+                                                               clean_box=clean_box)
         self.imagearray = self._mfista(self.mfistaparam, self.griddedvis,
                                        storeinitialimage=storeinitialimage, overwriteinitialimage=overwriteinitialimage)
     
@@ -246,7 +254,7 @@ class AlmaSparseModeling(AlmaSparseModelingCore):
         writer.write(overwrite=overwrite)
         
     def cvforgridvis(self, l1_list, ltsv_list, num_fold=10, imageprefix='image', imagepolicy='full', 
-               summarize=True, figfile=None, datafile=None):
+               summarize=True, figfile=None, datafile=None, maxiter=50000, eps=1.0e-5, clean_box=None):
         """
         Perform cross validation and search the best parameter for L1 and Ltsv from 
         the given list of these.
@@ -265,6 +273,9 @@ class AlmaSparseModeling(AlmaSparseModelingCore):
                        None will not produce a file.
             datafile -- name of output data file containing whole MSE values. 
                         None will not produce a file.
+            maxiter -- maximum number of iteration for MFISTA algorithm
+            eps -- threshold factor for MFISTA algorithm
+            clean_box -- clean box as a float array (default None)
         
         Output:
             dictionary containing best L1 (key: L1), best Ltsv (key;Ltsv), and
@@ -333,12 +344,13 @@ class AlmaSparseModeling(AlmaSparseModelingCore):
                 
                 # get full visibility image first
                 imagename = 'L1_{0}_Ltsv_{1}.fits'.format(int(math.log10(L1)), int(math.log10(Ltsv)))
-                self.mfista(L1, Ltsv, storeinitialimage=True, overwriteinitialimage=overwrite_initial)
+                self.mfista(L1, Ltsv, maxiter=maxiter, eps=eps, clean_box=clean_box,
+                            storeinitialimage=True, overwriteinitialimage=overwrite_initial)
                 self.exportimage(imagename, overwrite=True)
                 result_image.append(imagename)
                 
                 # then evaluate MSE
-                mse = self.computegridmse(L1, Ltsv)
+                mse = self.computegridmse(L1, Ltsv, maxiter, eps, clean_box)
                 result_mse.append(mse)
                 
                 print 'L1 10^{0} Ltsv 10^{1}: MSE {2} FITS {3}'.format(int(math.log10(L1)),
@@ -418,13 +430,15 @@ class AlmaSparseModeling(AlmaSparseModelingCore):
     def finalizecv(self):
         self.visset = None
     
-    def computegridmse(self, l1, ltsv):
+    def computegridmse(self, l1, ltsv, maxiter=50000, eps=1.0e-5, clean_box=None):
         """
         Compute mean-square-error (MSE) on resulting image.
         MSE is evaluated from gridded visibility.
         """
         mfistaparam = core.ParamContainer.CreateContainer(core.MfistaParamContainer, 
-                                                          l1=l1, ltsv=ltsv)
+                                                          l1=l1, ltsv=ltsv,
+                                                          maxiter=maxiter, eps=eps, 
+                                                          clean_box=clean_box)
         assert self.griddedvis is not None
         
         evaluator = core.MeanSquareErrorEvaluator()

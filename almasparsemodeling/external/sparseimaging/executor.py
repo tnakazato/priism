@@ -262,7 +262,8 @@ class SparseImagingExecutor(object):
         _mfista_name = os.path.join(self.libpath, self.libname)
         self._mfista = cdll.LoadLibrary(_mfista_name)
     
-    def run(self, inputs, initialimage=None):
+    def run(self, inputs, initialimage=None,
+            maxiter=50000, eps=1.0e-5, cl_box=None):
         """
         Run MFISTA routine to get an image
         
@@ -270,10 +271,11 @@ class SparseImagingExecutor(object):
         
           mfista_imaging_core_fft(int *u_idx, int *v_idx,
                  double *y_r, double *y_i, double *noise_stdev,
-                 int M, int NX, int NY,
+                 int M, int NX, int NY, int maxiter, double eps,
                  double lambda_l1, double lambda_tv, double lambda_tsv,
                  double cinit, double *xinit, double *xout,
                  int nonneg_flag, unsigned int fftw_plan_flag,
+                 int box_flag, float *cl_box,
                  struct RESULT *mfista_result)
         """
         # input summary
@@ -300,6 +302,11 @@ class SparseImagingExecutor(object):
         lambda_tsv = ctypes.c_double(self.lambda_TSV)
         cinit = ctypes.c_double(self.cinit)
         nonneg_flag = ctypes.c_int(1 if self.nonnegative else 0)
+        box_flag = 0 if clean_box is None else 1
+        if box_flag == 1:
+            cl_box = numpy.ctypeslib.as_ctypes(clean_box)
+        else:
+            cl_box = numpy.ctypeslib.as_ctypes(numpy.zeros(1, dtype=numpy.float32))
         fftw_plan_flag = ctypes.c_uint(65) # FFTW_ESTIMATE | FFTW_DESTROY_INPUT
         
         # outputs
@@ -310,10 +317,10 @@ class SparseImagingExecutor(object):
         
         # run MFISTA
         self._mfista.mfista_imaging_core_fft(u_idx, v_idx, y_r, y_i, noise_stdev,
-                                             M, NX, NY, 
+                                             M, NX, NY, maxiter, eps,
                                              lambda_l1, lambda_tv, lambda_tsv, 
                                              cinit, xinit, xout, nonneg_flag, fftw_plan_flag,
-                                             mfista_result)
+                                             box_flag, cl_box, mfista_result)
         
         # show IO filenames
         self._show_io_info(inputs, initialimage)

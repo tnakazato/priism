@@ -281,7 +281,7 @@ class GridParamContainer(object):
     
     
 class MfistaParamContainer(object):
-    def __init__(self, l1, ltsv):
+    def __init__(self, l1, ltsv, maxiter=50000, eps=1.0e-5, clean_box=None):
         """
         Constructor
         """
