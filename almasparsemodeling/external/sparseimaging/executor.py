@@ -302,11 +302,14 @@ class SparseImagingExecutor(object):
         lambda_tsv = ctypes.c_double(self.lambda_TSV)
         cinit = ctypes.c_double(self.cinit)
         nonneg_flag = ctypes.c_int(1 if self.nonnegative else 0)
-        box_flag = 0 if clean_box is None else 1
+        _maxiter = ctypes.c_int(maxiter)
+        _eps = ctypes.c_double(eps)
+        box_flag = 0 if cl_box is None else 1
         if box_flag == 1:
             cl_box = numpy.ctypeslib.as_ctypes(clean_box)
         else:
             cl_box = numpy.ctypeslib.as_ctypes(numpy.zeros(1, dtype=numpy.float32))
+        _box_flag = ctypes.c_int(box_flag)
         fftw_plan_flag = ctypes.c_uint(65) # FFTW_ESTIMATE | FFTW_DESTROY_INPUT
         
         # outputs
@@ -317,10 +320,10 @@ class SparseImagingExecutor(object):
         
         # run MFISTA
         self._mfista.mfista_imaging_core_fft(u_idx, v_idx, y_r, y_i, noise_stdev,
-                                             M, NX, NY, maxiter, eps,
+                                             M, NX, NY, _maxiter, _eps,
                                              lambda_l1, lambda_tv, lambda_tsv, 
                                              cinit, xinit, xout, nonneg_flag, fftw_plan_flag,
-                                             box_flag, cl_box, mfista_result)
+                                             _box_flag, cl_box, mfista_result)
         
         # show IO filenames
         self._show_io_info(inputs, initialimage)
