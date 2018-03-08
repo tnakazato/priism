@@ -4,8 +4,8 @@ import libsakurapy
 
 def grid(working_set, gridfunction, convsupport, convsampling, weight_only,
          grid_real, grid_imag, wgrid_real, wgrid_imag, wsum_real, wsum_imag):
-    print 'LOG: sakura gridding function is called for real'
-    print 'LOG: sakura gridding function is called for imag'
+    #print 'LOG: sakura gridding function is called for real'
+    #print 'LOG: sakura gridding function is called for imag'
     # grid real part
     libsakurapy.grid_convolving(
         working_set.nrow,
