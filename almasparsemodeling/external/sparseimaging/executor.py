@@ -208,11 +208,13 @@ class SparseImagingResults(CTypesUtilMixIn):
                     ('l1cost', ctypes.c_double),
                     ('tvcost', ctypes.c_double),
                     ('tsvcost', ctypes.c_double),
+                    ('mean_sq_error', ctypes.c_double),
                     ('looe_m', ctypes.c_double),
                     ('Hessian_positive', ctypes.c_double),
                     ('finalcost', ctypes.c_double),
                     ('comp_time', ctypes.c_double),
-                    ('residual', ctypes.c_void_p)]
+                    ('residual', ctypes.c_void_p),
+                    ('Lip_const', ctypes.c_double)]
         
     def __init__(self, nx, ny, initialimage=None):
         self.nx = nx
@@ -323,7 +325,8 @@ class SparseImagingExecutor(object):
                                              M, NX, NY, _maxiter, _eps,
                                              lambda_l1, lambda_tv, lambda_tsv, 
                                              cinit, xinit, xout, nonneg_flag, fftw_plan_flag,
-                                             _box_flag, cl_box, mfista_result)
+                                             _box_flag, cl_box, 
+                                             mfista_result)
         
         # show IO filenames
         self._show_io_info(inputs, initialimage)
