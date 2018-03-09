@@ -91,7 +91,8 @@ class MfistaSolverExternal(MfistaSolver):
         # TODO: define converter from gridded data to inputs
         inputs = pysparseimaging.SparseImagingInputs.from_gridder_result(grid_data)
 
-        result = executor.run(inputs, initialimage=self.initialimage)
+        result = executor.run(inputs, initialimage=self.initialimage,
+                              maxiter=self.maxiter, eps=self.eps, cl_box=self.clean_box)
         
         # keep output image as an initial image to next run if necessary
         if storeinitialimage:
