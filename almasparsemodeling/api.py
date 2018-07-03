@@ -532,7 +532,7 @@ class CVPlotter(object):
         dx = total_width / float(self.nh)
         dy = total_height / float(self.nv)
         self.dx = min(dx, dy)
-        self.dy = dx
+        self.dy = self.dx
         f = pl.figure(num='CVPlot', figsize=(8,8))
         pl.clf()
         left = self.left_margin
