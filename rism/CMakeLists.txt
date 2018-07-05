@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 
-project(RISM)
+project(rism)
 
 # download sparseimaging
 set(SPARSEIMAGING_DIR sparseimaging)
@@ -56,20 +56,51 @@ if(NOT EXISTS ${PROJECT_SOURCE_DIR}/${SAKURA_DIR}/${GTEST_DIR})
                   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/${SAKURA_DIR})
 endif()  
 
-# edit makefile for sparseimaging
+# edit makefile for sparseimaging if necessary
+set(SPARSEIMAGING_BUILD_DIR ${PROJECT_SOURCE_DIR}/${SPARSEIMAGING_DIR}/c)
+message(STATUS "OPENBLAS_LIBRARY_DIR=${OPENBLAS_LIBRARY_DIR}")
+if(OPENBLAS_LIBRARY_DIR)
+  message(STATUS "Edit makefile for sparseimaging")
+  execute_process(COMMAND sed -e "s@-lopenblas@-L${OPENBLAS_LIBRARY_DIR} -lopenblas@g" makefile
+                  COMMAND sed -e "s@-Xlinker /usr/lib@-Xlinker ${OPENBLAS_LIBRARY_DIR}@g"
+                  OUTPUT_FILE makefile.rism
+                  WORKING_DIRECTORY ${SPARSEIMAGING_BUILD_DIR})
+else()
+  execute_process(COMMAND cp -f makefile makefile.rism
+                  WORKIND_DIRECTORY ${SPARSEIMAGING_BUILD_DIR})
+endif()
 
 # configure compile of sparseimaging to generate libmfista_fft.so
+add_custom_target(sparseimaging make -f makefile.rism libmfista_fft
+                  WORKING_DIRECTORY ${SPARSEIMAGING_BUILD_DIR})
 
-# make symlink of googletest to sakura code tree
 
 # configure sakura
 #set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/${SAKURA_DIR}/cmake-modules ${CMAKE_MODULE_PATH}")
 #add_subdirectory(libsakura)
+set(SAKURA_BUILD_DIR ${PROJECT_SOURCE_DIR}/${SAKURA_DIR}/build)
+if(NOT EXISTS ${SAKURA_BUILD_DIR})
+  execute_process(COMMAND mkdir ${SAKURA_BUILD_DIR})
+endif()
+execute_process(COMMAND cmake .. -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} 
+                                 -DCMAKE_MODULE_PATH=../cmake-modules 
+                                 -DEIGEN3_INCLUDE_DIR=${EIGEN3_INCLUDE_DIR}
+                WORKING_DIRECTORY ${SAKURA_BUILD_DIR})
+add_custom_target(sakura make 
+                  COMMAND make apidoc
+                  WORKING_DIRECTORY ${SAKURA_BUILD_DIR})
+                
 
 # add rism module
 add_subdirectory(python)
+add_custom_target(rism echo ""
+                  DEPENDS sakura sparseimaging)
 
 # install libmfista_fft.so
+install(PROGRAMS ${SPARSEIMAGING_BUILD_DIR}/libmfista_fft.so
+        DESTINATION rism/core)
 
 # install sakura
+add_custom_target(install_sakura make install/fast
+                  WORKING_DIRECTORY ${SAKURA_BUILD_DIR})
 
