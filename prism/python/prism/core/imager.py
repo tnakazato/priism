@@ -276,8 +276,8 @@ class SparseModelingImager(object):
                 print >> f, '{0}, {1}, {2}'.format(L1, Ltsv, mse)
         
                 if summarize is True:
-                    data = self.getimage(imagename)
-                    
+                    imagearray = self.getimage(imagename)
+                    data = numpy.squeeze(imagearray.data) #data will be 2D
                     plotter.plotimage(i, j, data, mse)
                     
                 # As long as Ltsv is kept, initial image will not be updated

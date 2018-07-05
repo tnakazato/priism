@@ -21,7 +21,8 @@ from . import imagewriter
 import prism.external.sakura as sakura
 import prism.external.casa as casa
 
-import rism.core.imager as core_imager
+import prism.core.imager as core_imager
+import prism.core.datacontainer as datacontainer
 
 class AlmaSparseModelingResult(object):
     """
@@ -203,6 +204,5 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
     def getimage(self, imagename):
         with casa.OpenImage(imagename) as ia:
             chunk = ia.getchunk()
-        data = numpy.squeeze(chunk) # data will be 2D
-        return data
+        return datacontainer.ResultingImageStorage(chunk)
     
