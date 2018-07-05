@@ -42,3 +42,15 @@ install(FILES
         prism/external/sakura/core.py
         prism/external/sakura/reductionhelper.py
         DESTINATION prism/external/sakura)
+
+install(FILES
+        prism/test/__init__.py
+        #prism/test/demo.py
+        prism/test/runtest.py
+        prism/test/test_gridder.py
+        prism/test/test_imagewriter.py
+        prism/test/test_util.py
+        prism/test/test_visconverter.py
+        prism/test/test_visreader.py
+        prism/test/utils.py
+        DESTINATION prism/test)
