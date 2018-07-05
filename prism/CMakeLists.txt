@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 2.8)
 
 project(prism)
 
+# options
+option(BUNDLE_CASA_APP "Bundle python-binding to CASA release package (OSX only)" OFF)
+
 # download sparseimaging
 set(SPARSEIMAGING_DIR sparseimaging)
 if(NOT EXISTS ${PROJECT_SOURCE_DIR}/${SPARSEIMAGING_DIR})
@@ -82,9 +85,18 @@ set(SAKURA_BUILD_DIR ${PROJECT_SOURCE_DIR}/${SAKURA_DIR}/build)
 if(NOT EXISTS ${SAKURA_BUILD_DIR})
   execute_process(COMMAND mkdir ${SAKURA_BUILD_DIR})
 endif()
-execute_process(COMMAND cmake .. -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} 
-                                 -DCMAKE_MODULE_PATH=../cmake-modules 
-                                 -DEIGEN3_INCLUDE_DIR=${EIGEN3_INCLUDE_DIR}
+set(SAKURA_CMAKE_OPTIONS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER} -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER} -DCMAKE_MODULE_PATH=../cmake-modules)
+if(EIGEN3_INCLUDE_DIR)
+  set(SAKURA_CMAKE_OPTIONS ${SAKURA_CMAKE_OPTIONS} -DEIGEN3_INCLUDE_DIR=${EIGEN3_INCLUDE_DIR})
+endif()
+if(PYTHON_ROOTDIR)
+  set(SAKURA_CMAKE_OPTIONS ${SAKURA_CMAKE_OPTIONS} -DPYTHON_ROOTDIR=${PYTHON_ROOTDIR}) 
+endif()
+if(BUNDLE_CASA_APP)
+  set(SAKURA_CMAKE_OPTIONS ${SAKURA_CMAKE_OPTIONS} -DBUNDLE_CASA_APP=ON)
+endif() 
+message(STATUS "SAKURA_CMAKE_OPTIONS=${SAKURA_CMAKE_OPTIONS}")
+execute_process(COMMAND cmake .. ${SAKURA_CMAKE_OPTIONS}
                 WORKING_DIRECTORY ${SAKURA_BUILD_DIR})
 add_custom_target(sakura make 
                   COMMAND make apidoc
