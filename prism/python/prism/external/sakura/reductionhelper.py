@@ -12,7 +12,7 @@ import numpy
 #import _casasakura
 libsakurapy = None
 
-from taskinit import gentools, ms#, ssd
+#from taskinit import gentools, ms#, ssd
 #import mtpy
 #import reductionhelper_util as rhutil
 
@@ -121,201 +121,201 @@ def paraMap(numThreads, func, dataSource):
 		assert context.pendingItems < context.qLen
 		putEODIntoInQ(context)
 
-class GenerateQueryHelper(object):
-    def __init__(self, vis, data_desc_id, antenna_id, \
-		 field, spw, timerange, antenna, scan, observation, msselect):
-        self.vis = vis
-        if field is None: field = ''
-        if spw is None: spw = ''
-        if timerange is None: timerange = ''
-        if antenna is None: antenna = ''
-        if scan is None: scan = ''
-        if observation is None: observation = ''
-        if msselect is None: msselect = ''
+# class GenerateQueryHelper(object):
+#     def __init__(self, vis, data_desc_id, antenna_id, \
+# 		 field, spw, timerange, antenna, scan, observation, msselect):
+#         self.vis = vis
+#         if field is None: field = ''
+#         if spw is None: spw = ''
+#         if timerange is None: timerange = ''
+#         if antenna is None: antenna = ''
+#         if scan is None: scan = ''
+#         if observation is None: observation = ''
+#         if msselect is None: msselect = ''
+# 
+#         self.selected_idx = {}
+# 
+#         try:
+#             baseline_arg = '%s&&&'%(antenna) if str(antenna).strip()!='' else ''
+#             self.selected_idx = ms.msseltoindex(vis=vis, field=field, \
+#                                                 spw=spw, time=timerange, \
+#                                                 baseline=baseline_arg, \
+#                                                 scan=scan, \
+#                                                 observation=observation, \
+#                                                 taql=msselect)
+#             self.valid_selection = self.is_effective(data_desc_id, antenna_id)
+#         except:
+#             self.valid_selection = False
+# 
+#     def is_effective(self, data_desc_id, antenna_id):
+#         return self.is_effective_id('spwdd', data_desc_id) and \
+# 	    self.is_effective_id('antenna1', antenna_id) and \
+# 	    self.is_effective_id('antenna2', antenna_id)
+# 
+#     def is_effective_id(self, key, value):
+#         res = True
+#         if len(self.selected_idx[key]) > 0:
+#             try:
+#                 list(self.selected_idx[key]).index(value)
+#             except:
+#                 res = False
+#         return res
+# 
+#     def get_taql(self, state_id, data_desc_id, antenna_id, timerange, msselect):
+#         elem = []
+#         self._append_taql(elem, 'STATE_ID', 'IN', state_id)
+#         self._append_taql(elem, 'DATA_DESC_ID', '==', data_desc_id)
+#         self._append_taql(elem, 'ANTENNA1', '==', antenna_id)
+#         self._append_taql(elem, 'ANTENNA2', '==', antenna_id)
+#         self._append_taql(elem, 'FIELD_ID', 'IN', 'field', True)
+#         if timerange != '':
+#             taql_timerange = rhutil.select_by_timerange(self.vis, timerange)
+#             self._append_taql(elem, '', '', taql_timerange, True)
+#         self._append_taql(elem, 'SCAN_NUMBER', 'IN', 'scan', True)
+#         self._append_taql(elem, 'OBSERVATION_ID', 'IN', 'obsids', True)
+#         self._append_taql(elem, '', '', msselect, True)
+#         return ' && '.join(elem)
+# 
+#     def _append_taql(self, elem, keyword, operand, value, check=False):
+#         ope = operand.strip()
+# 	if isinstance(value, str): value = value.strip()
+#         can_append = True
+#         if check:
+#             if ope == 'IN':
+#                 can_append = len(self.selected_idx[value]) > 0
+#             else:
+#                 can_append = (value is not None) and (str(value) != '')
+#         if can_append:
+#             mgn = ' ' if ope != '' else ''
+#             if check:
+#                 val = str(self.selected_idx[value]) if ope == 'IN' else str(value)
+#             else:
+#                 val = str(value)
+#             res = '(' + keyword.strip().upper() + mgn + ope + mgn + val + ')'
+# 	    elem.append(res)
+# 
+#     def get_channel_selection(self):
+#         idx_channel = self.selected_idx['channel']
+#         return str(idx_channel) if len(idx_channel) > 0 else ''
+# 
+#     def get_pol_selection(self, pol):
+#         return pol if pol is not None else ''
+# 
+# def generate_query(vis, field=None, spw=None, timerange=None, antenna=None, scan=None, pol=None, observation=None, msselect=None):
+#     res_list = []
+# 
+#     with opentable(os.path.join(vis, 'DATA_DESCRIPTION')) as tb:
+#         num_data_desc_id = tb.nrows()
+# 
+#     with opentable(os.path.join(vis, 'ANTENNA')) as tb:
+#         num_antenna_id = tb.nrows()
+# 
+#     with opentable(os.path.join(vis, 'STATE')) as tb:
+#         state_list = tb.getcol('OBS_MODE')
+#         ondata_state_id = []
+#         for i in xrange(len(state_list)):
+#             if state_list[i].startswith('OBSERVE_TARGET#ON_SOURCE'):
+#                 ondata_state_id.append(i)
+# 
+#     for data_desc_id, antenna_id in itertools.product(xrange(num_data_desc_id), xrange(num_antenna_id)):
+#         gqh = GenerateQueryHelper(vis, data_desc_id, antenna_id, field, spw, timerange, antenna, scan, observation, msselect)
+#         if gqh.valid_selection:
+#             res = gqh.get_taql(ondata_state_id, data_desc_id, antenna_id, timerange, msselect)
+#             #yield res, gqh.get_channel_selection(), gqh.get_pol_selection(pol)
+#             res_list.append((res, gqh.get_channel_selection(), gqh.get_pol_selection(pol)))
+#     return res_list
+# 
+# def get_context(query, spwidmap, ctx):
+#     ddid, antennaid, chan_selection, pol_selection = _parse_query(query)
+#     spwid = spwidmap[ddid]
+#     c = ctx[spwid]
+#     return c[0][antennaid], c[1], c[2], c[3], chan_selection, pol_selection
+# 
+# def _parse_query(query):
+#     ddid = None
+#     antennaid = None
+#     elem = query[0].split(' && ')
+#     for i in xrange(len(elem)):
+#         elem_list = elem[i].replace('(', '').replace(')', '').split(' == ')
+#         if elem_list[0].upper() == 'DATA_DESC_ID':
+#             ddid = int(elem_list[1])
+#         elif elem_list[0].upper() == 'ANTENNA1':
+#             antennaid = int(elem_list[1])
+#     assert (ddid is not None) and (antennaid is not None)
+#     return ddid, antennaid, query[1], query[2]
 
-        self.selected_idx = {}
-
-        try:
-            baseline_arg = '%s&&&'%(antenna) if str(antenna).strip()!='' else ''
-            self.selected_idx = ms.msseltoindex(vis=vis, field=field, \
-                                                spw=spw, time=timerange, \
-                                                baseline=baseline_arg, \
-                                                scan=scan, \
-                                                observation=observation, \
-                                                taql=msselect)
-            self.valid_selection = self.is_effective(data_desc_id, antenna_id)
-        except:
-            self.valid_selection = False
-
-    def is_effective(self, data_desc_id, antenna_id):
-        return self.is_effective_id('spwdd', data_desc_id) and \
-	    self.is_effective_id('antenna1', antenna_id) and \
-	    self.is_effective_id('antenna2', antenna_id)
-
-    def is_effective_id(self, key, value):
-        res = True
-        if len(self.selected_idx[key]) > 0:
-            try:
-                list(self.selected_idx[key]).index(value)
-            except:
-                res = False
-        return res
-
-    def get_taql(self, state_id, data_desc_id, antenna_id, timerange, msselect):
-        elem = []
-        self._append_taql(elem, 'STATE_ID', 'IN', state_id)
-        self._append_taql(elem, 'DATA_DESC_ID', '==', data_desc_id)
-        self._append_taql(elem, 'ANTENNA1', '==', antenna_id)
-        self._append_taql(elem, 'ANTENNA2', '==', antenna_id)
-        self._append_taql(elem, 'FIELD_ID', 'IN', 'field', True)
-        if timerange != '':
-            taql_timerange = rhutil.select_by_timerange(self.vis, timerange)
-            self._append_taql(elem, '', '', taql_timerange, True)
-        self._append_taql(elem, 'SCAN_NUMBER', 'IN', 'scan', True)
-        self._append_taql(elem, 'OBSERVATION_ID', 'IN', 'obsids', True)
-        self._append_taql(elem, '', '', msselect, True)
-        return ' && '.join(elem)
-
-    def _append_taql(self, elem, keyword, operand, value, check=False):
-        ope = operand.strip()
-	if isinstance(value, str): value = value.strip()
-        can_append = True
-        if check:
-            if ope == 'IN':
-                can_append = len(self.selected_idx[value]) > 0
-            else:
-                can_append = (value is not None) and (str(value) != '')
-        if can_append:
-            mgn = ' ' if ope != '' else ''
-            if check:
-                val = str(self.selected_idx[value]) if ope == 'IN' else str(value)
-            else:
-                val = str(value)
-            res = '(' + keyword.strip().upper() + mgn + ope + mgn + val + ')'
-	    elem.append(res)
-
-    def get_channel_selection(self):
-        idx_channel = self.selected_idx['channel']
-        return str(idx_channel) if len(idx_channel) > 0 else ''
-
-    def get_pol_selection(self, pol):
-        return pol if pol is not None else ''
-
-def generate_query(vis, field=None, spw=None, timerange=None, antenna=None, scan=None, pol=None, observation=None, msselect=None):
-    res_list = []
-
-    with opentable(os.path.join(vis, 'DATA_DESCRIPTION')) as tb:
-        num_data_desc_id = tb.nrows()
-
-    with opentable(os.path.join(vis, 'ANTENNA')) as tb:
-        num_antenna_id = tb.nrows()
-
-    with opentable(os.path.join(vis, 'STATE')) as tb:
-        state_list = tb.getcol('OBS_MODE')
-        ondata_state_id = []
-        for i in xrange(len(state_list)):
-            if state_list[i].startswith('OBSERVE_TARGET#ON_SOURCE'):
-                ondata_state_id.append(i)
-
-    for data_desc_id, antenna_id in itertools.product(xrange(num_data_desc_id), xrange(num_antenna_id)):
-        gqh = GenerateQueryHelper(vis, data_desc_id, antenna_id, field, spw, timerange, antenna, scan, observation, msselect)
-        if gqh.valid_selection:
-            res = gqh.get_taql(ondata_state_id, data_desc_id, antenna_id, timerange, msselect)
-            #yield res, gqh.get_channel_selection(), gqh.get_pol_selection(pol)
-            res_list.append((res, gqh.get_channel_selection(), gqh.get_pol_selection(pol)))
-    return res_list
-
-def get_context(query, spwidmap, ctx):
-    ddid, antennaid, chan_selection, pol_selection = _parse_query(query)
-    spwid = spwidmap[ddid]
-    c = ctx[spwid]
-    return c[0][antennaid], c[1], c[2], c[3], chan_selection, pol_selection
-
-def _parse_query(query):
-    ddid = None
-    antennaid = None
-    elem = query[0].split(' && ')
-    for i in xrange(len(elem)):
-        elem_list = elem[i].replace('(', '').replace(')', '').split(' == ')
-        if elem_list[0].upper() == 'DATA_DESC_ID':
-            ddid = int(elem_list[1])
-        elif elem_list[0].upper() == 'ANTENNA1':
-            antennaid = int(elem_list[1])
-    assert (ddid is not None) and (antennaid is not None)
-    return ddid, antennaid, query[1], query[2]
-
-@contextlib.contextmanager
-def opentable(vis):
-    tb = gentools(['tb'])[0]
-    tb.open(vis, nomodify=False)
-    yield tb
-    tb.close()
-
-@contextlib.contextmanager
-def openms(vis):
-    ms = gentools(['ms'])[0]
-    ms.open(vis)
-    yield ms
-    ms.close()
+# @contextlib.contextmanager
+# def opentable(vis):
+#     tb = gentools(['tb'])[0]
+#     tb.open(vis, nomodify=False)
+#     yield tb
+#     tb.close()
+# 
+# @contextlib.contextmanager
+# def openms(vis):
+#     ms = gentools(['ms'])[0]
+#     ms.open(vis)
+#     yield ms
+#     ms.close()
     
-def optimize_thread_parameters(table, query, spwmap):
-    try:
-        num_threads = min(3, multiprocessing.cpu_count())
-        assert num_threads > 0
-
-	subt = table.query(query[0])
-        num_rows = subt.nrows()
-        valid_ddid = str(_parse_query(query)[0])
-        if (num_rows > 0) and spwmap.has_key(valid_ddid):
-            data = subt.getcell('FLOAT_DATA', 0)
-            num_pols = len(data)
-            num_channels = len(data[0])
-            data_size_per_record = num_pols * num_channels * (8 + 1) * 2 * 10 #dummy
-            assert data_size_per_record > 0
-
-            mem_size = 32*1024*1024*1024 #to be replaced with an appropriate function
-            num_record = mem_size / num_threads / data_size_per_record
-            if (num_record > num_rows): num_record = num_rows
-        else:
-            num_record = 0
-
-        ###
-        #if num_record > 0: num_record = 300
-        ###
-        return num_record, num_threads
-    finally:
-        subt.close()
-
-def readchunk(table, criteria, nrecord, ctx):
-    tb = table.query(criteria)
-    nrow = tb.nrows()
-    #print 'readchunk : nrow='+str(nrow)
-    rownumbers = tb.rownumbers()
-    tb.close()
-    nchunk = nrow / nrecord 
-    for ichunk in xrange(nchunk):
-        start = ichunk * nrecord
-        end = start + nrecord
-        chunk = _readchunk(table, rownumbers[start:end], ctx)
-        #print 'readchunk:',chunk
-        yield chunk
-
-    # residuals
-    residual = nrow % nrecord
-    if residual > 0:
-        start = nrow - residual
-        end = nrow
-        chunk = _readchunk(table, rownumbers[start:end], ctx)
-        #print 'readchunk:',chunk
-        yield chunk
-        
-def _readchunk(table, rows, ctx):
-    #print '_readchunk: reading rows %s...'%(rows)
-    return tuple((_readrow(table, irow, ctx) for irow in rows))
-
-def _readrow(table, row, ctx):
-    get = lambda col: table.getcell(col, row)
-    return (row, get('FLOAT_DATA'), get('FLAG'), get('TIME_CENTROID'), ctx)
+# def optimize_thread_parameters(table, query, spwmap):
+#     try:
+#         num_threads = min(3, multiprocessing.cpu_count())
+#         assert num_threads > 0
+# 
+# 	subt = table.query(query[0])
+#         num_rows = subt.nrows()
+#         valid_ddid = str(_parse_query(query)[0])
+#         if (num_rows > 0) and spwmap.has_key(valid_ddid):
+#             data = subt.getcell('FLOAT_DATA', 0)
+#             num_pols = len(data)
+#             num_channels = len(data[0])
+#             data_size_per_record = num_pols * num_channels * (8 + 1) * 2 * 10 #dummy
+#             assert data_size_per_record > 0
+# 
+#             mem_size = 32*1024*1024*1024 #to be replaced with an appropriate function
+#             num_record = mem_size / num_threads / data_size_per_record
+#             if (num_record > num_rows): num_record = num_rows
+#         else:
+#             num_record = 0
+# 
+#         ###
+#         #if num_record > 0: num_record = 300
+#         ###
+#         return num_record, num_threads
+#     finally:
+#         subt.close()
+# 
+# def readchunk(table, criteria, nrecord, ctx):
+#     tb = table.query(criteria)
+#     nrow = tb.nrows()
+#     #print 'readchunk : nrow='+str(nrow)
+#     rownumbers = tb.rownumbers()
+#     tb.close()
+#     nchunk = nrow / nrecord 
+#     for ichunk in xrange(nchunk):
+#         start = ichunk * nrecord
+#         end = start + nrecord
+#         chunk = _readchunk(table, rownumbers[start:end], ctx)
+#         #print 'readchunk:',chunk
+#         yield chunk
+# 
+#     # residuals
+#     residual = nrow % nrecord
+#     if residual > 0:
+#         start = nrow - residual
+#         end = nrow
+#         chunk = _readchunk(table, rownumbers[start:end], ctx)
+#         #print 'readchunk:',chunk
+#         yield chunk
+#         
+# def _readchunk(table, rows, ctx):
+#     #print '_readchunk: reading rows %s...'%(rows)
+#     return tuple((_readrow(table, irow, ctx) for irow in rows))
+# 
+# def _readrow(table, row, ctx):
+#     get = lambda col: table.getcell(col, row)
+#     return (row, get('FLOAT_DATA'), get('FLAG'), get('TIME_CENTROID'), ctx)
 
 # def reducechunk(chunk):
 #     #print 'reducechunk'
@@ -444,16 +444,16 @@ def _readrow(table, row, ctx):
 #     data, flag = tocasa(data, mask)
 #     yield (record[0], data, flag, record[3], stats)
 #     
-def writechunk(table, results):
-    #print '                writechunk'
-    put = lambda row, col, val: table.putcell(col, row, val)
-    for record in results:
-        row = int(record[0])
-        data = record[1]
-        flag = record[2]
-        #print 'writing result to table %s at row %s...'%(table.name(), row)
-        put(row, 'CORRECTED_DATA', data)
-        put(row, 'FLAG', flag)
+# def writechunk(table, results):
+#     #print '                writechunk'
+#     put = lambda row, col, val: table.putcell(col, row, val)
+#     for record in results:
+#         row = int(record[0])
+#         data = record[1]
+#         flag = record[2]
+#         #print 'writing result to table %s at row %s...'%(table.name(), row)
+#         put(row, 'CORRECTED_DATA', data)
+#         put(row, 'FLAG', flag)
 
 ###
 # def reducerecord_old(record):
@@ -759,33 +759,33 @@ def data_desc_id_map(vis):
 #                'clip_upper': clip_upper}
 #     return context
 
-def _select_sky_tables(gaintable):
-    return list(_select_match(gaintable, 'sky'))
-
-def _select_tsys_tables(gaintable):
-    return list(_select_match(gaintable, 'tsys'))
-
-def _select_match(gaintable, tabletype):
-    pattern = '_%s(\.ms/?)?$'%(tabletype.lower())
-    for caltable in gaintable:
-        if re.search(pattern, caltable):
-            yield caltable
-
-def colname(tb):
-    colnames = tb.colnames()
-    if 'FLOAT_DATA' in colnames:
-        return 'FLOAT_DATA'
-    else:
-        return 'DATA'
-
-def add_corrected_data(table):
-    with opentable(table) as tb:
-        colnames = tb.colnames()
-        if 'CORRECTED_DATA' not in colnames:
-            if 'DATA' in colnames:
-                desc = tb.getcoldesc('DATA')
-            elif 'FLOAT_DATA' in colnames:
-                desc = tb.getcoldesc('FLOAT_DATA')
-                desc['valueType'] = 'complex'
-            desc['comment'] = 'corrected data'
-            tb.addcols({'CORRECTED_DATA': desc})
+# def _select_sky_tables(gaintable):
+#     return list(_select_match(gaintable, 'sky'))
+# 
+# def _select_tsys_tables(gaintable):
+#     return list(_select_match(gaintable, 'tsys'))
+# 
+# def _select_match(gaintable, tabletype):
+#     pattern = '_%s(\.ms/?)?$'%(tabletype.lower())
+#     for caltable in gaintable:
+#         if re.search(pattern, caltable):
+#             yield caltable
+# 
+# def colname(tb):
+#     colnames = tb.colnames()
+#     if 'FLOAT_DATA' in colnames:
+#         return 'FLOAT_DATA'
+#     else:
+#         return 'DATA'
+# 
+# def add_corrected_data(table):
+#     with opentable(table) as tb:
+#         colnames = tb.colnames()
+#         if 'CORRECTED_DATA' not in colnames:
+#             if 'DATA' in colnames:
+#                 desc = tb.getcoldesc('DATA')
+#             elif 'FLOAT_DATA' in colnames:
+#                 desc = tb.getcoldesc('FLOAT_DATA')
+#                 desc['valueType'] = 'complex'
+#             desc['comment'] = 'corrected data'
+#             tb.addcols({'CORRECTED_DATA': desc})
