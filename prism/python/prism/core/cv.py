@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
 import numpy
-import scipy
+import scipy.interpolate
 import itertools
 import contextlib
 
