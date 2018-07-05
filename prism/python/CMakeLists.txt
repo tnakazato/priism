@@ -46,6 +46,8 @@ install(FILES
 install(FILES
         prism/test/__init__.py
         #prism/test/demo.py
+        prism/test/cvrun.py
+        prism/test/cvrun_core.py
         prism/test/runtest.py
         prism/test/test_gridder.py
         prism/test/test_imagewriter.py
