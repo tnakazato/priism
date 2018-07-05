@@ -414,8 +414,8 @@ class VisibilityGridder(object):
         uvgrid_imag[nonzero_imag] = grid_imag[nonzero_imag] / wgrid_imag[nonzero_imag]
         
         result = datacontainer.GriddedVisibilityStorage(uvgrid_real, uvgrid_imag, 
-                                                        uvgrid_wreal, uvgrid_wimag) 
-#                                                         self.num_ws)
+                                                        uvgrid_wreal, uvgrid_wimag,
+                                                        self.num_ws)
         return result
     
 class CrossValidationVisibilityGridder(VisibilityGridder):

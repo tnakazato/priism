@@ -18,7 +18,7 @@ class GriddedVisibilityStorage(object):
     expected array shape for grid_real and grid_imag is 
     (nv, nu, npol, nchan)
     """
-    def __init__(self, grid_real, grid_imag, wgrid_real, wgrid_imag=None):#, num_ws=None):
+    def __init__(self, grid_real, grid_imag, wgrid_real, wgrid_imag=None, num_ws=None):
         self.real = grid_real
         self.imag = grid_imag
         self.wreal = wgrid_real
@@ -28,8 +28,8 @@ class GriddedVisibilityStorage(object):
         assert self.real.shape == self.wimag.shape
         self.shape = self.real.shape
         
-#         # number of ws that are accumulated onto grid
-#         self.num_ws = num_ws if num_ws is not None else 0
+        # number of ws that are accumulated onto grid
+        self.num_ws = num_ws if num_ws is not None else 0
 
 
 class ResultingImageStorage(object):
