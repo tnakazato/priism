@@ -2,11 +2,11 @@ from __future__ import absolute_import
 
 import numpy
 
-import rism.core.util as util
-import rism.core.paramcontainer as paramcontainer
-import rism.core.datacontainer as datacontainer
-import rism.external.casa as casa
-import rism.external.sakura as sakura
+import prism.core.util as util
+import prism.core.paramcontainer as paramcontainer
+import prism.core.datacontainer as datacontainer
+import prism.external.casa as casa
+import prism.external.sakura as sakura
 
 class GridderWorkingSet(paramcontainer.ParamContainer):
     """

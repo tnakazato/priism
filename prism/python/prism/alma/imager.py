@@ -18,8 +18,8 @@ from . import gridder
 from . import visreader
 from . import visconverter
 from . import imagewriter
-import rism.external.sakura as sakura
-import rism.external.casa as casa
+import prism.external.sakura as sakura
+import prism.external.casa as casa
 
 import rism.core.imager as core_imager
 

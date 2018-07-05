@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 
-project(rism)
+project(prism)
 
 # download sparseimaging
 set(SPARSEIMAGING_DIR sparseimaging)
@@ -63,15 +63,15 @@ if(OPENBLAS_LIBRARY_DIR)
   message(STATUS "Edit makefile for sparseimaging")
   execute_process(COMMAND sed -e "s@-lopenblas@-L${OPENBLAS_LIBRARY_DIR} -lopenblas@g" makefile
                   COMMAND sed -e "s@-Xlinker /usr/lib@-Xlinker ${OPENBLAS_LIBRARY_DIR}@g"
-                  OUTPUT_FILE makefile.rism
+                  OUTPUT_FILE makefile.prism
                   WORKING_DIRECTORY ${SPARSEIMAGING_BUILD_DIR})
 else()
-  execute_process(COMMAND cp -f makefile makefile.rism
+  execute_process(COMMAND cp -f makefile makefile.prism
                   WORKIND_DIRECTORY ${SPARSEIMAGING_BUILD_DIR})
 endif()
 
 # configure compile of sparseimaging to generate libmfista_fft.so
-add_custom_target(sparseimaging make -f makefile.rism libmfista_fft
+add_custom_target(sparseimaging make -f makefile.prism libmfista_fft
                   WORKING_DIRECTORY ${SPARSEIMAGING_BUILD_DIR})
 
 
@@ -91,16 +91,16 @@ add_custom_target(sakura make
                   WORKING_DIRECTORY ${SAKURA_BUILD_DIR})
                 
 
-# add rism module
+# add prism module
 add_subdirectory(python)
-add_custom_target(rism echo ""
+add_custom_target(prism echo ""
                   DEPENDS sakura sparseimaging)
 
 # install libmfista_fft.so
 install(PROGRAMS ${SPARSEIMAGING_BUILD_DIR}/libmfista_fft.so
-        DESTINATION rism/core)
+        DESTINATION prism/core)
 
-# install sakura
+# install sakura (currently separated process)
 add_custom_target(install_sakura make install/fast
                   WORKING_DIRECTORY ${SAKURA_BUILD_DIR})
 

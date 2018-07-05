@@ -2,10 +2,10 @@ from __future__ import absolute_import
 
 #import collections
 
-import rism.external.casa as casa
+import prism.external.casa as casa
 
-import rism.core.paramcontainer as base_container
-import rism.core.datacontainer as datacontainer
+import prism.core.paramcontainer as base_container
+import prism.core.datacontainer as datacontainer
                 
 
 class VisParamContainer(base_container.ParamContainer):

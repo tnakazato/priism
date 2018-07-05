@@ -4,7 +4,7 @@ import time
 
 from . import paramcontainer
 from . import visconverter
-import rism.external.casa as casa
+import prism.external.casa as casa
 
 class VisibilityReader(object):
     """

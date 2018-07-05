@@ -3,8 +3,8 @@ from __future__ import absolute_import
 import os
 import numpy
 
-import rism.external.casa as casa
-import rism.core.util as core_util
+import prism.external.casa as casa
+import prism.core.util as core_util
 
 RandomIndexGenerator = core_util.RandomIndexGenerator
     
