@@ -79,29 +79,10 @@ add_custom_target(sparseimaging make -f makefile.prism libmfista_fft
 
 
 # configure sakura
-#set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/${SAKURA_DIR}/cmake-modules ${CMAKE_MODULE_PATH}")
-#add_subdirectory(libsakura)
-set(SAKURA_BUILD_DIR ${PROJECT_SOURCE_DIR}/${SAKURA_DIR}/build)
-if(NOT EXISTS ${SAKURA_BUILD_DIR})
-  execute_process(COMMAND mkdir ${SAKURA_BUILD_DIR})
-endif()
-set(SAKURA_CMAKE_OPTIONS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER} -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER} -DCMAKE_MODULE_PATH=../cmake-modules)
-if(EIGEN3_INCLUDE_DIR)
-  set(SAKURA_CMAKE_OPTIONS ${SAKURA_CMAKE_OPTIONS} -DEIGEN3_INCLUDE_DIR=${EIGEN3_INCLUDE_DIR})
-endif()
-if(PYTHON_ROOTDIR)
-  set(SAKURA_CMAKE_OPTIONS ${SAKURA_CMAKE_OPTIONS} -DPYTHON_ROOTDIR=${PYTHON_ROOTDIR}) 
-endif()
-if(BUNDLE_CASA_APP)
-  set(SAKURA_CMAKE_OPTIONS ${SAKURA_CMAKE_OPTIONS} -DBUNDLE_CASA_APP=ON)
-endif() 
-message(STATUS "SAKURA_CMAKE_OPTIONS=${SAKURA_CMAKE_OPTIONS}")
-execute_process(COMMAND cmake .. ${SAKURA_CMAKE_OPTIONS}
-                WORKING_DIRECTORY ${SAKURA_BUILD_DIR})
-add_custom_target(sakura make 
-                  COMMAND make apidoc
-                  WORKING_DIRECTORY ${SAKURA_BUILD_DIR})
-                
+set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/${SAKURA_DIR}/cmake-modules CACHE STRING "List of directories to search for CMake modules")
+set(BUILD_DOC OFF CACHE BOOL "Build Sakura API document")
+add_subdirectory(libsakura)
+set_target_properties(sakurapy PROPERTIES INSTALL_RPATH "$ORIGIN/../lib:$ORIGIN/")
 
 # add prism module
 add_subdirectory(python)
@@ -111,8 +92,4 @@ add_custom_target(prism ALL echo ""
 # install libmfista_fft.so
 install(PROGRAMS ${SPARSEIMAGING_BUILD_DIR}/libmfista_fft.so
         DESTINATION prism/core)
-
-# install sakura (currently separated process)
-add_custom_target(install_sakura make install/fast
-                  WORKING_DIRECTORY ${SAKURA_BUILD_DIR})
 
