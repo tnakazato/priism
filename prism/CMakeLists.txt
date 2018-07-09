@@ -2,9 +2,6 @@ cmake_minimum_required(VERSION 2.8)
 
 project(prism)
 
-# options
-option(BUNDLE_CASA_APP "Bundle python-binding to CASA release package (OSX only)" OFF)
-
 # download sparseimaging
 set(SPARSEIMAGING_DIR sparseimaging)
 if(NOT EXISTS ${PROJECT_SOURCE_DIR}/${SPARSEIMAGING_DIR})
@@ -63,7 +60,9 @@ endif()
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/${SAKURA_DIR}/cmake-modules CACHE STRING "List of directories to search for CMake modules")
 set(BUILD_DOC OFF CACHE BOOL "Build Sakura API document")
 add_subdirectory(libsakura)
-set_target_properties(sakurapy PROPERTIES INSTALL_RPATH "$ORIGIN/../lib:$ORIGIN/")
+if(NOT APPLE)
+  set_target_properties(sakurapy PROPERTIES INSTALL_RPATH "$ORIGIN/../lib:$ORIGIN/")
+endif()
 
 # edit makefile for sparseimaging if necessary
 set(SPARSEIMAGING_BUILD_DIR ${PROJECT_SOURCE_DIR}/${SPARSEIMAGING_DIR}/c)
