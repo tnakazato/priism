@@ -105,7 +105,7 @@ add_custom_target(sakura make
 
 # add prism module
 add_subdirectory(python)
-add_custom_target(prism echo ""
+add_custom_target(prism ALL echo ""
                   DEPENDS sakura sparseimaging)
 
 # install libmfista_fft.so
