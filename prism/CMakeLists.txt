@@ -59,30 +59,41 @@ if(NOT EXISTS ${PROJECT_SOURCE_DIR}/${SAKURA_DIR}/${GTEST_DIR})
                   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/${SAKURA_DIR})
 endif()  
 
-# edit makefile for sparseimaging if necessary
-set(SPARSEIMAGING_BUILD_DIR ${PROJECT_SOURCE_DIR}/${SPARSEIMAGING_DIR}/c)
-message(STATUS "OPENBLAS_LIBRARY_DIR=${OPENBLAS_LIBRARY_DIR}")
-if(OPENBLAS_LIBRARY_DIR)
-  message(STATUS "Edit makefile for sparseimaging")
-  execute_process(COMMAND sed -e "s@-lopenblas@-L${OPENBLAS_LIBRARY_DIR} -lopenblas@g" makefile
-                  COMMAND sed -e "s@-Xlinker /usr/lib@-Xlinker ${OPENBLAS_LIBRARY_DIR}@g"
-                  OUTPUT_FILE makefile.prism
-                  WORKING_DIRECTORY ${SPARSEIMAGING_BUILD_DIR})
-else()
-  execute_process(COMMAND cp -f makefile makefile.prism
-                  WORKIND_DIRECTORY ${SPARSEIMAGING_BUILD_DIR})
-endif()
-
-# configure compile of sparseimaging to generate libmfista_fft.so
-add_custom_target(sparseimaging make -f makefile.prism libmfista_fft
-                  WORKING_DIRECTORY ${SPARSEIMAGING_BUILD_DIR})
-
-
 # configure sakura
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/${SAKURA_DIR}/cmake-modules CACHE STRING "List of directories to search for CMake modules")
 set(BUILD_DOC OFF CACHE BOOL "Build Sakura API document")
 add_subdirectory(libsakura)
 set_target_properties(sakurapy PROPERTIES INSTALL_RPATH "$ORIGIN/../lib:$ORIGIN/")
+
+# edit makefile for sparseimaging if necessary
+set(SPARSEIMAGING_BUILD_DIR ${PROJECT_SOURCE_DIR}/${SPARSEIMAGING_DIR}/c)
+message(STATUS "OPENBLAS_LIBRARY_DIR=${OPENBLAS_LIBRARY_DIR}")
+message(STATUS "FFTW3_INCLUDE_DIR is ${FFTW3_INCLUDE_DIR}")
+execute_process(COMMAND echo ${FFTW3_INCLUDE_DIR}
+                COMMAND sed -e "s@include@lib@g"
+                COMMAND tr -d "\n"
+                OUTPUT_VARIABLE FFTW3_LIBRARY_DIR)
+message(STATUS "FFTW3_LIBRARY_DIR is ${FFTW3_LIBRARY_DIR}")
+if(OPENBLAS_LIBRARY_DIR)
+  message(STATUS "Edit makefile for sparseimaging")
+  execute_process(COMMAND sed -e "s@-lopenblas@-L${OPENBLAS_LIBRARY_DIR} -lopenblas@g" makefile
+                  COMMAND sed -e "s@-Xlinker /usr/lib@-Xlinker ${OPENBLAS_LIBRARY_DIR}@g"
+                  COMMAND sed -e "s@^CFLAGS=-O2@CFLAGS=-O2 -I${FFTW3_INCLUDE_DIR}@g"
+                  COMMAND sed -e "s@-lrt @@g"
+                  COMMAND sed -e "s@^CLIBS_FFTW = @CLIBS_FFTW = -L${FFTW3_LIBRARY_DIR} @g"
+                  OUTPUT_FILE makefile.prism
+                  WORKING_DIRECTORY ${SPARSEIMAGING_BUILD_DIR})
+else()
+  execute_process(COMMAND sed -e "s@CFLAGS=-O2@CFLAGS=-O2 -I${FFTW3_INCLUDE_DIR}@g" makefile
+                  COMMAND sed -e "s@-lrt @@g"
+                  COMMAND sed -e "s@^CLIBS_FFTW = @CLIBS_FFTW = -L${FFTW3_LIBRARY_DIR} @g"
+                  OUTPUT_FILE makefile.prism
+                  WORKIND_DIRECTORY ${SPARSEIMAGING_BUILD_DIR})
+endif()
+
+# configure compile of sparseimaging to generate libmfista_fft.so
+add_custom_target(sparseimaging make -f makefile.prism libmfista_fft
+                  WORKING_DIRECTORY ${SPARSEIMAGING_BUILD_DIR})             
 
 # add prism module
 add_subdirectory(python)
