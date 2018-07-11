@@ -87,7 +87,7 @@ else()
                   COMMAND sed -e "s@-lrt @@g"
                   COMMAND sed -e "s@^CLIBS_FFTW = @CLIBS_FFTW = -L${FFTW3_LIBRARY_DIR} @g"
                   OUTPUT_FILE makefile.prism
-                  WORKIND_DIRECTORY ${SPARSEIMAGING_BUILD_DIR})
+                  WORKING_DIRECTORY ${SPARSEIMAGING_BUILD_DIR})
 endif()
 
 # configure compile of sparseimaging to generate libmfista_fft.so
