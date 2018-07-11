@@ -126,7 +126,7 @@ class VisibilityConverterTest(utils.TestBase):
         end = image_start + image_nchan * image_width
         expected_data = numpy.zeros(expected_shape, dtype=numpy.complex)
         expected_flag = numpy.ones(expected_shape, dtype=numpy.bool)
-        for ipol in xrange(npol):
+        for ipol in range(npol):
             expected_data += (chunk['data'][ipol:ipol+1,start:end,:] \
                 * numpy.where(chunk['flag'][ipol:ipol+1,start:end,:] == False, 0.5, 0.0)).transpose((2,0,1))
             expected_flag = numpy.logical_and(expected_flag, chunk['flag'][ipol:ipol+1,start:end,:])
@@ -136,7 +136,7 @@ class VisibilityConverterTest(utils.TestBase):
         self.assertMaxDiffLess(expected_data.imag, ws.idata, eps)
         self.assertTrue(numpy.all(expected_flag == ws.flag))
             
-        for ichan in xrange(image_nchan):
+        for ichan in range(image_nchan):
             s = ichan * image_width
             e = s + image_width
             self.assertTrue(numpy.all(ws.channel_map[s:e] == ichan))
@@ -188,7 +188,7 @@ class VisibilityConverterTest(utils.TestBase):
         expected_data = numpy.complex(0)
         expected_flag = True
         eps = 1e-5
-        for ipol in xrange(npol):
+        for ipol in range(npol):
             if base_flag[ipol] == False:
                 expected_data += 0.5 * base_data[ipol]
             expected_flag = numpy.logical_and(expected_flag, base_flag[ipol])
@@ -262,7 +262,7 @@ class VisibilityConverterTest(utils.TestBase):
         expected_data = numpy.zeros(expected_shape, dtype=numpy.complex)
         expected_flag = numpy.ones(expected_shape, dtype=numpy.bool)
         eps = 1e-5
-        for ipol in xrange(npol):
+        for ipol in range(npol):
             if base_flag[ipol] == False:
                 expected_data += 0.5 * base_data[ipol]
             expected_flag = numpy.logical_and(expected_flag, base_flag[ipol])
@@ -330,7 +330,7 @@ class VisibilityConverterTest(utils.TestBase):
         end = start + image_nchan * 10
         expected_data = numpy.zeros(expected_shape, dtype=numpy.complex)
         expected_flag = numpy.ones(expected_shape, dtype=numpy.bool)
-        for ipol in xrange(npol):
+        for ipol in range(npol):
             expected_data += (chunk['data'][ipol:ipol+1,start:end,:] \
                 * numpy.where(chunk['flag'][ipol:ipol+1,start:end,:] == False, 0.5, 0.0)).transpose((2,0,1))
             expected_flag = numpy.logical_and(expected_flag, chunk['flag'][ipol:ipol+1,start:end,:])
@@ -338,7 +338,7 @@ class VisibilityConverterTest(utils.TestBase):
         self.assertMaxDiffLess(expected_data.real, ws.rdata, eps)
         self.assertMaxDiffLess(expected_data.imag, ws.idata, eps)
         self.assertTrue(numpy.all(numpy.logical_not(expected_flag) == ws.flag))
-        for ichan in xrange(image_nchan):
+        for ichan in range(image_nchan):
             s = ichan * 10
             e = s + 10
             self.assertTrue(numpy.all(ws.channel_map[s:e] == ichan))
@@ -366,7 +366,7 @@ class VisibilityConverterTest(utils.TestBase):
         serial_results = numpy.empty(num_measure, dtype=numpy.float32)
         parallel_results = numpy.empty_like(serial_results)
         conv = lambda chunk: (chunk['chunk_id'], converter.generate_working_set(chunk))
-        for i in xrange(num_measure):
+        for i in range(num_measure):
             # serial run
             ws_serial = []
             start_serial = time.time()
@@ -399,7 +399,7 @@ class VisibilityConverterTest(utils.TestBase):
             self.assertEqual(len(ws_serial), len(ws_parallel))
             for _, p in ws_parallel:
                 found = False
-                for i in xrange(len(ws_serial)):
+                for i in range(len(ws_serial)):
                     _, s = ws_serial[i]
                     if p.data_id == s.data_id:
                         _, s = ws_serial.pop(i)
@@ -523,9 +523,9 @@ class VisibilityConverterTest(utils.TestBase):
         chunk['field_id'] = numpy.empty_like(chunk['data_desc_id'])
         with casa.OpenTableForRead(self.vis) as tb:
             chunk['time'][:] = tb.getcell('TIME', 0)
-        for field_id in xrange(nfields):
+        for field_id in range(nfields):
             chunk['field_id'][0] = field_id
-            for dd_id in xrange(ndds):   
+            for dd_id in range(ndds):   
                 chunk['data_desc_id'][0] = dd_id
                 lsr_freq = converter.get_lsr_frequency(chunk)
                 #print lsr_freq
@@ -564,7 +564,7 @@ class VisibilityConverterTest(utils.TestBase):
         me.doframe(mepoch)
         me.doframe(mposition)
         lsr_freq = numpy.empty_like(chan_freq)
-        for ichan in xrange(len(lsr_freq)):
+        for ichan in range(len(lsr_freq)):
             mfrequency = me.frequency(rf=mfr, v0=qa.quantity(chan_freq[ichan], 'Hz'))
             converted = me.measure(mfrequency, rf='LSRK')
             lsr_freq[ichan] = converted['m0']['value']

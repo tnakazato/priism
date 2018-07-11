@@ -499,12 +499,12 @@ def calibration_typemap(key):
         
 def spw_id_map(vis):
     with opentable(os.path.join(vis, 'DATA_DESCRIPTION')) as tb:
-        spwidmap = dict(((i,tb.getcell('SPECTRAL_WINDOW_ID',i)) for i in xrange(tb.nrows())))
+        spwidmap = dict(((i,tb.getcell('SPECTRAL_WINDOW_ID',i)) for i in range(tb.nrows())))
     return spwidmap
 
 def data_desc_id_map(vis):
     with opentable(os.path.join(vis, 'DATA_DESCRIPTION')) as tb:
-        ddidmap = dict(((tb.getcell('SPECTRAL_WINDOW_ID',i),i) for i in xrange(tb.nrows())))
+        ddidmap = dict(((tb.getcell('SPECTRAL_WINDOW_ID',i),i) for i in range(tb.nrows())))
     return ddidmap
     
     

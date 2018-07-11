@@ -98,7 +98,7 @@ class ImageConfigurationHelper(object):
         nrow = len(ddid)
         umax = 0.0
         vmax = 0.0
-        for irow in xrange(nrow):
+        for irow in range(nrow):
             f = observing_frequency[ddid[irow]]
             u = uvw[0,irow] / c * f
             v = uvw[1,irow] / c * f

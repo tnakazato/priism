@@ -95,7 +95,7 @@ class SparseImagingInputs(CTypesUtilMixIn):
             yreal = numpy.empty(M, dtype=numpy.double)
             yimag = numpy.empty_like(yreal)
             noise = numpy.empty_like(yreal)
-            for i in xrange(M):
+            for i in range(M):
                 line = f.readline()
                 values = line.split(',')
                 u[i] = numpy.int32(values[0].strip())
@@ -152,7 +152,7 @@ class SparseImagingInputs(CTypesUtilMixIn):
         
         # 20171102 suggestion by Ikeda-san
         # change sign according to pixel coordinate
-        for i in xrange(len(yreal)):
+        for i in range(len(yreal)):
             j = nonzeros[0][i]
             k = nonzeros[1][i]
             factor = (-1)**(j+k)
@@ -184,7 +184,7 @@ class SparseImagingInputs(CTypesUtilMixIn):
             print('', file=f)
             print('u, v, y_r, y_i, noise_std_dev', file=f)
             print('', file=f)
-            for i in xrange(self.m):
+            for i in range(self.m):
                 print('{0}, {1}, {2:e}, {3:e}, {4:e}'.format(self.u[i],
                                                                    self.v[i],
                                                                    self.yreal[i],
@@ -439,7 +439,7 @@ class SparseImagingExecutor(object):
             yreal = numpy.empty(M, dtype=numpy.double)
             yimag = numpy.empty_like(yreal)
             noise = numpy.empty_like(yreal)
-            for i in xrange(M):
+            for i in range(M):
                 line = f.readline()
                 values = line.split(',')
                 u[i] = numpy.int32(values[0].strip())
@@ -470,7 +470,7 @@ class SparseImagingExecutor(object):
 def plot_inputs(inputs, interpolation='nearest', coverage=False):
     areal = numpy.zeros((inputs.nx, inputs.ny,), dtype=numpy.float)
     aimag = numpy.zeros_like(areal)
-    for i in xrange(inputs.m):
+    for i in range(inputs.m):
         areal[inputs.u[i], inputs.v[i]] = inputs.yreal[i]
         aimag[inputs.u[i], inputs.v[i]] = inputs.yimag[i]
         

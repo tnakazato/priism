@@ -24,7 +24,7 @@ class RandomIndexGenerator(object):
         assert self.num_subws.max() - self.num_subws.min() < 2
         
         # sort a priori
-        for subset_id in xrange(self.num_fold):
+        for subset_id in range(self.num_fold):
             random_index = self.get_subset_index(subset_id)
             random_index.sort()
         

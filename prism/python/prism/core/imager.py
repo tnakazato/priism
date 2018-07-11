@@ -246,14 +246,14 @@ class SparseModelingImager(object):
                 
         #for j, Ltsv in enumerate(np_ltsv_list):
         # loop Ltsv in ascending order
-        for j in xrange(num_Ltsv):
+        for j in range(num_Ltsv):
             Ltsv = sorted_ltsv_list[j]
             # trick to update initial image when Ltsv is changed
             overwrite_initial = True
             
             #for i, L1 in enumerate(np_l1_list):
             # loop L1 in descending order
-            for i in xrange(num_L1 - 1, -1, -1):
+            for i in range(num_L1 - 1, -1, -1):
                 L1 = sorted_l1_list[i]
                 result_L1.append(L1)
                 result_Ltsv.append(Ltsv)
@@ -365,7 +365,7 @@ class SparseModelingImager(object):
         subset_handler = cv.GriddedVisibilitySubsetHandler(self.visset, 
                                                              self.uvgridconfig)
         
-        for i in xrange(num_fold):
+        for i in range(num_fold):
             # pick up subset for cross validation
             with subset_handler.generate_subset(subset_id=i) as subset:
             
@@ -458,8 +458,8 @@ class CVPlotter(object):
         outer_frame.set_ylim(-0.5, self.nv - 0.5)
         outer_frame.set_xlabel('log10(Ltsv)')
         outer_frame.set_ylabel('log10(L1)')
-        outer_frame.xaxis.set_major_locator(matplotlib.ticker.FixedLocator(range(self.nh)))
-        outer_frame.yaxis.set_major_locator(matplotlib.ticker.FixedLocator(range(self.nv)))
+        outer_frame.xaxis.set_major_locator(matplotlib.ticker.FixedLocator(list(range(self.nh))))
+        outer_frame.yaxis.set_major_locator(matplotlib.ticker.FixedLocator(list(range(self.nv))))
         outer_frame.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda x, pos: int(math.log10(Ltsv_list[int(x)]))))
         outer_frame.yaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda x, pos: int(math.log10(L1_list[int(x)]))))
         

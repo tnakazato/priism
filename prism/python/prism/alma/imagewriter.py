@@ -95,7 +95,7 @@ class ImageWriter(object):
         start = qa.convert(self.imageparam.start, 'Hz')
         width = qa.convert(self.imageparam.width, 'Hz')
         nchan = self.imageparam.nchan
-        f = numpy.fromiter((start['value'] + i * width['value'] for i in xrange(nchan)), dtype=numpy.float64)
+        f = numpy.fromiter((start['value'] + i * width['value'] for i in range(nchan)), dtype=numpy.float64)
         print('f = {0}'.format(f))
         frequencies = qa.quantity(f, 'Hz')
         veldef = 'radio'

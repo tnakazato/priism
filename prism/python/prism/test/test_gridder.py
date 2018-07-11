@@ -76,7 +76,7 @@ class GridderTest(utils.TestBase):
         ws.flag[:] = True
         ws.row_flag[:] = True
         ws.weight[:] = 1.0
-        ws.channel_map[:] = range(nchan)
+        ws.channel_map[:] = list(range(nchan))
         
         return ws
     
@@ -135,8 +135,8 @@ class GridderTest(utils.TestBase):
         if row_flag is not None:
             assert len(row_flag) >= ws.nrow
         
-        for irow in xrange(ws.nrow):
-            for ipol in xrange(ws.npol):
+        for irow in range(ws.nrow):
+            for ipol in range(ws.npol):
                 start = irow * ws.npol * ws.nchan + ipol * ws.nchan
                 end = start + ws.nchan
                 ws.rdata[irow,ipol,:] = rdata[start:end]
@@ -216,7 +216,7 @@ class GridderTest(utils.TestBase):
             
         for _ws in ws_list:
             # grid data
-            for irow in xrange(_ws.nrow):
+            for irow in range(_ws.nrow):
                 print('rdata {0}\tidata {1}\tu {2}\tv {3}'.format(_ws.rdata[irow].flatten(), 
                                                                   _ws.idata[irow].flatten(),
                                                                   _ws.u[irow],
@@ -671,10 +671,10 @@ class GridderTest(utils.TestBase):
         umax = gridder.nu
         vmin = 0
         vmax = gridder.nv
-        lv = range(vmin, vmax) * gridder.nu
+        lv = list(range(vmin, vmax)) * gridder.nu
         lv.sort()
         lv = lv + lv
-        lu = range(umin, umax)
+        lu = list(range(umin, umax))
         lu = lu * gridder.nv
         lu = lu + lu
         lp = [0] * len(lv)
@@ -711,7 +711,7 @@ class GridderTest(utils.TestBase):
                 wi += k * dweight[dindex]
             return gr, gi, wr, wi
         
-        for i in xrange(len(ref_real)):
+        for i in range(len(ref_real)):
             x = lu[i]
             y = lv[i]
             p = lp[i]
@@ -764,7 +764,7 @@ class GridderTest(utils.TestBase):
         
         eps = 1.0e-7
         ndx_real = []
-        for i in xrange(len(ref_real)):
+        for i in range(len(ref_real)):
             if abs(ref_real[i]) != 0.0:
                 ndx_real.append(i)
         print('ndx_real', ndx_real)
@@ -772,7 +772,7 @@ class GridderTest(utils.TestBase):
                     numpy.asarray(lp)[ndx_real], numpy.asarray(lc)[ndx_real])
         ref_real = ref_real[ndx_real]
         ndx_imag = []
-        for i in xrange(len(ref_imag)):
+        for i in range(len(ref_imag)):
             if abs(ref_imag[i]) >= eps:
                 ndx_imag.append(i)
         print('ndx_imag', ndx_imag)

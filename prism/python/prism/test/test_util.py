@@ -59,7 +59,7 @@ class RandomIndexGeneratorTest(unittest.TestCase):
         # per subset check
         nmod = num_ws % num_fold
         ndiv = num_ws / num_fold
-        for subset_id in xrange(num_fold):
+        for subset_id in range(num_fold):
             subset_index = generator.get_subset_index(subset_id)
             print('subset {0}: index {1}'.format(subset_id, subset_index))
             

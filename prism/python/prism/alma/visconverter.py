@@ -53,7 +53,7 @@ class VisibilityConverter(object):
             real_out[:] = data_in.real.transpose((2,0,1))
             imag_out[:] = data_in.imag.transpose((2,0,1))
             flag_out[:] = flag_in.transpose((2,0,1))
-            for irow in xrange(nrow):
+            for irow in range(nrow):
                 weight_out[irow] = weight_in[irow] * weight_factor
             return
         elif npol == 4:
@@ -64,7 +64,7 @@ class VisibilityConverter(object):
             imag_out[:] = data_in.imag.transpose((2,0,1))[:,:1,:]
             flag_out[:] = flag_in.transpose((2,0,1))[:,:1,:]
             #print weight_in.shape
-            for irow in xrange(nrow):
+            for irow in range(nrow):
                 weight_out[irow] = weight_in[0, irow] * weight_factor
             return
         
@@ -81,14 +81,14 @@ class VisibilityConverter(object):
         
         # flag
         flag_out[:] = True
-        for ipol in xrange(npol):
+        for ipol in range(npol):
             flag_out[:] = numpy.logical_and(flag_out, 
                                             flag_in[ipol:ipol+1,:,:].transpose((2,0,1)))
         
         # weight
         # weight_in.shape = (npol, nrow)
         # weight_out.shape = (nrow, nchan)
-        for irow in xrange(nrow):
+        for irow in range(nrow):
             w1 = weight_in[0, irow] * weight_factor
             w2 = weight_in[1, irow] * weight_factor
             weight_out[irow] = 4.0 * w1 * w2 / (w1 + w2)
@@ -116,7 +116,7 @@ class VisibilityConverter(object):
             self.chan_freq = {}
             self.chan_width = {}
             self.freq_ref = {}
-            for irow in xrange(tb.nrows()):
+            for irow in range(tb.nrows()):
                 self.freq_ref[irow] = self.freq_ref_string(meas_freq_ref[irow])
                 self.chan_freq[irow] = tb.getcell('CHAN_FREQ', irow)
                 self.chan_width[irow] = tb.getcell('CHAN_WIDTH', irow)
@@ -130,7 +130,7 @@ class VisibilityConverter(object):
             else:
                 # variable reference column, assume J2000
                 self.field_ref = 'J2000'
-            for irow in xrange(tb.nrows()):
+            for irow in range(tb.nrows()):
                 self.field_dir[irow] = tb.getcell('PHASE_DIR', irow)
                 
             all_fields = numpy.arange(tb.nrows(), dtype=numpy.int)
@@ -200,7 +200,7 @@ class VisibilityConverter(object):
         
         lsr_frequency = {}
         lsr_width = {}
-        for i in xrange(nchunk):
+        for i in range(nchunk):
             ddid = data_desc_ids[i]
             field_id = field_ids[i]
             spwid = self.dd_spw_map[ddid]
@@ -229,7 +229,7 @@ class VisibilityConverter(object):
                 # frequency measure
                 frequency = qa.quantity(0.0, 'Hz')
                 mfrequency = me.frequency(freq_ref, frequency)
-                for ichan in xrange(nchan):
+                for ichan in range(nchan):
                     mfrequency['m0']['value'] = lsr_freq_edge[ichan]#chan_freq[ichan] - 0.5 * chan_width[ichan]
                     #print 'LOG mfrequency = {0}'.format(mfrequency)
                     # convert
@@ -287,7 +287,7 @@ class VisibilityConverter(object):
             # use nominal LSRK frequency for image (channel boundary)
             nominal_lsr_frequency = self.nominal_lsr_frequency[field_id][data_desc_id]
             #nominal_lsr_width = self.nominal_lsr_width[field_id][data_desc_id]
-            for ichan in xrange(nchan):
+            for ichan in range(nchan):
                 # left boundary of start channel
                 channel_start = int(qstart['value']) + ichan * int(qwidth['value'])
                 # right boundary of end channel
@@ -299,7 +299,7 @@ class VisibilityConverter(object):
                             * int(qwidth['value'])
         elif match_with(frequency_pattern):
             # frequency selection
-            for ichan in xrange(nchan):
+            for ichan in range(nchan):
                 image_freq[ichan] = qa.convert(
                     qa.add(qstart, qa.mul(qwidth, ichan)),
                     'Hz')['value']
@@ -388,7 +388,7 @@ class VisibilityConverter(object):
             for ichan, chan_chunk in enumerate(in_range):
                 # fill in channel_map
                 f = lsr_frequency[chan_chunk]
-                for chan_image in xrange(nchan):
+                for chan_image in range(nchan):
                     b0 = image_freq_boundary[chan_image]
                     b1 = image_freq_boundary[chan_image + 1]
                     if b0 > b1:
@@ -476,7 +476,7 @@ class VisibilityConverter(object):
         # UVW conversion
         u = sakura.empty_aligned((nrow,), dtype=uvw.dtype)
         v = sakura.empty_like_aligned(u)
-        for irow in xrange(nrow):
+        for irow in range(nrow):
             # TODO: phase rotation if image phasecenter is different from
             #       the reference direction of the observation
             pass

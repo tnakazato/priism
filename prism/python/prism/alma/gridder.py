@@ -137,7 +137,7 @@ class GridFunctionUtil(object):
         gf[:] = 0.0
         sigma = float(hwhm) / numpy.sqrt(2.0 * numpy.log(2.0))
         m = convsupport * convsampling
-        for i in xrange(m):
+        for i in range(m):
             x = float(i) / float(convsampling)
             gf[i] = numpy.exp(-(x * x) / (2.0 * sigma * sigma))
         return gf
@@ -152,7 +152,7 @@ class GridFunctionUtil(object):
         """
         gf = GridFunctionUtil.allocate(convsupport, convsampling)
         m = convsupport * convsampling
-        for i in xrange(m):
+        for i in range(m):
             nu = float(i) / float(m)
             val = GridFunctionUtil.grdsf(nu)
             gf[i] = (1.0 - nu * nu) * val
@@ -191,13 +191,13 @@ class GridFunctionUtil(object):
         top = P[0]
         delnusq = nu * nu - nuend * nuend
         kdelnusq = 1.0
-        for k in xrange(1, nP+1):
+        for k in range(1, nP+1):
             kdelnusq *= delnusq
             top += P[k] * kdelnusq
             
         bot = Q[0]
         kdelnusq = 1.0
-        for k in xrange(1, nQ+1):
+        for k in range(1, nQ+1):
             kdelnusq *= delnusq
             bot += Q[k] * kdelnusq
             

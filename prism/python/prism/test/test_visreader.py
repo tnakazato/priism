@@ -44,8 +44,8 @@ class VisibilityReaderTest(utils.TestBase):
         with casa.OpenTableForRead(os.path.join(self.vis, 'POLARIZATION')) as tb:
             num_corrs = tb.getcol('NUM_CORR')
             
-        self.nchanmap = dict(((i, num_chans[spw_ids[i]],) for i in xrange(len(spw_ids))))
-        self.ncorrmap = dict(((i, num_corrs[pol_ids[i]],) for i in xrange(len(pol_ids))))
+        self.nchanmap = dict(((i, num_chans[spw_ids[i]],) for i in range(len(spw_ids))))
+        self.ncorrmap = dict(((i, num_corrs[pol_ids[i]],) for i in range(len(pol_ids))))
     
     def tearDown(self):
         if os.path.exists(self.vis):
@@ -90,7 +90,7 @@ class VisibilityReaderTest(utils.TestBase):
             ddid_list = chunk['data_desc_id']
             weight_list = chunk['weight']
             
-            for irow in xrange(nrow):
+            for irow in range(nrow):
                 data = data_list[...,irow]
                 weight = weight_list[...,irow]
                 ddid = ddid_list[irow]
@@ -278,7 +278,7 @@ class VisibilityReaderTest(utils.TestBase):
             data_list = chunk['data']
             ddid_list = chunk['data_desc_id']
             
-            for irow in xrange(nrow):
+            for irow in range(nrow):
                 data = data_list[:,:,irow]
                 ddid = ddid_list[irow]
                 self.assertEqual(ddid, 0)
