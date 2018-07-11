@@ -489,7 +489,7 @@ class CVPlotter(object):
         best_frame = pl.axes(bbox, axisbg='none')
         best_frame.xaxis.set_major_locator(matplotlib.ticker.NullLocator())
         best_frame.yaxis.set_major_locator(matplotlib.ticker.NullLocator())
-        for loc, spine in best_frame.spines.iteritems():
+        for loc, spine in best_frame.spines.items():
             spine.set_color('red')
             spine.set_linewidth(3)
             

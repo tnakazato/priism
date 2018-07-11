@@ -281,7 +281,7 @@ class GridderTest(utils.TestBase):
         """
         # parse locobj
         self.assertEqual(len(locobj), 1)
-        location_mode = locobj.iterkeys().next()
+        location_mode = list(locobj.keys())[0]
         # sort axes: (u, v, pol, chan) -> (v, u, pol, chan)
         a, b, c, d = locobj[location_mode]
         #expected_location = (b, a, c, d)

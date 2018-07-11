@@ -79,8 +79,8 @@ class VisibilityReaderTest(utils.TestBase):
             print('LOG chunk {0}: nrow={1} items={2} itemshape={3}'.format(
                 chunk_id,
                 nrow,
-                chunk.keys(),
-                chunk.values()[0].shape))
+                list(chunk.keys()),
+                list(chunk.values())[0].shape))
             
             self.verify_chunk_consistency(chunk, chunk_id)
             nrow_total += nrow
@@ -118,7 +118,7 @@ class VisibilityReaderTest(utils.TestBase):
             print('LOG chunk {0}: nrow={1} items={2} itemshape={3}'.format(
                 chunk_id,
                 nrow,
-                chunk.keys(),
+                list(chunk.keys()),
                 chunk['data_desc_id'].shape))
             
             self.verify_chunk_consistency(chunk, chunk_id)
@@ -147,8 +147,8 @@ class VisibilityReaderTest(utils.TestBase):
             print('LOG chunk {0}: nrow={1} items={2} itemshape={3}'.format(
                 chunk_id,
                 nrow,
-                chunk.keys(),
-                chunk.values()[0].shape))
+                list(chunk.keys()),
+                list(chunk.values())[0].shape))
 
             self.verify_chunk_consistency(chunk, chunk_id)
             chunk_id += 1
@@ -178,7 +178,7 @@ class VisibilityReaderTest(utils.TestBase):
             print('LOG chunk {0}: nrow={1} items={2} itemshape={3}'.format(
                 chunk_id,
                 nrow,
-                chunk.keys(),
+                list(chunk.keys()),
                 chunk[items[0]].shape))
 
             self.verify_chunk_consistency(chunk, chunk_id)
@@ -210,7 +210,7 @@ class VisibilityReaderTest(utils.TestBase):
             print('LOG chunk {0}: nrow={1} items={2} itemshape={3}'.format(
                 chunk_id,
                 nrow,
-                chunk.keys(),
+                list(chunk.keys()),
                 chunk['time'].shape))
 
             self.verify_chunk_consistency(chunk, chunk_id)
@@ -242,8 +242,8 @@ class VisibilityReaderTest(utils.TestBase):
             print('LOG chunk {0}: nrow={1} items={2} itemshape={3}'.format(
                 chunk_id,
                 nrow,
-                chunk.keys(),
-                chunk.values()[0].shape))
+                list(chunk.keys()),
+                list(chunk.values())[0].shape))
 
             self.verify_chunk_consistency(chunk, chunk_id)
             chunk_id += 1
@@ -268,8 +268,8 @@ class VisibilityReaderTest(utils.TestBase):
             print('LOG chunk {0}: nrow={1} items={2} itemshape={3}'.format(
                 chunk_id,
                 nrow,
-                chunk.keys(),
-                chunk.values()[0].shape))
+                list(chunk.keys()),
+                list(chunk.values())[0].shape))
 
             self.verify_chunk_consistency(chunk, chunk_id)
             chunk_id += 1

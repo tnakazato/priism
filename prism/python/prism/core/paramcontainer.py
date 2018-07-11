@@ -7,7 +7,7 @@ from __future__ import absolute_import
 class ParamContainer(object):
     def InitContainer(self, kwargs):
         ignores = ('self',)
-        for (k,v) in kwargs.items():
+        for k,v in kwargs.items():
             if k not in ignores:
                 setattr(self, k, v)
 
