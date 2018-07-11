@@ -80,7 +80,7 @@ def paraMap(numThreads, func, dataSource):
 	def fillInQ(context):
 		try:
 			while context.pendingItems < context.qLen:
-				item = dataSource.next()
+				item = next(dataSource)
 				with context.inCv:
 					context.inQ.put(item, False)
 					context.pendingItems += 1
