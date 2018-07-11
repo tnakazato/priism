@@ -36,7 +36,7 @@ class SparseModelingImager(object):
     def griddedvis(self, value):
         if value is None:
             self._griddedvis = None
-        elif type(value) == datacontainer.GriddedVisibilityStorage:
+        elif isinstance(value, datacontainer.GriddedVisibilityStorage):
             self._griddedvis = value
         else:
             raise TypeError('Given value is not an instance of GriddedVisibilityStorage')
@@ -52,7 +52,7 @@ class SparseModelingImager(object):
     def imagearray(self, value):
         if value is None:
             self._imagearray = None
-        elif type(value) == datacontainer.ResultingImageStorage:
+        elif isinstance(value, datacontainer.ResultingImageStorage):
             self._imagearray = value
         else:
             raise TypeError('Given value is not an instance of ResultingImageStorage')
@@ -68,7 +68,7 @@ class SparseModelingImager(object):
     def uvgridconfig(self, value):
         if value is None:
             self._uvgridconfig = None
-        elif type(value) == datacontainer.UVGridConfig:
+        elif isinstance(value, datacontainer.UVGridConfig):
             self._uvgridconfig = value
         else:
             raise TypeError('Given value is not an instance of UVGridConfig')
