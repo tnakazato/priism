@@ -31,4 +31,4 @@ worker.cvforgridvis(L1_list, Ltsv_list, num_fold=num_fold,
                     datafile='cvresult_core.dat', maxiter=1000)
 
 end_time = time.time()
-print '{0}: elapsed {1} sec'.format('cvrun_core.py', end_time-start_time)
+print('{0}: elapsed {1} sec'.format('cvrun_core.py', end_time-start_time))

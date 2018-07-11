@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import print_function
 
 import os
 import numpy
@@ -177,18 +178,18 @@ class SparseImagingInputs(CTypesUtilMixIn):
         
     def export(self, filename):
         with open(filename, 'w') as f:
-            print >> f, 'M = {0}'.format(self.m)
-            print >> f, 'NX = {0}'.format(self.nx)
-            print >> f, 'NY = {0}'.format(self.ny)
-            print >> f, ''
-            print >> f, 'u, v, y_r, y_i, noise_std_dev'
-            print >> f, ''
+            print('M = {0}'.format(self.m), file=f)
+            print('NX = {0}'.format(self.nx), file=f)
+            print('NY = {0}'.format(self.ny), file=f)
+            print('', file=f)
+            print('u, v, y_r, y_i, noise_std_dev', file=f)
+            print('', file=f)
             for i in xrange(self.m):
-                print >> f, '{0}, {1}, {2:e}, {3:e}, {4:e}'.format(self.u[i],
+                print('{0}, {1}, {2:e}, {3:e}, {4:e}'.format(self.u[i],
                                                                    self.v[i],
                                                                    self.yreal[i],
                                                                    self.yimag[i],
-                                                                   self.noise[i])
+                                                                   self.noise[i]), file=f)
     
 class SparseImagingResults(CTypesUtilMixIn):
     class MFISTAResult(ctypes.Structure):
@@ -282,14 +283,14 @@ class SparseImagingExecutor(object):
                  struct RESULT *mfista_result)
         """
         # input summary
-        print 'lambda_l1 = {0}'.format(self.lambda_L1)
-        print 'lambda_tv = {0}'.format(self.lambda_TV)
-        print 'lambda_tsv = {0}'.format(self.lambda_TSV)
-        print 'c = {0:g}'.format(self.cinit)
-        print ''
-        print 'number of u-v points: {0}'.format(inputs.m)
-        print 'X-dim of image:       {0}'.format(inputs.nx)
-        print 'Y-dim of image:       {0}'.format(inputs.ny)
+        print('lambda_l1 = {0}'.format(self.lambda_L1))
+        print('lambda_tv = {0}'.format(self.lambda_TV))
+        print('lambda_tsv = {0}'.format(self.lambda_TSV))
+        print('c = {0:g}'.format(self.cinit))
+        print('')
+        print('number of u-v points: {0}'.format(inputs.m))
+        print('X-dim of image:       {0}'.format(inputs.nx))
+        print('Y-dim of image:       {0}'.format(inputs.ny))
         
         # inputs
         u_idx = ctypes.pointer(inputs.as_carray('u'))
@@ -339,71 +340,71 @@ class SparseImagingExecutor(object):
         
     def _show_io_info(self, inputs, initialimage=None):
         # show IO filenames
-        print ''
-        print ''
-        print 'IO files of {0}.'.format(self.libname)
-        print ''
-        print ''
-        print ' FFTW file:              {0}'.format(inputs.infile)
+        print('')
+        print('')
+        print('IO files of {0}.'.format(self.libname))
+        print('')
+        print('')
+        print(' FFTW file:              {0}'.format(inputs.infile))
         if initialimage is None:
-            print ' x was initialized with 1.0'
+            print(' x was initialized with 1.0')
         else:
-            print ' x was initialize by the user'
+            print(' x was initialize by the user')
         #print ' x is saved to:          xout'
-        print ''
+        print('')
         
         
     def _show_result(self, mfista_result):
         # show results
-        print ''
-        print ''
-        print 'Output of {0}.'.format(self.libname)
-        print ''
-        print ''
-        print ' Size of the problem:'
-        print ''
-        print ''
-        print ' size of input vector:  {0}'.format(mfista_result.M)
-        print ' size of output vector: {0}'.format(mfista_result.N)
+        print('')
+        print('')
+        print('Output of {0}.'.format(self.libname))
+        print('')
+        print('')
+        print(' Size of the problem:')
+        print('')
+        print('')
+        print(' size of input vector:  {0}'.format(mfista_result.M))
+        print(' size of output vector: {0}'.format(mfista_result.N))
         if mfista_result.NX != 0:
-            print 'size of image:          {0} x {0}'.format(mfista_result.NX, 
-                                                             mfista_result.NY)
-        print ''
-        print ''
-        print ' Problem Setting:'
-        print ''
-        print ''
+            print('size of image:          {0} x {0}'.format(mfista_result.NX, 
+                                                             mfista_result.NY))
+        print('')
+        print('')
+        print(' Problem Setting:')
+        print('')
+        print('')
         if mfista_result.nonneg == 1:
-            print ' x is a nonnegative vector.'
+            print(' x is a nonnegative vector.')
         elif mfista_result.nonneg == 0:
-            print ' x is a real vector (takes 0, positive, and negative value).'
-        print ''
-        print ''
+            print(' x is a real vector (takes 0, positive, and negative value).')
+        print('')
+        print('')
         if mfista_result.lambda_l1 != 0:
-            print ' Lambda_l1: {0:e}'.format(mfista_result.lambda_l1)
+            print(' Lambda_l1: {0:e}'.format(mfista_result.lambda_l1))
         if mfista_result.lambda_tsv != 0:
-            print ' Lambda_tsv: {0:e}'.format(mfista_result.lambda_tsv)
+            print(' Lambda_tsv: {0:e}'.format(mfista_result.lambda_tsv))
         if mfista_result.lambda_tv != 0:
-            print ' Lambda_tv: {0:e}'.format(mfista_result.lambda_tv)
-        print ' MAXITER: {0}'.format(mfista_result.maxiter)
+            print(' Lambda_tv: {0:e}'.format(mfista_result.lambda_tv))
+        print(' MAXITER: {0}'.format(mfista_result.maxiter))
         
-        print ' Results:'
-        print ''
-        print ' # of iterations:       {0}'.format(mfista_result.ITER)
-        print ' cost:                  {0:e}'.format(mfista_result.finalcost)
-        print ' computation time[sec]: {0:e}'.format(mfista_result.comp_time)
-        print ''
-        print ' # of nonzero pixels:   {0}'.format(mfista_result.N_active)
-        print ' Squared Error (SE):    {0:e}'.format(mfista_result.sq_error)
-        print ' Mean SE:               {0:e}'.format(mfista_result.mean_sq_error)
+        print(' Results:')
+        print('')
+        print(' # of iterations:       {0}'.format(mfista_result.ITER))
+        print(' cost:                  {0:e}'.format(mfista_result.finalcost))
+        print(' computation time[sec]: {0:e}'.format(mfista_result.comp_time))
+        print('')
+        print(' # of nonzero pixels:   {0}'.format(mfista_result.N_active))
+        print(' Squared Error (SE):    {0:e}'.format(mfista_result.sq_error))
+        print(' Mean SE:               {0:e}'.format(mfista_result.mean_sq_error))
         if mfista_result.lambda_l1 != 0:
-            print ' L1 cost:               {0:e}'.format(mfista_result.l1cost)
+            print(' L1 cost:               {0:e}'.format(mfista_result.l1cost))
         if mfista_result.lambda_tsv != 0:
-            print ' TSV cost:              {0:e}'.format(mfista_result.tsvcost)
+            print(' TSV cost:              {0:e}'.format(mfista_result.tsvcost))
         if mfista_result.lambda_tv != 0:
-            print ' TV cost:               {0:e}'.format(mfista_result.tvcost)
-        print ''
-        print ' LOOE:    Could not be computed because Hessian was not positive definite.'
+            print(' TV cost:               {0:e}'.format(mfista_result.tvcost))
+        print('')
+        print(' LOOE:    Could not be computed because Hessian was not positive definite.')
                 
                 
     def _exec_line(self, f, varname):

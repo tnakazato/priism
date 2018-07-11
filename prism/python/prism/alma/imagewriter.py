@@ -71,7 +71,7 @@ class ImageWriter(object):
         
         # direction coordinate
         phasecenter = parse_phasecenter(self.imageparam.phasecenter)
-        print 'DEBUG phasecenter={0}'.format(phasecenter)
+        print('DEBUG phasecenter={0}'.format(phasecenter))
         refframe = me.getref(phasecenter)
         refpix = map(lambda x: 0.5 * (x - 1), self.imageparam.imsize)
         center = me.getvalue(phasecenter)
@@ -81,7 +81,7 @@ class ImageWriter(object):
         incr = map(qa.quantity, self.imageparam.cell)
         sincr = map(q2s, incr)
         projection = self.imageparam.projection
-        print 'DEBUG refpix={0}, refval={1}'.format(refpix, refval)
+        print('DEBUG refpix={0}, refval={1}'.format(refpix, refval))
         c.setdirection(refcode=refframe, 
                        proj=projection,
                        refpix=refpix,
@@ -90,13 +90,13 @@ class ImageWriter(object):
         
         # spectral coordinate
         refframe = 'LSRK'
-        print 'start {0} width {1}'.format(self.imageparam.start, 
-                                           self.imageparam.width)
+        print('start {0} width {1}'.format(self.imageparam.start, 
+                                           self.imageparam.width))
         start = qa.convert(self.imageparam.start, 'Hz')
         width = qa.convert(self.imageparam.width, 'Hz')
         nchan = self.imageparam.nchan
         f = numpy.fromiter((start['value'] + i * width['value'] for i in xrange(nchan)), dtype=numpy.float64)
-        print 'f = {0}'.format(f)
+        print('f = {0}'.format(f))
         frequencies = qa.quantity(f, 'Hz')
         veldef = 'radio'
         if len(f) > 1:
@@ -104,7 +104,7 @@ class ImageWriter(object):
                           frequencies=frequencies,
                           doppler=veldef)
         else:
-            print 'set increment for spectral axis: {0}'.format(width)
+            print('set increment for spectral axis: {0}'.format(width))
             #c.setreferencepixel(value=0, type='spectral')
             #c.setreferencevalue(value=start, type='spectral')
             #c.setincrement(value=width, type='spectral')
@@ -139,10 +139,10 @@ class ImageWriter(object):
                 c1 = (nchan - 1) / 2
                 rest_frequency = qa.quantity(f[c1], frequencies['unit'])
                 
-        print 'rest_frequency={0}'.format(rest_frequency)
+        print('rest_frequency={0}'.format(rest_frequency))
         c.setrestfrequency(rest_frequency)
         
-        print c.summary(list=False)[0]
+        print(c.summary(list=False)[0])
 
         return c
         

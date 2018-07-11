@@ -40,9 +40,9 @@ class GridderTest(utils.TestBase):
         convsupport = 1
         convsampling = 10
         gridfunction = almagridder.GridFunctionUtil.box(convsupport, convsampling)
-        print 'support {0} sampling {1} len(gridfunction) {2}'.format(convsupport,
+        print('support {0} sampling {1} len(gridfunction) {2}'.format(convsupport,
                                                                       convsampling,
-                                                                      len(gridfunction))
+                                                                      len(gridfunction)))
         self.standard_gridparam = paramcontainer.GridParamContainer(convsupport=convsupport,
                                                                     convsampling=convsampling,
                                                                     gridfunction=gridfunction)
@@ -179,8 +179,8 @@ class GridderTest(utils.TestBase):
                           nonzero_pixels[1][ndx],
                           nonzero_pixels[2][ndx],
                           nonzero_pixels[3][ndx],)
-        print 'nonzero: {}'.format(nonzero_pixels)
-        print 'index_list: {}'.format(index_list)
+        print('nonzero: {}'.format(nonzero_pixels))
+        print('index_list: {}'.format(index_list))
         self.assertIndexListEqual(nonzero_pixels, index_list)
         return nonzero_pixels
     
@@ -196,8 +196,8 @@ class GridderTest(utils.TestBase):
 #         self.assertMaxDiffLess(eimag, result_imag, eps)
         
     def _verify_data(self, result, ref):
-        print 'EXPECTED', ref
-        print 'ACTUAL', result
+        print('EXPECTED', ref)
+        print('ACTUAL', result)
 
         self.assertEqual(len(result), len(ref))
         if len(result) == 0:
@@ -217,16 +217,16 @@ class GridderTest(utils.TestBase):
         for _ws in ws_list:
             # grid data
             for irow in xrange(_ws.nrow):
-                print 'rdata {0}\tidata {1}\tu {2}\tv {3}'.format(_ws.rdata[irow].flatten(), 
+                print('rdata {0}\tidata {1}\tu {2}\tv {3}'.format(_ws.rdata[irow].flatten(), 
                                                                   _ws.idata[irow].flatten(),
                                                                   _ws.u[irow],
-                                                                  _ws.v[irow])
+                                                                  _ws.v[irow]))
             #print 'gridfunction={}'.format(gridder.gridfunction)
             gridder.grid(_ws)
         
         # verification
         result = gridder.get_result()
-        print 'result_imag:', result.imag
+        print('result_imag:', result.imag)
     
         # number of ws's accumulated onto grid
         self.assertEqual(result.num_ws, len(ws_list))
@@ -258,10 +258,10 @@ class GridderTest(utils.TestBase):
         ref_real = ref_real[ndx_real]
         if len(ndx_imag) > 0:
             ref_imag = ref_imag[ndx_imag]
-        print 'greal:', greal
-        print 'ref_real:', ref_real
-        print 'gimag:', gimag
-        print 'ref_imag:', ref_imag
+        print('greal:', greal)
+        print('ref_real:', ref_real)
+        print('gimag:', gimag)
+        print('ref_imag:', ref_imag)
 
         self._verify_data(greal, ref_real)
         self._verify_data(gimag, ref_imag)
@@ -624,10 +624,10 @@ class GridderTest(utils.TestBase):
         if isinstance(gparam, dict):
             params.update(gparam)
         gridfunction = getattr(almagridder.GridFunctionUtil, gtype)(**params)
-        print 'Custom Grid Fucntion:'
-        print 'support {0} sampling {1} len(gridfunction) {2}'.format(support,
+        print('Custom Grid Fucntion:')
+        print('support {0} sampling {1} len(gridfunction) {2}'.format(support,
                                                                       sampling,
-                                                                      len(gridfunction))
+                                                                      len(gridfunction)))
         gridparam = paramcontainer.GridParamContainer(convsupport=support, convsampling=sampling,
                                                       gridfunction=gridfunction)
 
@@ -660,13 +660,13 @@ class GridderTest(utils.TestBase):
         # perform gridding and verification
         w = len(gridfunction.nonzero()[0]) / sampling
         iw = int(w)
-        print w
+        print(w)
         #umin = int(round(ws.u[0] - iw))
         #umax = int(ws.u[0] + iw)
         cen = (float(gridder.nu - 1) / 2, float(gridder.nv - 1) / 2)
-        print 'cen', cen, 'nunv', gridder.nu, gridder.nv
-        print 'u:', ws.u
-        print 'v:', ws.v
+        print('cen', cen, 'nunv', gridder.nu, gridder.nv)
+        print('u:', ws.u)
+        print('v:', ws.v)
         umin = 0
         umax = gridder.nu
         vmin = 0
@@ -690,7 +690,7 @@ class GridderTest(utils.TestBase):
             dist = numpy.sqrt(du * du + dv * dv) * numpy.float64(sampling)
             idist = int(dist)
             if dist - idist >= 1.0 - 1e-10:
-                print 'Increment idist since dist-int(dist) > 1'
+                print('Increment idist since dist-int(dist) > 1')
                 idist += 1
             return idist
         
@@ -704,7 +704,7 @@ class GridderTest(utils.TestBase):
             if idist < len(gridfunction) - 1:
                 sign = -1 if conj else 1
                 k = gridfunction[idist]
-                print 'accumulate', k, dreal[dindex], dimag[dindex], dweight[dindex]
+                print('accumulate', k, dreal[dindex], dimag[dindex], dweight[dindex])
                 gr += dreal[dindex] * k * dweight[dindex]
                 gi += sign * dimag[dindex] * k * dweight[dindex]
                 wr += k * dweight[dindex]
@@ -767,7 +767,7 @@ class GridderTest(utils.TestBase):
         for i in xrange(len(ref_real)):
             if abs(ref_real[i]) != 0.0:
                 ndx_real.append(i)
-        print 'ndx_real', ndx_real
+        print('ndx_real', ndx_real)
         loc_real = (numpy.asarray(lv)[ndx_real], numpy.asarray(lu)[ndx_real],
                     numpy.asarray(lp)[ndx_real], numpy.asarray(lc)[ndx_real])
         ref_real = ref_real[ndx_real]
@@ -775,7 +775,7 @@ class GridderTest(utils.TestBase):
         for i in xrange(len(ref_imag)):
             if abs(ref_imag[i]) >= eps:
                 ndx_imag.append(i)
-        print 'ndx_imag', ndx_imag
+        print('ndx_imag', ndx_imag)
         loc_imag = (numpy.asarray(lv)[ndx_imag], numpy.asarray(lu)[ndx_imag],
                     numpy.asarray(lp)[ndx_imag], numpy.asarray(lc)[ndx_imag])
         ref_imag = ref_imag[ndx_imag]

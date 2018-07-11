@@ -41,7 +41,7 @@ class VisibilityConverterTest(utils.TestBase):
     vis = 'test-subtables-alma.ms'
 
     def setUp(self):
-        print 'setUp: copying {0}...'.format(self.vis)
+        print('setUp: copying {0}...'.format(self.vis))
         shutil.copytree(os.path.join(self.datapath, self.vis), self.vis)
         
         self.assertTrue(os.path.exists(self.vis))
@@ -64,7 +64,7 @@ class VisibilityConverterTest(utils.TestBase):
             
     def tearDown(self):
         if os.path.exists(self.vis):
-            print 'tearDown: removing {0}...'.format(self.vis)
+            print('tearDown: removing {0}...'.format(self.vis))
             shutil.rmtree(self.vis)
             
         self.assertFalse(os.path.exists(self.vis))
@@ -251,9 +251,9 @@ class VisibilityConverterTest(utils.TestBase):
         expected_shape = (1, image_nchan, nrow)
         self.assertEqual(data_shape, expected_shape)
         
-        print 'LOG: rdata={0}'.format(ws.rdata)
-        print 'LOG: idata={0}'.format(ws.idata)
-        print 'LOG: chunk data0 {0} 1 {1}'.format(chunk['data'][:,0,0], chunk['data'][:,1,0])
+        print('LOG: rdata={0}'.format(ws.rdata))
+        print('LOG: idata={0}'.format(ws.idata))
+        print('LOG: chunk data0 {0} 1 {1}'.format(chunk['data'][:,0,0], chunk['data'][:,1,0]))
     
         d0 = chunk['data'][:,0,0]
         d1 = chunk['data'][:,1,0]
@@ -276,8 +276,8 @@ class VisibilityConverterTest(utils.TestBase):
         self.assertEqual(ws.channel_map[0], 0)
         
         # TODO: uv test
-        print expected_u, ws.u[0]
-        print expected_v, ws.v[0]
+        print(expected_u, ws.u[0])
+        print(expected_v, ws.v[0])
         eps = 1.0e-5
         self.assertMaxDiffLess(expected_u, ws.u[0], eps)
         self.assertMaxDiffLess(expected_v, ws.v[0], eps)
@@ -378,7 +378,7 @@ class VisibilityConverterTest(utils.TestBase):
             end_serial = time.time()
             
             serial_results[i] = end_serial - start_serial
-            print 'SERIAL RUN: {0} sec'.format(serial_results[i])
+            print('SERIAL RUN: {0} sec'.format(serial_results[i]))
             
             # parallel run
             num_threads = 2
@@ -391,7 +391,7 @@ class VisibilityConverterTest(utils.TestBase):
             end_parallel = time.time()
             
             parallel_results[i] = end_parallel - start_parallel
-            print 'PARALLEL RUN: {0} sec'.format(parallel_results[i])
+            print('PARALLEL RUN: {0} sec'.format(parallel_results[i]))
         
             # consistency check
             for chunk_id, ws in ws_serial:
@@ -419,12 +419,12 @@ class VisibilityConverterTest(utils.TestBase):
                      
             
         # verification
-        print 'LOG: SERIAL RUN: {0}'.format(serial_results)
-        print 'LOG: PARALLEL RUN: {0}'.format(parallel_results)
+        print('LOG: SERIAL RUN: {0}'.format(serial_results))
+        print('LOG: PARALLEL RUN: {0}'.format(parallel_results))
         acceleration = serial_results / parallel_results
-        print 'LOG: ACCELERATION: {0} (max {1} min {2})'.format(acceleration, 
+        print('LOG: ACCELERATION: {0} (max {1} min {2})'.format(acceleration, 
                                                                 acceleration.max(),
-                                                                acceleration.min())
+                                                                acceleration.min()))
         self.assertLess(parallel_results.min(), serial_results.min())
     
     def get_chunk_template(self, nrow=1, dd_id=0):
@@ -455,9 +455,9 @@ class VisibilityConverterTest(utils.TestBase):
                                                              width=width, 
                                                              nchan=nchan,
                                                              phasecenter=str(self.field_id))
-        print 'LOG: s,w,n {0} {1} {2}'.format(self.imageparam.start, 
+        print('LOG: s,w,n {0} {1} {2}'.format(self.imageparam.start, 
                                               self.imageparam.width, 
-                                              self.imageparam.nchan)
+                                              self.imageparam.nchan))
         converter = visconverter.VisibilityConverter(self.visparam, self.imageparam)
         return converter
 
@@ -490,9 +490,9 @@ class VisibilityConverterTest(utils.TestBase):
         self.assertEqual(len(ws.channel_map), data_shape[2])
         self.assertEqual(len(ws.row_flag), data_shape[0])
 
-        print 'LOG: ws data_shape {0}'.format(data_shape)
-        print 'LOG: u = {0}'.format(ws.u.tolist())
-        print 'LOG: v = {0}'.format(ws.v.tolist())
+        print('LOG: ws data_shape {0}'.format(data_shape))
+        print('LOG: u = {0}'.format(ws.u.tolist()))
+        print('LOG: v = {0}'.format(ws.v.tolist()))
 
 
     def test_lsr_freq_topo(self):

@@ -447,7 +447,7 @@ class VisibilityConverter(object):
                              + 'Please specify field ID instead.')
 
     def _warn_refocus(self):
-        print '***WARN*** refocusing is disabled even if distance to the source is known.'
+        print('***WARN*** refocusing is disabled even if distance to the source is known.')
     
     def fill_uvw(self, ws, chunk, lsr_edge_frequency):
         """
@@ -553,7 +553,7 @@ class VisibilityConverter(object):
         # working set to be filled in
         chunk_id = chunk['chunk_id']
         working_set = gridder.GridderWorkingSet(data_id=chunk_id)
-        print 'LOG: generate working set for visibility chunk #{0}'.format(chunk_id)
+        print('LOG: generate working set for visibility chunk #{0}'.format(chunk_id))
             
         # 1. visibility frequency conversion 
         # get LSRK frequency at channel boundary

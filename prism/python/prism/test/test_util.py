@@ -61,7 +61,7 @@ class RandomIndexGeneratorTest(unittest.TestCase):
         ndiv = num_ws / num_fold
         for subset_id in xrange(num_fold):
             subset_index = generator.get_subset_index(subset_id)
-            print 'subset {0}: index {1}'.format(subset_id, subset_index)
+            print('subset {0}: index {1}'.format(subset_id, subset_index))
             
             # check if size of subset index is correct
             num_index = ndiv
@@ -90,7 +90,7 @@ class RandomIndexGeneratorTest(unittest.TestCase):
         self.assertTrue(numpy.all(index_flag == True))
                 
         # check if index spacing is not unique 
-        print delta_list
+        print(delta_list)
         flattened = []
         for delta in delta_list:
             flattened.extend(delta)

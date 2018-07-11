@@ -69,5 +69,5 @@ def grid(working_set, gridfunction, convsupport, convsampling, weight_only,
 def solvemfista(l1, ltsqv, grid_data, image_data):
     grid_real = grid_data.real
     grid_imag = grid_data.imag
-    print 'LOG: solvemfista(l1, ltsqv, grid_real, grid_imag, image_data)'
+    print('LOG: solvemfista(l1, ltsqv, grid_real, grid_imag, image_data)')
     

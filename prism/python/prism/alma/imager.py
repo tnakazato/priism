@@ -180,7 +180,7 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
         # convert phasecenter if it is given as FIELD_ID
         vis = self.visparams[0].vis
         if isinstance(self.imparam.phasecenter, str) and self.imparam.phasecenter.isdigit():
-            print 'Use PHASE_DIR for FIELD {0}'.format(self.imparam.phasecenter)
+            print('Use PHASE_DIR for FIELD {0}'.format(self.imparam.phasecenter))
             # take first MS
             field_id = int(self.imparam.phasecenter)
             phase_direction = imagewriter.ImageWriter.phase_direction_for_field(vis=vis, 
@@ -191,7 +191,7 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
             # TODO: we need LSRK frequency
             start = self.imparam.start
             spw = int(self.visparams[0].as_msindex()['spw'][0])
-            print 'Use Freuquency for channel {0} spw {1}'.format(start, spw)
+            print('Use Freuquency for channel {0} spw {1}'.format(start, spw))
             cf, cw = imagewriter.ImageWriter.frequency_setup_for_spw(vis=vis, 
                                                               spw_id=spw,
                                                               chan=start)

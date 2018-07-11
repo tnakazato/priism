@@ -21,7 +21,7 @@ class VisibilitySubsetGenerator(object):
             grid_imag = griddedvis.imag
             self.active_index = numpy.where(numpy.logical_and(grid_real != 0, grid_imag != 0))
             self.num_active = len(self.active_index[0])
-            print 'num_active={0}'.format(self.num_active)
+            print('num_active={0}'.format(self.num_active))
         
             # random index 
             self.index_generator = util.RandomIndexGenerator(self.num_active, self.num_fold)
@@ -64,7 +64,7 @@ class GriddedVisibilitySubsetHandler(object):
         # amplitude should be nonzero in active pixels
         #self.active_index = numpy.where(numpy.logical_and(grid_real != 0, grid_imag != 0))
         num_active = len(self.active_index[0])
-        print 'num_active={0}'.format(num_active)
+        print('num_active={0}'.format(num_active))
     
         # random index 
         #self.index_generator = util.RandomIndexGenerator(num_active, self.num_fold)
@@ -81,7 +81,7 @@ class GriddedVisibilitySubsetHandler(object):
         
         # random index 
         random_index = self.index_generator.get_subset_index(self.subset_id)
-        print 'DEBUG_TN: subset ID {0} random_index = {1}'.format(self.subset_id, list(random_index))
+        print('DEBUG_TN: subset ID {0} random_index = {1}'.format(self.subset_id, list(random_index)))
         
         # uv location
         # assumption here is that the first index corresponds to v while

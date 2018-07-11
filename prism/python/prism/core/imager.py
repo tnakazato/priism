@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import print_function
 
 import os
 import shutil
@@ -206,8 +207,8 @@ class SparseModelingImager(object):
             np_l1_list = numpy.asarray(l1_list)
             np_ltsv_list = numpy.asarray(ltsv_list)
         except Exception, e:
-            print 'Exception occurred'
-            print str(e)
+            print('Exception occurred')
+            print(str(e))
             raise ArgumentError('l1_list or ltsv_list (or both) seems invalid.')
         
         if str(np_l1_list.dtype) == 'object':
@@ -238,7 +239,7 @@ class SparseModelingImager(object):
             f = open('cvresult.dat', 'w')
         else:
             f = open(os.devnull, 'w')
-        print >> f, '# L1, Ltsv, MSE'
+        print('# L1, Ltsv, MSE', file=f)
         
         # initialize CV
         self.initializecv(num_fold=num_fold)
@@ -269,11 +270,11 @@ class SparseModelingImager(object):
                 mse = self.computegridmse(L1, Ltsv, maxiter, eps, clean_box)
                 result_mse.append(mse)
                 
-                print 'L1 10^{0} Ltsv 10^{1}: MSE {2} FITS {3}'.format(int(math.log10(L1)),
+                print('L1 10^{0} Ltsv 10^{1}: MSE {2} FITS {3}'.format(int(math.log10(L1)),
                                                                        int(math.log10(Ltsv)),
                                                                        mse,
-                                                                       imagename)
-                print >> f, '{0}, {1}, {2}'.format(L1, Ltsv, mse)
+                                                                       imagename))
+                print('{0}, {1}, {2}'.format(L1, Ltsv, mse), file=f)
         
                 if summarize is True:
                     imagearray = self.getimage(imagename)
@@ -308,15 +309,15 @@ class SparseModelingImager(object):
         end_time = time.time()
         
         if best_mse >= 0.0:
-            print 'Process completed. Optimal result is as follows'
-            print '    L1, Ltsv = 10^{0}, 10^{1}'.format(int(math.log10(best_L1)), int(math.log10(best_Ltsv)))
-            print '    MSE = {0}'.format(best_mse)
-            print '    imagename = {0}'.format(best_image)
+            print('Process completed. Optimal result is as follows')
+            print('    L1, Ltsv = 10^{0}, 10^{1}'.format(int(math.log10(best_L1)), int(math.log10(best_Ltsv))))
+            print('    MSE = {0}'.format(best_mse))
+            print('    imagename = {0}'.format(best_image))
         else:
-            print 'Process completed. Cross-validation was not performed.'
-            print 'WARNING: Optimal solution will not be correct one since no CV was executed.'
+            print('Process completed. Cross-validation was not performed.')
+            print('WARNING: Optimal solution will not be correct one since no CV was executed.')
         
-        print 'Elapsed {0} sec'.format(end_time - start_time)
+        print('Elapsed {0} sec'.format(end_time - start_time))
         
         
         # copy the best image to final image

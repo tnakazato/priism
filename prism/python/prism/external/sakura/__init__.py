@@ -13,11 +13,11 @@ try:
         pass
 except NameError:
     _SAKURA_INITIALIZED_ = True
-    print 'LOG: initialize sakura...'
-    print libsakurapy
+    print('LOG: initialize sakura...')
+    print(libsakurapy)
     libsakurapy.initialize()
     def sakura_cleanup():
-        print 'LOG: clean up sakura...'
+        print('LOG: clean up sakura...')
         libsakurapy.clean_up()
     atexit.register(sakura_cleanup)
 

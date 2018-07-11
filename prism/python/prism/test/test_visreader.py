@@ -29,7 +29,7 @@ class VisibilityReaderTest(utils.TestBase):
     vis = 'uid___X02_X3d737_X1_01_small.ms'
 
     def setUp(self):
-        print 'setUp: copying {0}...'.format(self.vis)
+        print('setUp: copying {0}...'.format(self.vis))
         shutil.copytree(os.path.join(self.datapath, self.vis), self.vis)
         
         self.assertTrue(os.path.exists(self.vis))
@@ -49,7 +49,7 @@ class VisibilityReaderTest(utils.TestBase):
     
     def tearDown(self):
         if os.path.exists(self.vis):
-            print 'tearDown: removing {0}...'.format(self.vis)
+            print('tearDown: removing {0}...'.format(self.vis))
             shutil.rmtree(self.vis)
             
         self.assertFalse(os.path.exists(self.vis))
@@ -76,11 +76,11 @@ class VisibilityReaderTest(utils.TestBase):
         chunk_id = 0
         for chunk in reader.readvis(items=['time', 'data_desc_id', 'data', 'weight']):
             nrow = chunk['time'].shape[-1]
-            print 'LOG chunk {0}: nrow={1} items={2} itemshape={3}'.format(
+            print('LOG chunk {0}: nrow={1} items={2} itemshape={3}'.format(
                 chunk_id,
                 nrow,
                 chunk.keys(),
-                chunk.values()[0].shape)
+                chunk.values()[0].shape))
             
             self.verify_chunk_consistency(chunk, chunk_id)
             nrow_total += nrow
@@ -99,12 +99,12 @@ class VisibilityReaderTest(utils.TestBase):
                 self.assertEqual(data.shape, (ncorr, nchan,))
                 self.assertEqual(weight.shape, (ncorr,))
         
-        print 'LOG iterated {0} times in total'.format(chunk_id)
-        print 'LOG total number of rows {0}'.format(nrow_total)
+        print('LOG iterated {0} times in total'.format(chunk_id))
+        print('LOG total number of rows {0}'.format(nrow_total))
                 
         nrow_total_expected = self._expected_nrows()
             
-        print 'LOG number of rows for input ms {0}'.format(nrow_total_expected)
+        print('LOG number of rows for input ms {0}'.format(nrow_total_expected))
         self.assertEqual(nrow_total_expected, nrow_total)
     
     def test_msselect(self):
@@ -115,11 +115,11 @@ class VisibilityReaderTest(utils.TestBase):
         nrow_total = 0
         for chunk in reader.readvis(items=['data_desc_id']):
             nrow = chunk['data_desc_id'].shape[-1]
-            print 'LOG chunk {0}: nrow={1} items={2} itemshape={3}'.format(
+            print('LOG chunk {0}: nrow={1} items={2} itemshape={3}'.format(
                 chunk_id,
                 nrow,
                 chunk.keys(),
-                chunk['data_desc_id'].shape)
+                chunk['data_desc_id'].shape))
             
             self.verify_chunk_consistency(chunk, chunk_id)
             chunk_id += 1
@@ -131,7 +131,7 @@ class VisibilityReaderTest(utils.TestBase):
             
         nrow_total_expected = self._expected_nrows('DATA_DESC_ID==1')
             
-        print 'LOG number of rows for input ms {0}'.format(nrow_total_expected)
+        print('LOG number of rows for input ms {0}'.format(nrow_total_expected))
         self.assertEqual(nrow_total_expected, nrow_total)
         
     
@@ -144,11 +144,11 @@ class VisibilityReaderTest(utils.TestBase):
         items = ['antenna1', 'antenna2', 'uvw', 'time']
         for chunk in reader.readvis(items=items):
             nrow = chunk[items[0]].shape[-1]
-            print 'LOG chunk {0}: nrow={1} items={2} itemshape={3}'.format(
+            print('LOG chunk {0}: nrow={1} items={2} itemshape={3}'.format(
                 chunk_id,
                 nrow,
                 chunk.keys(),
-                chunk.values()[0].shape)
+                chunk.values()[0].shape))
 
             self.verify_chunk_consistency(chunk, chunk_id)
             chunk_id += 1
@@ -161,7 +161,7 @@ class VisibilityReaderTest(utils.TestBase):
                         
         nrow_total_expected = self._expected_nrows()
             
-        print 'LOG number of rows for input ms {0}'.format(nrow_total_expected)
+        print('LOG number of rows for input ms {0}'.format(nrow_total_expected))
         self.assertEqual(nrow_total_expected, nrow_total)
             
     def test_iter_columns(self):
@@ -175,11 +175,11 @@ class VisibilityReaderTest(utils.TestBase):
         antenna_list = []
         for chunk in reader.readvis(items=items, columns=columns, adddefault=False):
             nrow = chunk[items[0]].shape[-1]
-            print 'LOG chunk {0}: nrow={1} items={2} itemshape={3}'.format(
+            print('LOG chunk {0}: nrow={1} items={2} itemshape={3}'.format(
                 chunk_id,
                 nrow,
                 chunk.keys(),
-                chunk[items[0]].shape)
+                chunk[items[0]].shape))
 
             self.verify_chunk_consistency(chunk, chunk_id)
             chunk_id += 1
@@ -194,7 +194,7 @@ class VisibilityReaderTest(utils.TestBase):
                         
         nrow_total_expected = self._expected_nrows()
             
-        print 'LOG number of rows for input ms {0}'.format(nrow_total_expected)
+        print('LOG number of rows for input ms {0}'.format(nrow_total_expected))
         self.assertEqual(nrow_total_expected, nrow_total)
     
     def test_iter_interval(self):
@@ -207,11 +207,11 @@ class VisibilityReaderTest(utils.TestBase):
         for chunk in reader.readvis(items=['time'], 
                                     interval=interval):
             nrow = chunk['time'].shape[-1]
-            print 'LOG chunk {0}: nrow={1} items={2} itemshape={3}'.format(
+            print('LOG chunk {0}: nrow={1} items={2} itemshape={3}'.format(
                 chunk_id,
                 nrow,
                 chunk.keys(),
-                chunk['time'].shape)
+                chunk['time'].shape))
 
             self.verify_chunk_consistency(chunk, chunk_id)
             chunk_id += 1
@@ -227,7 +227,7 @@ class VisibilityReaderTest(utils.TestBase):
                         
         nrow_total_expected = self._expected_nrows()
             
-        print 'LOG number of rows for input ms {0}'.format(nrow_total_expected)
+        print('LOG number of rows for input ms {0}'.format(nrow_total_expected))
         self.assertEqual(nrow_total_expected, nrow_total)
     
     def test_iter_nrow(self):
@@ -239,11 +239,11 @@ class VisibilityReaderTest(utils.TestBase):
         nrow_chunk = 4
         for chunk in reader.readvis(nrow=nrow_chunk):
             nrow = chunk['time'].shape[-1]
-            print 'LOG chunk {0}: nrow={1} items={2} itemshape={3}'.format(
+            print('LOG chunk {0}: nrow={1} items={2} itemshape={3}'.format(
                 chunk_id,
                 nrow,
                 chunk.keys(),
-                chunk.values()[0].shape)
+                chunk.values()[0].shape))
 
             self.verify_chunk_consistency(chunk, chunk_id)
             chunk_id += 1
@@ -253,7 +253,7 @@ class VisibilityReaderTest(utils.TestBase):
             
         nrow_total_expected = self._expected_nrows()
            
-        print 'LOG number of rows for input ms {0}'.format(nrow_total_expected)
+        print('LOG number of rows for input ms {0}'.format(nrow_total_expected))
         self.assertEqual(nrow_total_expected, nrow_total)
     
     def test_msselect_chan(self):
@@ -265,11 +265,11 @@ class VisibilityReaderTest(utils.TestBase):
         nrow_total = 0
         for chunk in reader.readvis(items=['time', 'data_desc_id', 'data']):
             nrow = chunk['time'].shape[-1]
-            print 'LOG chunk {0}: nrow={1} items={2} itemshape={3}'.format(
+            print('LOG chunk {0}: nrow={1} items={2} itemshape={3}'.format(
                 chunk_id,
                 nrow,
                 chunk.keys(),
-                chunk.values()[0].shape)
+                chunk.values()[0].shape))
 
             self.verify_chunk_consistency(chunk, chunk_id)
             chunk_id += 1
@@ -283,16 +283,16 @@ class VisibilityReaderTest(utils.TestBase):
                 ddid = ddid_list[irow]
                 self.assertEqual(ddid, 0)
                 nchan = min(self.nchanmap[ddid], 10)
-                print 'nchan = {0}'.format(nchan)
+                print('nchan = {0}'.format(nchan))
                 ncorr = self.ncorrmap[ddid]
                 self.assertEqual(data.shape, (ncorr, nchan,))
         
-        print 'LOG iterated {0} times in total'.format(chunk_id)
-        print 'LOG total number of rows {0}'.format(nrow_total)
+        print('LOG iterated {0} times in total'.format(chunk_id))
+        print('LOG total number of rows {0}'.format(nrow_total))
                 
         nrow_total_expected = self._expected_nrows('DATA_DESC_ID==0')  
           
-        print 'LOG number of rows for input ms {0}'.format(nrow_total_expected)
+        print('LOG number of rows for input ms {0}'.format(nrow_total_expected))
         self.assertEqual(nrow_total_expected, nrow_total)
     
 def suite():

@@ -137,7 +137,7 @@ class ImageWriterTest(utils.TestBase):
             self.assertEqual(imageshape, expected_shape)
             
             shaped_chunk = chunk[:,:,:,0]
-            print shaped_chunk.shape, arr.shape
+            print(shaped_chunk.shape, arr.shape)
             self.assertTrue(numpy.allclose(arr, shaped_chunk),
                             msg='expected {0} actual {1} (maxdiff {2})'.format(arr,
                                                                                shaped_chunk,
@@ -225,7 +225,7 @@ class ImageWriterTest(utils.TestBase):
             'stokes': 'I'
             }
         imparam = paramcontainer.ImageParamContainer.CreateContainer(**paramdict) 
-        print imparam.imagename
+        print(imparam.imagename)
         self.assertEqual(imparam.imagename, paramdict['imagename'])
         
         imshape = (imparam.imsize[0], imparam.imsize[1], 
@@ -250,9 +250,9 @@ class ImageWriterTest(utils.TestBase):
         lon['value'] = (lon['value'] + pi) % (2 * pi) - pi 
         lat = qa.quantity(latstr)
         
-        print lon
-        print lat
-        print phasecenter_str
+        print(lon)
+        print(lat)
+        print(phasecenter_str)
         
         self.assertEqual(me.gettype(phasecenter_rec), 'Direction')
         self.assertEqual(me.getref(phasecenter_rec), ref)
