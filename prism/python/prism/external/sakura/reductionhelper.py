@@ -482,13 +482,13 @@ def paraMap(numThreads, func, dataSource):
 def sakura_typemap(typemap, key):
     try:
         return typemap[key.lower()]
-    except KeyError, e:
+    except KeyError as e:
         raise RuntimeError('Invalid type: %s'%(key))
 
 def calibration_typemap(key):
     try:
         return CALIBRATION_TYPEMAP[key.lower()], 0
-    except KeyError, e:
+    except KeyError as e:
         if key.isdigit():
             return #libsakurapy.INTERPOLATION_METHOD_POLYNOMIAL, int(key)
         else:

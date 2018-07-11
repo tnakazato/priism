@@ -97,7 +97,7 @@ class GridderWorkingSet(paramcontainer.ParamContainer):
                     self._pol_map = value
                 else:
                     raise
-            except Exception, e:
+            except Exception as e:
                 raise ValueError('invalid pol_map ({0}). Should be int list or None.'.format(value))
         
                 

@@ -206,7 +206,7 @@ class SparseModelingImager(object):
         try:
             np_l1_list = numpy.asarray(l1_list)
             np_ltsv_list = numpy.asarray(ltsv_list)
-        except Exception, e:
+        except Exception as e:
             print('Exception occurred')
             print(str(e))
             raise ArgumentError('l1_list or ltsv_list (or both) seems invalid.')
