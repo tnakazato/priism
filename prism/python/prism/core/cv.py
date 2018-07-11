@@ -150,7 +150,7 @@ class GriddedVisibilitySubsetHandler(object):
             self._clear()
             
     def __replace_with(self, src, index_list, newval):
-        replace_index = tuple(map(lambda x: x[index_list], self.active_index))
+        replace_index = tuple([x[index_list] for x in self.active_index])
         src[replace_index] = newval
 
 class MeanSquareErrorEvaluator(object):

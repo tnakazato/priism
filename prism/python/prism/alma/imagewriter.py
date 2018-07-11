@@ -73,13 +73,13 @@ class ImageWriter(object):
         phasecenter = parse_phasecenter(self.imageparam.phasecenter)
         print('DEBUG phasecenter={0}'.format(phasecenter))
         refframe = me.getref(phasecenter)
-        refpix = map(lambda x: 0.5 * (x - 1), self.imageparam.imsize)
+        refpix = [0.5 * (x - 1) for x in self.imageparam.imsize]
         center = me.getvalue(phasecenter)
         refval = [center['m0']['value'], center['m1']['value']]
         q2s = lambda x: '{0} {1}'.format(x['value'], x['unit'])
-        srefval = map(q2s, [center['m0'], center['m1']])
-        incr = map(qa.quantity, self.imageparam.cell)
-        sincr = map(q2s, incr)
+        srefval = list(map(q2s, [center['m0'], center['m1']]))
+        incr = list(map(qa.quantity, self.imageparam.cell))
+        sincr = list(map(q2s, incr))
         projection = self.imageparam.projection
         print('DEBUG refpix={0}, refval={1}'.format(refpix, refval))
         c.setdirection(refcode=refframe, 
