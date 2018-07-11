@@ -109,9 +109,9 @@ class ImageWriter(object):
             #c.setreferencevalue(value=start, type='spectral')
             #c.setincrement(value=width, type='spectral')
             r = c.torecord()
-            if r.has_key('spectral2'):
+            if 'spectral2' in r:
                 key = 'spectral2'
-            elif r.has_key('spectral1'):
+            elif 'spectral1' in r:
                 key = 'spectral1'
             r[key]['wcs']['crpix'] = 0.0
             r[key]['wcs']['crval'] = start['value']

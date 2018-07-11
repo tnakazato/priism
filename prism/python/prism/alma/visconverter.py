@@ -125,7 +125,7 @@ class VisibilityConverter(object):
         with casa.OpenTableForRead(os.path.join(vis, 'FIELD')) as tb:
             self.field_dir = {}
             measinfo = tb.getcolkeyword('PHASE_DIR', 'MEASINFO')
-            if measinfo.has_key('Ref'):
+            if 'Ref' in measinfo:
                 self.field_ref = measinfo['Ref']
             else:
                 # variable reference column, assume J2000
@@ -542,7 +542,7 @@ class VisibilityConverter(object):
         # sanity check 
         # - chunk should contain all required data 
         for column in self.required_columns:
-            assert chunk.has_key(column)
+            assert column in chunk
         # - all chunk entry should have same timestamp (mitigate in future?)
         assert numpy.all(chunk['time'] == chunk['time'][0])
         # - all chunk entry should have same spw (mitigate in future?)

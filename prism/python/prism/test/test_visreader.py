@@ -125,7 +125,7 @@ class VisibilityReaderTest(utils.TestBase):
             chunk_id += 1
             nrow_total += nrow
             
-            self.assertTrue(chunk.has_key('data_desc_id'))
+            self.assertTrue('data_desc_id' in chunk)
             dd = chunk['data_desc_id']
             self.assertTrue(numpy.all(dd == 1))
             
@@ -157,7 +157,7 @@ class VisibilityReaderTest(utils.TestBase):
             # chunk has additional field 'chunk_id'
             self.assertEqual(len(chunk), len(items) + 1)
             for item in items:
-                self.assertTrue(chunk.has_key(item))
+                self.assertTrue(item in chunk)
                         
         nrow_total_expected = self._expected_nrows()
             
