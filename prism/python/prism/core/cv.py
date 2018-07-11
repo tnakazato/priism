@@ -2,7 +2,6 @@ from __future__ import absolute_import
 
 import numpy
 import scipy.interpolate
-import itertools
 import contextlib
 
 from . import datacontainer
@@ -191,7 +190,7 @@ class MeanSquareErrorEvaluator(object):
             pv = v / cellv + offsetv
             uid.append(pu)
             vid.append(pv)
-            for p, q, x, y in itertools.izip(pu, pv, rdata, idata):
+            for p, q, x, y in zip(pu, pv, rdata, idata):
                 a = rinterp(p, q) # please take care about index order
                 b = iinterp(p, q)
                 dx = x - a

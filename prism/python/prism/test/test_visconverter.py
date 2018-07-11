@@ -1,10 +1,8 @@
 from __future__ import absolute_import
 
-import unittest
 import numpy
 import os
 import shutil
-import itertools
 import time
 
 import prism.alma.paramcontainer as paramcontainer
@@ -70,7 +68,7 @@ class VisibilityConverterTest(utils.TestBase):
         self.assertFalse(os.path.exists(self.vis))
         
     def test_arbitrary_phasecenter(self):
-         # create data chunk
+        # create data chunk
         nrow = 1
         dd_id = 0
         spw_id = self.dd_spw_map[dd_id]
@@ -144,7 +142,7 @@ class VisibilityConverterTest(utils.TestBase):
             self.assertTrue(numpy.all(ws.channel_map[s:e] == ichan))
 
     def test_channel_interp(self):
-         # create data chunk
+        # create data chunk
         nrow = 1
         dd_id = 0
         spw_id = self.dd_spw_map[dd_id]
@@ -372,8 +370,8 @@ class VisibilityConverterTest(utils.TestBase):
             # serial run
             ws_serial = []
             start_serial = time.time()
-            for chunk_id, ws in itertools.imap(conv,
-                                     reader.readvis(nrow=max_nrow)):
+            for chunk_id, ws in map(conv,
+                                    reader.readvis(nrow=max_nrow)):
                 ws_serial.append((chunk_id, ws))
             end_serial = time.time()
             
@@ -385,8 +383,8 @@ class VisibilityConverterTest(utils.TestBase):
             ws_parallel = []
             start_parallel = time.time()
             for chunk_id, ws in sakura.paraMap(num_threads,
-                              conv,
-                              reader.readvis(nrow=max_nrow)):
+                                               conv,
+                                               reader.readvis(nrow=max_nrow)):
                 ws_parallel.append((chunk_id, ws))
             end_parallel = time.time()
             

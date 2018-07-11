@@ -1,10 +1,7 @@
 from __future__ import absolute_import
 
 import unittest
-import nose
-import sys
 import numpy
-import itertools
 
 class TestBase(unittest.TestCase):
     def assertMaxDiffLess(self, ref, val, eps, msg=''):
@@ -17,7 +14,7 @@ class TestBase(unittest.TestCase):
             
     def assertIndexListEqual(self, val, ref):
         self.assertEqual(len(val), len(ref))
-        for (a, b) in itertools.izip(val, ref):
+        for (a, b) in zip(val, ref):
             self.assertEqual(len(a), len(b))
             self.assertTrue(numpy.all(a == b))
                
