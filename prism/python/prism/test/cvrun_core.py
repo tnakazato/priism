@@ -1,14 +1,17 @@
 import time
-import cPickle
+try:
+    import cPickle as pickle    
+except ImportError:
+    import pickle
 
 import prism
 
 # load pickled objects 
 with open('griddedvis.pickle', 'rb') as f:
-    griddedvis = cPickle.load(f)
+    griddedvis = pickle.load(f)
 
 with open('uvgridconfig.pickle', 'rb') as f:
-    uvgridconfig = cPickle.load(f)
+    uvgridconfig = pickle.load(f)
 
 start_time = time.time()
 

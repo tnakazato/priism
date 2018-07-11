@@ -2,7 +2,10 @@ import contextlib
 import itertools
 import multiprocessing
 import os
-import Queue
+try:
+	import Queue as queue
+except ImportError:
+	import queue
 from threading import *
 import time
 import re
@@ -42,7 +45,7 @@ def worker(func, context):
 						if item is EOD:
 							raise item
 						break
-					except Queue.Empty:
+					except queue.Empty:
 						context.inCv.wait()
 			try:
 				result = func(item)
@@ -63,9 +66,9 @@ def paraMap(numThreads, func, dataSource):
 	context = Context()
 	context.qLen = int(numThreads * 1.5)
 	assert context.qLen >= numThreads
-	context.inQ = Queue.Queue(maxsize=context.qLen)
+	context.inQ = queue.Queue(maxsize=context.qLen)
 	context.inCv = Condition()
-	context.outQ = Queue.Queue(maxsize=context.qLen)
+	context.outQ = queue.Queue(maxsize=context.qLen)
 	context.outCv = Condition()
 	context.pendingItems = 0
 	threads = []
@@ -82,7 +85,7 @@ def paraMap(numThreads, func, dataSource):
 					context.inQ.put(item, False)
 					context.pendingItems += 1
 					context.inCv.notify()
-		except Queue.Full:
+		except queue.Full:
 			assert False
 	def putEODIntoInQ(context):
 		try:
@@ -100,7 +103,7 @@ def paraMap(numThreads, func, dataSource):
 					item = context.outQ.get(False)
 					context.pendingItems -= 1
 					return item
-				except Queue.Empty:
+				except queue.Empty:
 					context.outCv.wait()
 	try:
 		fillInQ(context)

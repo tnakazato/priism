@@ -1,4 +1,9 @@
 import time
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
+
 import prism.alma
 
 start_time = time.time()
@@ -45,10 +50,9 @@ end_time = time.time()
 print('{0}: elapsed {1} sec'.format('cvrun.py', end_time-start_time))
 
 # export griddedvis and uvgridconfig for non-CASA test
-import cPickle
 with open('griddedvis.pickle', 'w') as f:
-    cPickle.dump(worker.griddedvis, f)
+    pickle.dump(worker.griddedvis, f)
 
 with open('uvgridconfig.pickle', 'w') as f:
-    cPickle.dump(worker.uvgridconfig, f)
+    pickle.dump(worker.uvgridconfig, f)
 
