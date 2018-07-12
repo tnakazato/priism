@@ -151,7 +151,7 @@ class SparseModelingImager(object):
         if os.path.exists(imagename) and overwrite == False:
             raise RuntimeError('Cannot overwrite existing file "{}"'.format(imagename))
         
-        with open(imagename, 'w') as f:
+        with open(imagename, 'wb') as f:
             pickle.dump(self.imagearray, f)
 
     def getimage(self, imagename):
