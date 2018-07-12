@@ -678,7 +678,7 @@ class GridderTest(utils.TestBase):
         lu = lu * gridder.nv
         lu = lu + lu
         lp = [0] * len(lv)
-        lc = [0] * (len(lv) / 2) + [1] * (len(lv) / 2)
+        lc = [0] * (len(lv) // 2) + [1] * (len(lv) // 2)
         #print 'lu, lv, lp, lc=', lu, lv, lp, lc
         loc_real = (lv, lu, lp, lc)
         ref_real = numpy.zeros(len(loc_real[0]), dtype=numpy.float32)

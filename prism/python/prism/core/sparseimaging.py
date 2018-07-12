@@ -34,7 +34,7 @@ def shift_uvindex(n, iarr, inplace=True):
     iarr --- input array index
     inplace --- if True, iarr is edited instead to prepare output array
     """
-    shift_term = n/2
+    shift_term = n // 2
     if inplace:
         ret = iarr
     else:
@@ -58,7 +58,7 @@ def rshift_uvindex(n, iarr, inplace=True):
     iarr --- input array index
     inplace --- if True, iarr is edited instead to prepare output array
     """
-    shift_term = n/2 + (n % 2)
+    shift_term = n // 2 + (n % 2)
     if inplace:
         ret = iarr
     else:

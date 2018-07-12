@@ -200,8 +200,8 @@ class VisibilityConverterTest(utils.TestBase):
         self.assertEqual(ws.channel_map[0], 0)
 
         # (u,v) = (0,0) maps onto (nearly) grid plane center
-        self.assertTrue(ws.u[0] == int(self.imageparam.imsize[0]) / 2)
-        self.assertTrue(ws.v[0] == int(self.imageparam.imsize[1]) / 2)
+        self.assertTrue(ws.u[0] == int(self.imageparam.imsize[0]) // 2)
+        self.assertTrue(ws.v[0] == int(self.imageparam.imsize[1]) // 2)
     
     def test_freq_interp(self):
         # create data chunk
@@ -578,8 +578,8 @@ class VisibilityConverterTest(utils.TestBase):
         dy = qa.convert(self.imageparam.cell[1], 'rad')['value']
         wx = nx * dx
         wy = ny * dy
-        offx = int(nx) / 2
-        offy = int(ny) / 2
+        offx = int(nx) // 2
+        offy = int(ny) // 2
         fcenter = (lsr_freq.min() + lsr_freq.max()) / 2.0
         c = qa.convert(qa.constants('c'), 'm/s')['value']
         lcenter = c / fcenter

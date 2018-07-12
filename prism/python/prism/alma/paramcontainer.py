@@ -168,8 +168,8 @@ class ImageParamContainer(base_container.ParamContainer):
             cellv = 1 / wy
             # offset must always be pixel center even if nu and/or nv 
             # is even (which causes offset value to be non-integer)
-            offsetu = int(nu) / 2 # make sure integer operation
-            offsetv = int(nv) / 2 # make sure integer operation
+            offsetu = int(nu) // 2 # make sure integer operation
+            offsetv = int(nv) // 2 # make sure integer operation
 #             UVGridConfig = collections.namedtuple('UVGridCondig', 
 #                                                   ['cellu', 'cellv',
 #                                                    'nu', 'nv',

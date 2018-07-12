@@ -15,7 +15,7 @@ class RandomIndexGenerator(object):
         numpy.random.shuffle(self.random_index)
         
         self.num_subws = numpy.zeros(self.num_fold, dtype=numpy.int64)
-        ndiv = self.num_ws / self.num_fold
+        ndiv = self.num_ws // self.num_fold
         nmod = self.num_ws % self.num_fold
         self.num_subws[:] = ndiv
         self.num_subws[:nmod] += 1

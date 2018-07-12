@@ -132,11 +132,11 @@ class ImageWriter(object):
             f = frequencies['value']
             nchan = len(f)
             if nchan % 2 == 0:
-                c1 = (nchan - 1) / 2
+                c1 = (nchan - 1) // 2
                 c2 = c1 + 1
                 rest_frequency = qa.quantity(0.5 * (f[c1] + f[c2]), frequencies['unit'])
             else:
-                c1 = (nchan - 1) / 2
+                c1 = (nchan - 1) // 2
                 rest_frequency = qa.quantity(f[c1], frequencies['unit'])
                 
         print('rest_frequency={0}'.format(rest_frequency))
