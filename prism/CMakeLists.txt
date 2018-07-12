@@ -4,10 +4,10 @@ project(prism)
 
 # download sparseimaging
 set(SPARSEIMAGING_DIR sparseimaging)
+set(SPARSEIMAGING_EXTRACT sparseimaging-development)
+set(SPARSEIMAGING_ZIP development.zip)
 if(NOT EXISTS ${PROJECT_SOURCE_DIR}/${SPARSEIMAGING_DIR})
-  set(SPARSEIMAGING_EXTRACT sparseimaging-development)
   if(NOT EXISTS ${PROJECT_SOURCE_DIR}/${SPARSEIMAGING_EXTRACT})
-    set(SPARSEIMAGING_ZIP development.zip)
     if(NOT EXISTS ${CMAKE_BINARY_DIR}/${SPARSEIMAGING_ZIP})
       message(STATUS "Sparseimaging is not downloaded yet")
       set(SPARSEIMAGING_URL https://github.com/ikeda46/sparseimaging/archive/${SPARSEIMAGING_ZIP})
@@ -23,8 +23,8 @@ endif()
 
 # download sakura
 set(SAKURA_DIR libsakura)
+set(SAKURA_TAR libsakura-5.0.0.tgz)
 if(NOT EXISTS ${PROJECT_SOURCE_DIR}/${SAKURA_DIR})
-  set(SAKURA_TAR libsakura-5.0.0.tgz)
   if(NOT EXISTS ${PROJECT_SOURCE_DIR}/${SAKURA_TAR})
     message(STATUS "Sakura is not downloaded yet")
     set(SAKURA_URL https://alma-intweb.mtk.nao.ac.jp/~nakazato/libsakura/${SAKURA_TAR})
@@ -39,10 +39,10 @@ message(STATUS "CMAKE_BINARY_DIR=${CMAKE_BINARY_DIR}")
 
 # download googletest
 set(GTEST_DIR gtest)
+set(GTEST_ZIP master.zip)
 if(NOT EXISTS ${PROJECT_SOURCE_DIR}/${SAKURA_DIR}/${GTEST_DIR})
   set(GTEST_EXTRACT googletest-master)
   if(NOT EXISTS ${PROJECT_SOURCE_DIR}/${SAKURA_DIR}/${GTEST_EXTRACT})
-     set(GTEST_ZIP master.zip)
      if(NOT EXISTS ${CMAKE_BINARY_DIR}/${GTEST_ZIP})
        message(STATUS "GoogleTest is not downloaded yet")
        set(GTEST_URL https://github.com/google/googletest/archive/${GTEST_ZIP})
@@ -103,3 +103,13 @@ add_custom_target(prism ALL echo ""
 install(PROGRAMS ${SPARSEIMAGING_BUILD_DIR}/libmfista_fft.so
         DESTINATION prism/core)
 
+# clean_all 
+# clean_all will execute "make clean" as well as removing all downloaded files
+add_custom_target(clean_all make clean
+                  COMMAND rm -rf ${PROJECT_SOURCE_DIR}/${SAKURA_DIR}
+                  COMMAND rm -rf ${PROJECT_SOURCE_DIR}/${SPARSEIMAGING_DIR}
+                  COMMAND rm -rf ${PROJECT_SOURCE_DIR}/${SPARSEIMAGING_EXTRACT}
+                  COMMAND rm -f  ${CMAKE_BINARY_DIR}/${SAKURA_TAR}
+                  COMMAND rm -f  ${CMAKE_BINARY_DIR}/${SPARSEIMAGING_ZIP}
+                  COMMAND rm -f  ${CMAKE_BINARY_DIR}/${GTEST_ZIP}
+                  COMMAND echo "All downloaded/extracted materials have been removed. You have to re-do cmake to get them.")
