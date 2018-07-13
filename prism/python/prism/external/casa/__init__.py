@@ -2,22 +2,6 @@ from __future__ import absolute_import
 
 import collections
 
-# casa tool generators
-from .casatools import CasaToolGenerator
-CreateCasaTable = CasaToolGenerator.CreateTable
-CreateCasaImageAnalysis = CasaToolGenerator.CreateImageAnalysis
-CreateCasaCoordSys = CasaToolGenerator.CreateCoordSys
-CreateCasaMeasure = CasaToolGenerator.CreateMeasure
-CreateCasaQuantity = CasaToolGenerator.CreateQuantity
-
-# casa utility
-from .casatools import OpenTableForRead
-from .casatools import OpenTableForReadWrite
-from .casatools import SelectTableForRead
-from .casatools import OpenMS
-from .casatools import OpenMSMetaData
-from .casatools import OpenImage
-
 # casa version
 def _get_casa_version():
     try:
@@ -59,7 +43,25 @@ def _get_casa_version():
 
 casa_version = _get_casa_version()
 
+# Fail if CASA is not available, warn if CASA is too old
 if casa_version.major < 0:
-    print('WARNING: CASA tools/tasks is not available. prism.alma will not work.')
+    raise ImportError('CASA tools/tasks is not available. prism.alma will not work. Please use prism or prism.core instead.')
 elif casa_version.major < 5:
-    print('WARNING: CASA version should be 5.0.0 or higher. prism.alma will not work.')
+    print('WARNING: CASA version should be 5.0.0 or higher. prism.alma will not work. Please use prism or prism.core instead.')
+
+# casa tool generators
+from .casatools import CasaToolGenerator
+CreateCasaTable = CasaToolGenerator.CreateTable
+CreateCasaImageAnalysis = CasaToolGenerator.CreateImageAnalysis
+CreateCasaCoordSys = CasaToolGenerator.CreateCoordSys
+CreateCasaMeasure = CasaToolGenerator.CreateMeasure
+CreateCasaQuantity = CasaToolGenerator.CreateQuantity
+
+# casa utility
+from .casatools import OpenTableForRead
+from .casatools import OpenTableForReadWrite
+from .casatools import SelectTableForRead
+from .casatools import OpenMS
+from .casatools import OpenMSMetaData
+from .casatools import OpenImage
+
