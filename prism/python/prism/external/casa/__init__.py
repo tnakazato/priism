@@ -30,6 +30,11 @@ def _get_casa_version():
                 if 'version' in casadict:
                     version_string = casadict['version']
                     break
+                elif 'build' in casadict:
+                    buildinfo = casadict['build']
+                    if 'version' in buildinfo:
+                        version_string = buildinfo['version']
+                        break
     except:
         version_string = 'NONE'
     #print(version_string)
@@ -53,3 +58,8 @@ def _get_casa_version():
     return CASAVersion(major=major, minor=minor, patch=patch, build=build)
 
 casa_version = _get_casa_version()
+
+if casa_version.major < 0:
+    print('WARNING: CASA tools/tasks is not available. prism.alma will not work.')
+elif casa_version.major < 5:
+    print('WARNING: CASA version should be 5.0.0 or higher. prism.alma will not work.')
