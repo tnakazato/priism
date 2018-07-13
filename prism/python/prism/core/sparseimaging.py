@@ -17,6 +17,14 @@ def exec_line(f, varname):
     val = locals()[varname]
     #print '{0} = {1}'.format(varname, val)
     return val
+
+def __shift_with(n, iarr, shift_term, inplace=True):
+    if inplace:
+        ret = iarr
+    else:
+        ret = numpy.zeros_like(iarr)
+    ret = (iarr + shift_term) % n
+    return ret
     
 def shift_uvindex(n, iarr, inplace=True):
     """
@@ -35,12 +43,7 @@ def shift_uvindex(n, iarr, inplace=True):
     inplace --- if True, iarr is edited instead to prepare output array
     """
     shift_term = n // 2
-    if inplace:
-        ret = iarr
-    else:
-        ret = numpy.zeros_like(iarr)
-    ret = (iarr + shift_term) % n
-    return ret
+    return __shift_with(n, iarr, shift_term, inplace)
 
 def rshift_uvindex(n, iarr, inplace=True):
     """
@@ -59,13 +62,7 @@ def rshift_uvindex(n, iarr, inplace=True):
     inplace --- if True, iarr is edited instead to prepare output array
     """
     shift_term = n // 2 + (n % 2)
-    if inplace:
-        ret = iarr
-    else:
-        ret = numpy.zeros_like(iarr)
-    ret = (iarr + shift_term) % n
-    return ret
-    
+    return __shift_with(n, iarr, shift_term, inplace)    
     
 
 class SparseImagingInputs(CTypesUtilMixIn):
