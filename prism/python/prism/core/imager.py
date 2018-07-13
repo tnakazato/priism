@@ -18,6 +18,7 @@ from . import datacontainer
 from . import paramcontainer
 from . import mfista
 from . import cv
+from . import sparseimaging
 
 class SparseModelingImager(object):
     """
@@ -136,6 +137,119 @@ class SparseModelingImager(object):
         assert griddedvis is not None
         self.solver.mfistaparam = mfistaparam
         return self.solver.solve(griddedvis, storeinitialimage, overwriteinitialimage)
+    
+    def importvis(self, data=None, weight=None, filename=None, flipped=False, uvgrid=None):
+        """
+        Import visibility data. Users can provide visibility data either as numpy array 
+        (data and weight) or as filename that stores visibility data in a specified format.
+        Either data or filename should be specified. If both are specified, filename takes 
+        priority.
+        
+        Parameters:
+            data     -- Visibility data as numpy complex array. Its shape must effectively 
+                        be two-dimensional (nv, nu). For unflipped array, total power component
+                        (0,0) must be located at (nv//2, nu//2). For flipped array, order of 
+                        the array elements follows convention of FFTW3 library. 
+                        Additional axes (spectral and stokes) may be added but their length 
+                        must be 1. 
+            weight   -- Visibility weight (inverse square of sigma) as numpy array. Array 
+                        type can be either float or complex. If complex array is given, 
+                        its real part is interpreted as a weight for real part of the 
+                        visibility while the imaginary part is a weight for imaginary part. 
+                        Array shape must conform with data. None is also acceptable. 
+                        In this case, equal weight (1.0) will be applied to all visibilities.
+            filename -- Name of the file that stores visibility data and weights. Format 
+                        should be as follows:
+                        
+                        TODO
+                        
+                        
+            flipped  -- Whether or not given data and weight are flipped for FFT.
+            uvgrid   -- (Optional) Configuration of uv grid as a UVGridConfig instance.
+        """
+        if data is None and filename is None:
+            raise RuntimeError('data or filename must be specified')
+        
+        if filename is not None:
+            # filename is specified. read it.
+            inputs = sparseimaging.SparseImagingInputs.from_file(filename)
+            realdata = numpy.zeros((inputs.ny, inputs.nx, 1, 1), dtype=numpy.float)
+            imagdata = numpy.zeros_like(realdata)
+            realweight = numpy.zeros_like(realdata)
+            for i in range(inputs.m):
+                realdata[inputs.v[i], inputs.u[i], 0, 0] = inputs.yreal[i]
+                imagdata[inputs.v[i], inputs.u[i], 0, 0] = inputs.yimag[i]
+                squared_noise = inputs.noise[i] * inputs.noise[i]
+                realweight[inputs.v[i], inputs.u[i], 0, 0] = 1 / squared_noise
+            imagweight = None
+            default_nu = inputs.nx
+            default_nv = inputs.ny
+        else:
+            datashape = data.shape
+            default_nu = datashape[1]
+            default_nv = datashape[0]
+            if weight is None:
+                # use default weight (all 1.0)
+                weight = numpy.ones(datashape, dtype=numpy.float32)
+                
+            weightshape = weight.shape
+            if datashape != weightshape:
+                raise RuntimeError('Array shape of weight must conform with that of data.')
+            
+            if len(datashape) == 2:
+                newdata = numpy.expand_dims(numpy.expand_dims(data, axis=-1), axis=-1)
+                newweight = numpy.reshape(weight, newdata.shape)
+            elif len(datashape) == 3:
+                if datashape[2] > 1:
+                    raise RuntimeError('Invalid array shape {}'.format(list(datashape)))
+                newdata = numpy.expand_dims(data, axis=-1)
+                newweight = numpy.reshape(weight, newdata.shape)
+            elif len(datashape) == 4:
+                if datashape[2] > 1 or datashape[3] > 1:
+                    raise RuntimeError('Invalid array shape {}'.format(list(datashape)))
+                newdata = data
+                newweight = weight
+            else:
+                raise RuntimeError('Invalid array shape {}'.format(list(datashape)))
+            
+            if newdata.dtype not in (numpy.complex, complex):
+                raise TypeError('data must be float complex array')
+            
+            realdata = newdata.real
+            imagdata = newdata.imag
+            
+            if newweight.dtype not in (numpy.float32, numpy.float, float, numpy.complex, complex):
+                raise TypeError('weight must be float or float complex array')
+                
+            if newweight.dtype in (numpy.float32, numpy.float, float):
+                realweight = newweight
+                imagweight = None
+            else:
+                realweight = newweight.real
+                imagweight = newweight.imag
+            
+        # flip back operation if necessary
+        if flipped == True:
+            realdata = numpy.fft.fftshift(realdata)
+            imagdata = numpy.fft.fftshift(imagdata)
+            realweight = numpy.fft.fftshift(realweight)
+            if imagweight is not None:
+                imagweight = numpy.fft.fftshift(imagweight)
+            
+        self.griddedvis = datacontainer.GriddedVisibilityStorage(grid_real=realdata,
+                                                                 grid_imag=imagdata,
+                                                                 wgrid_real=realweight,
+                                                                 wgrid_imag=imagweight)
+        
+        if uvgrid is not None:
+            self.uvgridconfig = uvgrid
+        else:
+            # default grid configuration
+            nv = default_nv#datashape[0]
+            nu = default_nu#datashape[1]
+            cell = 1.0
+            self.uvgridconfig = datacontainer.UVGridConfig(cellu=cell, cellv=cell, 
+                                                           nu=nu, nv=nv)
     
     def exportimage(self, imagename, overwrite=False):
         """
@@ -363,7 +477,7 @@ class SparseModelingImager(object):
             return -1.0
         
         subset_handler = cv.GriddedVisibilitySubsetHandler(self.visset, 
-                                                             self.uvgridconfig)
+                                                           self.uvgridconfig)
         
         for i in range(num_fold):
             # pick up subset for cross validation

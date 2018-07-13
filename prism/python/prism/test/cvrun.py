@@ -5,6 +5,7 @@ except ImportError:
     import pickle
 
 import prism.alma
+import prism.core.sparseimaging as sparseimaging
 
 start_time = time.time()
 
@@ -49,10 +50,6 @@ worker.cvforgridvis(L1_list, Ltsv_list, num_fold=num_fold,
 end_time = time.time()
 print('{0}: elapsed {1} sec'.format('cvrun.py', end_time-start_time))
 
-# export griddedvis and uvgridconfig for non-CASA test
-with open('griddedvis.pickle', 'w') as f:
-    pickle.dump(worker.griddedvis, f)
-
-with open('uvgridconfig.pickle', 'w') as f:
-    pickle.dump(worker.uvgridconfig, f)
-
+# export griddedvis for non-CASA test
+inputs = sparseimaging.SparseImagingInputs.from_gridder_result(worker.griddedvis)
+inputs.export('griddedvis.dat')

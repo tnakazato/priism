@@ -6,21 +6,13 @@ except ImportError:
 
 import prism
 
-# load pickled objects 
-with open('griddedvis.pickle', 'rb') as f:
-    griddedvis = pickle.load(f)
-
-with open('uvgridconfig.pickle', 'rb') as f:
-    uvgridconfig = pickle.load(f)
-
 start_time = time.time()
 
 # instantiate
 worker = prism.SparseModelingImager(solver_name='sparseimaging')
 
-# set necessary data to worker
-worker.griddedvis = griddedvis
-worker.uvgridconfig = uvgridconfig
+# import visibility data
+worker.importvis(filename='griddedvis.dat', flipped=True)
 
 # mfista
 L1_list = [1e0, 1e2, 1e4, 1e6, 1e7, 1e8]
