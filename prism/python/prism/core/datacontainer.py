@@ -46,7 +46,23 @@ class UVGridConfig(paramcontainer.ParamContainer):
     """
     Class to hold grid configuration on u-v plane
     """
-    def __init__(self, cellu, cellv, nu, nv, offsetu, offsetv):
+    @property
+    def offsetu(self):
+        return self._offsetu if self._offsetu is not None else self.nu // 2
+    
+    @offsetu.setter
+    def offsetu(self, value):
+        self._offsetu = value
+        
+    @property
+    def offsetv(self):
+        return self._offsetv if self._offsetv is not None else self.nv // 2
+    
+    @offsetv.setter
+    def offsetv(self, value):
+        self._offsetv = value
+        
+    def __init__(self, cellu, cellv, nu, nv, offsetu=None, offsetv=None):
         self.InitContainer(locals())
         
 
