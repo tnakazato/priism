@@ -30,6 +30,8 @@ class VisibilityConverter(object):
         self.visparam = visparam
         self.imageparam = imageparam
         
+        self._warn_refocus()
+        
         self.inspect_data()
         
     def _to_stokesI(self, data_in, flag_in, weight_in, weight_factor,
@@ -459,7 +461,7 @@ class VisibilityConverter(object):
         """
         phasecenter = self.imageparam.phasecenter
         self._check_phasecenter(phasecenter)
-        self._warn_refocus()
+        #self._warn_refocus()
         
         qa = casa.CreateCasaQuantity()
         speed_of_light = qa.constants('c')
