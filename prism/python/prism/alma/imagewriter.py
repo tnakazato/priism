@@ -79,6 +79,8 @@ class ImageWriter(object):
         q2s = lambda x: '{0} {1}'.format(x['value'], x['unit'])
         srefval = list(map(q2s, [center['m0'], center['m1']]))
         incr = list(map(qa.quantity, self.imageparam.cell))
+        # increment of horizontal axis should be negative
+        incr[0] = qa.mul(-1.0, incr[0])
         sincr = list(map(q2s, incr))
         projection = self.imageparam.projection
         print('DEBUG refpix={0}, refval={1}'.format(refpix, refval))

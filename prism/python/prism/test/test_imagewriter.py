@@ -96,7 +96,7 @@ class ImageWriterTest(utils.TestBase):
             eps = 1.0e-11
             self.assertClose(refval[0], center_x, eps)
             self.assertClose(refval[1], center_y, eps)
-            cellx = qa.convert(qa.quantity(imageparam.cell[0]), 'rad')['value']
+            cellx = -qa.convert(qa.quantity(imageparam.cell[0]), 'rad')['value']
             celly = qa.convert(qa.quantity(imageparam.cell[1]), 'rad')['value']
             #print cellx, celly
             self.assertClose(incr[0], cellx, eps)
