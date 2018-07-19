@@ -1,58 +1,58 @@
 cmake_minimum_required(VERSION 2.8)
 
-message(STATUS "Entering prism subdirectory...")
+message(STATUS "Entering priism subdirectory...")
 
-install(FILES prism/__init__.py
-        DESTINATION prism)
+install(FILES priism/__init__.py
+        DESTINATION priism)
         
 install(FILES 
-        prism/core/__init__.py
-        prism/core/cv.py
-        prism/core/datacontainer.py
-        prism/core/imager.py
-        prism/core/mfista.py
-        prism/core/paramcontainer.py
-        prism/core/sparseimaging.py
-        prism/core/util.py
-        DESTINATION prism/core)
+        priism/core/__init__.py
+        priism/core/cv.py
+        priism/core/datacontainer.py
+        priism/core/imager.py
+        priism/core/mfista.py
+        priism/core/paramcontainer.py
+        priism/core/sparseimaging.py
+        priism/core/util.py
+        DESTINATION priism/core)
         
 install(FILES
-        prism/alma/__init__.py
-        prism/alma/gridder.py
-        prism/alma/imager.py
-        prism/alma/imagewriter.py
-        prism/alma/paramcontainer.py
-        prism/alma/util.py
-        prism/alma/visconverter.py
-        prism/alma/visreader.py
-        DESTINATION prism/alma)
+        priism/alma/__init__.py
+        priism/alma/gridder.py
+        priism/alma/imager.py
+        priism/alma/imagewriter.py
+        priism/alma/paramcontainer.py
+        priism/alma/util.py
+        priism/alma/visconverter.py
+        priism/alma/visreader.py
+        DESTINATION priism/alma)
         
-install(FILES prism/external/__init__.py
-        DESTINATION prism/external)
-        
-install(FILES
-        prism/external/casa/__init__.py
-        prism/external/casa/casa_atexit.py
-        prism/external/casa/casatools.py
-        DESTINATION prism/external/casa)
+install(FILES priism/external/__init__.py
+        DESTINATION priism/external)
         
 install(FILES
-        prism/external/sakura/__init__.py
-        prism/external/sakura/allocator.py
-        prism/external/sakura/core.py
-        prism/external/sakura/reductionhelper.py
-        DESTINATION prism/external/sakura)
+        priism/external/casa/__init__.py
+        priism/external/casa/casa_atexit.py
+        priism/external/casa/casatools.py
+        DESTINATION priism/external/casa)
+        
+install(FILES
+        priism/external/sakura/__init__.py
+        priism/external/sakura/allocator.py
+        priism/external/sakura/core.py
+        priism/external/sakura/reductionhelper.py
+        DESTINATION priism/external/sakura)
 
 install(FILES
-        prism/test/__init__.py
-        #prism/test/demo.py
-        prism/test/cvrun.py
-        prism/test/cvrun_core.py
-        prism/test/runtest.py
-        prism/test/test_gridder.py
-        prism/test/test_imagewriter.py
-        prism/test/test_util.py
-        prism/test/test_visconverter.py
-        prism/test/test_visreader.py
-        prism/test/utils.py
-        DESTINATION prism/test)
+        priism/test/__init__.py
+        #priism/test/demo.py
+        priism/test/cvrun.py
+        priism/test/cvrun_core.py
+        priism/test/runtest.py
+        priism/test/test_gridder.py
+        priism/test/test_imagewriter.py
+        priism/test/test_util.py
+        priism/test/test_visconverter.py
+        priism/test/test_visreader.py
+        priism/test/utils.py
+        DESTINATION priism/test)
