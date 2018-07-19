@@ -5,7 +5,6 @@ except ImportError:
     import pickle
 
 import priism.alma
-import priism.core.sparseimaging as sparseimaging
 
 start_time = time.time()
 
@@ -51,5 +50,7 @@ end_time = time.time()
 print('{0}: elapsed {1} sec'.format('cvrun.py', end_time-start_time))
 
 # export griddedvis for non-CASA test
-inputs = sparseimaging.SparseImagingInputs.from_gridder_result(worker.griddedvis)
-inputs.export('griddedvis.dat')
+#import priism.core.sparseimaging as sparseimaging
+#inputs = sparseimaging.SparseImagingInputs.from_gridder_result(worker.griddedvis)
+#inputs.export('griddedvis.dat')
+worker.griddedvis.exportdata('griddedvis.dat')
