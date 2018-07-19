@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import print_function
 
 import os
 import shutil
@@ -11,6 +12,13 @@ import time
 
 from . import paramcontainer
 
+def exec_line(f, varname):
+    line = f.readline()
+    exec(line.rstrip('\n'))
+    val = locals()[varname]
+    #print '{0} = {1}'.format(varname, val)
+    return val
+
 class GriddedVisibilityStorage(object):
     """
     Class to hold gridder result
@@ -18,6 +26,47 @@ class GriddedVisibilityStorage(object):
     expected array shape for grid_real and grid_imag is 
     (nv, nu, npol, nchan)
     """
+    @classmethod
+    def importdata(cls, filename):
+        with open(filename, 'r') as f:
+            # read M
+            M = exec_line(f, 'M')
+            
+            # read NX
+            NX = exec_line(f, 'NX')
+            
+            # read NY
+            NY = exec_line(f, 'NY')
+            
+            # skip headers
+            f.readline()
+            f.readline()
+            f.readline()
+            
+            # read input data
+            grid_shape = (NY, NX, 1, 1,)
+            yreal = numpy.zeros(grid_shape, dtype=numpy.float64)
+            yimag = numpy.zeros_like(yreal)
+            weight = numpy.zeros_like(yreal)
+            #u = numpy.empty(M, dtype=numpy.int32)
+            #v = numpy.empty_like(u)
+            #yreal = numpy.empty(M, dtype=numpy.double)
+            #yimag = numpy.empty_like(yreal)
+            #noise = numpy.empty_like(yreal)
+            for i in range(M):
+                line = f.readline()
+                values = line.split(',')
+                u = numpy.int32(values[0].strip())
+                v = numpy.int32(values[1].strip())
+                yreal[v, u, 0, 0] = numpy.double(values[2].strip())
+                yimag[v, u, 0, 0] = numpy.double(values[3].strip())
+                noise = numpy.double(values[4].strip())
+                weight[v, u, 0, 0] = 1 / (noise * noise)
+                #print '{0} {1} {2} {3}'.format(u[i], v[i], yreal[i], yimag[i], noise[i])
+                
+            storage = cls(yreal, yimag, weight)
+            return storage
+        
     def __init__(self, grid_real, grid_imag, wgrid_real, wgrid_imag=None, num_ws=None):
         self.real = grid_real
         self.imag = grid_imag
@@ -30,6 +79,29 @@ class GriddedVisibilityStorage(object):
         
         # number of ws that are accumulated onto grid
         self.num_ws = num_ws if num_ws is not None else 0
+        
+    def exportdata(self, filename):
+        nonzeros = numpy.where(self.wreal != 0.0)
+        m = len(nonzeros[0])
+        nx = self.shape[1]
+        ny = self.shape[0]
+        with open(filename, 'w') as f:
+            print('M = {0}'.format(m), file=f)
+            print('NX = {0}'.format(nx), file=f)
+            print('NY = {0}'.format(ny), file=f)
+            print('', file=f)
+            print('u, v, y_r, y_i, noise_std_dev', file=f)
+            print('', file=f)
+            for i in range(m):
+                u = nonzeros[1][i]
+                v = nonzeros[0][i]
+                noise = 1 / math.sqrt(self.wreal[v, u, 0, 0])
+                print('{0}, {1}, {2:e}, {3:e}, {4:e}'.format(u, 
+                                                             v,
+                                                             self.real[v, u, 0, 0],
+                                                             self.imag[v, u, 0, 0],
+                                                             noise), file=f)
+        
 
 
 class ResultingImageStorage(object):
