@@ -4,10 +4,10 @@ import unittest
 import numpy
 import os
 
-import prism.alma.paramcontainer as paramcontainer
-import prism.alma.imagewriter as imagewriter
-import prism.external.casa as casa
-import prism.test.utils as utils
+import priism.alma.paramcontainer as paramcontainer
+import priism.alma.imagewriter as imagewriter
+import priism.external.casa as casa
+import priism.test.utils as utils
 
 class ImageWriterTest(utils.TestBase):
     """

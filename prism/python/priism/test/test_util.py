@@ -3,7 +3,7 @@ from __future__ import absolute_import
 import unittest
 import numpy
 
-import prism.alma.util as util
+import priism.alma.util as util
 from . import utils as testutils
 
 class RandomIndexGeneratorTest(unittest.TestCase):

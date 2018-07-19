@@ -6,8 +6,8 @@ import scipy.interpolate as interpolate
 import re
 
 from . import gridder
-import prism.external.casa as casa
-import prism.external.sakura as sakura
+import priism.external.casa as casa
+import priism.external.sakura as sakura
 
 class VisibilityConverter(object):
     """

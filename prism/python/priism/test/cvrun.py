@@ -4,13 +4,13 @@ try:
 except ImportError:
     import pickle
 
-import prism.alma
-import prism.core.sparseimaging as sparseimaging
+import priism.alma
+import priism.core.sparseimaging as sparseimaging
 
 start_time = time.time()
 
 # instantiate
-worker = prism.alma.AlmaSparseModelingImager(solver_name='sparseimaging')
+worker = priism.alma.AlmaSparseModelingImager(solver_name='sparseimaging')
 
 # select data
 worker.selectdata(vis='cyc3_hd142527_selfcal.ms',

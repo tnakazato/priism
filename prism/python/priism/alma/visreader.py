@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 from . import paramcontainer
 from . import visconverter
-import prism.external.casa as casa
+import priism.external.casa as casa
 
 class VisibilityReader(object):
     def __method_name(self, basename):

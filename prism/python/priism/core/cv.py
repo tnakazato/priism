@@ -6,7 +6,7 @@ import contextlib
 
 from . import datacontainer
 from . import util
-import prism.external.sakura as sakura
+import priism.external.sakura as sakura
 
 class VisibilitySubsetGenerator(object):
     def __init__(self, griddedvis, num_fold=10):

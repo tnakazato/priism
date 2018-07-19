@@ -5,11 +5,11 @@ import os
 import shutil
 import time
 
-import prism.alma.paramcontainer as paramcontainer
-import prism.alma.visreader as visreader
-import prism.alma.visconverter as visconverter
-import prism.external.casa as casa
-import prism.external.sakura as sakura
+import priism.alma.paramcontainer as paramcontainer
+import priism.alma.visreader as visreader
+import priism.alma.visconverter as visconverter
+import priism.external.casa as casa
+import priism.external.sakura as sakura
 from . import utils
 
 class VisibilityConverterTest(utils.TestBase):

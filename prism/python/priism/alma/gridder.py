@@ -2,11 +2,11 @@ from __future__ import absolute_import
 
 import numpy
 
-import prism.core.util as util
-import prism.core.paramcontainer as paramcontainer
-import prism.core.datacontainer as datacontainer
-import prism.external.casa as casa
-import prism.external.sakura as sakura
+import priism.core.util as util
+import priism.core.paramcontainer as paramcontainer
+import priism.core.datacontainer as datacontainer
+import priism.external.casa as casa
+import priism.external.sakura as sakura
 
 class GridderWorkingSet(paramcontainer.ParamContainer):
     """

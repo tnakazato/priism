@@ -4,12 +4,12 @@ try:
 except ImportError:
     import pickle
 
-import prism
+import priism
 
 start_time = time.time()
 
 # instantiate
-worker = prism.SparseModelingImager(solver_name='sparseimaging')
+worker = priism.SparseModelingImager(solver_name='sparseimaging')
 
 # import visibility data
 worker.importvis(filename='griddedvis.dat', flipped=True)

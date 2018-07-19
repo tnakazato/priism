@@ -4,7 +4,7 @@ import numpy
 import os
 
 from . import paramcontainer
-import prism.external.casa as casa
+import priism.external.casa as casa
 
 class ImageWriter(object):
     """

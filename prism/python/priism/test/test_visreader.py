@@ -5,9 +5,9 @@ import numpy
 import os
 import shutil
 
-import prism.alma.paramcontainer as paramcontainer
-import prism.alma.visreader as visreader
-import prism.external.casa as casa
+import priism.alma.paramcontainer as paramcontainer
+import priism.alma.visreader as visreader
+import priism.external.casa as casa
 from . import utils
 
 class VisibilityReaderTest(utils.TestBase):

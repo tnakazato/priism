@@ -5,9 +5,9 @@ import numpy
 import itertools
 
 #import prism..core as core
-import prism.alma.paramcontainer as paramcontainer
-import prism.alma.gridder as almagridder
-import prism.external.sakura as sakura
+import priism.alma.paramcontainer as paramcontainer
+import priism.alma.gridder as almagridder
+import priism.external.sakura as sakura
 from . import utils
 
 class GridderTest(utils.TestBase):
