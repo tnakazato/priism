@@ -12,7 +12,7 @@ start_time = time.time()
 worker = priism.SparseModelingImager(solver_name='sparseimaging')
 
 # import visibility data
-worker.importvis(filename='griddedvis.dat', flipped=True)
+worker.importvis(filename='griddedvis.dat', flipped=False)
 
 # mfista
 L1_list = [1e0, 1e2, 1e4, 1e6, 1e7, 1e8]
