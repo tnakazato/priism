@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 
-project(prism)
+project(priism)
 
 # download sparseimaging
 set(SPARSEIMAGING_DIR sparseimaging)
@@ -80,28 +80,28 @@ if(OPENBLAS_LIBRARY_DIR)
                   COMMAND sed -e "s@^CFLAGS=-O2@CFLAGS=-O2 -I${FFTW3_INCLUDE_DIR}@g"
                   COMMAND sed -e "s@-lrt @@g"
                   COMMAND sed -e "s@^CLIBS_FFTW = @CLIBS_FFTW = -L${FFTW3_LIBRARY_DIR} @g"
-                  OUTPUT_FILE makefile.prism
+                  OUTPUT_FILE makefile.priism
                   WORKING_DIRECTORY ${SPARSEIMAGING_BUILD_DIR})
 else()
   execute_process(COMMAND sed -e "s@CFLAGS=-O2@CFLAGS=-O2 -I${FFTW3_INCLUDE_DIR}@g" makefile
                   COMMAND sed -e "s@-lrt @@g"
                   COMMAND sed -e "s@^CLIBS_FFTW = @CLIBS_FFTW = -L${FFTW3_LIBRARY_DIR} @g"
-                  OUTPUT_FILE makefile.prism
+                  OUTPUT_FILE makefile.priism
                   WORKING_DIRECTORY ${SPARSEIMAGING_BUILD_DIR})
 endif()
 
 # configure compile of sparseimaging to generate libmfista_fft.so
-add_custom_target(sparseimaging make -f makefile.prism libmfista_fft
+add_custom_target(sparseimaging make -f makefile.priism libmfista_fft
                   WORKING_DIRECTORY ${SPARSEIMAGING_BUILD_DIR})             
 
-# add prism module
+# add priism module
 add_subdirectory(python)
-add_custom_target(prism ALL echo ""
+add_custom_target(priism ALL echo ""
                   DEPENDS sakura sparseimaging)
 
 # install libmfista_fft.so
 install(PROGRAMS ${SPARSEIMAGING_BUILD_DIR}/libmfista_fft.so
-        DESTINATION prism/core)
+        DESTINATION priism/core)
 
 # clean_all 
 # clean_all will execute "make clean" as well as removing all downloaded files
