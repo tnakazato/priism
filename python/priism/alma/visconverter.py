@@ -5,9 +5,9 @@ import numpy
 import scipy.interpolate as interpolate
 import re
 
-from . import gridder
 import priism.external.casa as casa
 import priism.external.sakura as sakura
+from . import gridder
 
 class VisibilityConverter(object):
     """
@@ -306,10 +306,10 @@ class VisibilityConverter(object):
                     qa.add(qstart, qa.mul(qwidth, ichan)),
                     'Hz')['value']
             image_width = qa.convert(qwidth, 'Hz')['value']
-        elif match_width(wavelength_pattern):
+        elif match_with(wavelength_pattern):
             # wavelength selection -- not supported yet
             raise NotImplementedError('wavelength selection is not implemented yet')
-        elif match_width(velocity_pattern):
+        elif match_with(velocity_pattern):
             # velocity selection -- not supported yet
             raise NotImplementedError('velocity selection is not implemented yet')
         else:

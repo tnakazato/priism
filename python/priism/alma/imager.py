@@ -9,10 +9,6 @@ import pylab as pl
 import matplotlib
 import time
 
-# import almasparsemodeling.external.sakura as sakura
-# import almasparsemodeling.core as core
-# import almasparsemodeling.external.casa as casa
-
 from . import paramcontainer
 from . import gridder
 from . import visreader
