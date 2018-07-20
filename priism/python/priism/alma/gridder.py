@@ -5,7 +5,7 @@ import numpy
 import priism.core.util as util
 import priism.core.paramcontainer as paramcontainer
 import priism.core.datacontainer as datacontainer
-import priism.external.casa as casa
+#import priism.external.casa as casa
 import priism.external.sakura as sakura
 
 class GridderWorkingSet(paramcontainer.ParamContainer):

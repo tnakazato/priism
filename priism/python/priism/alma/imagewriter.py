@@ -3,8 +3,8 @@ from __future__ import absolute_import
 import numpy
 import os
 
-from . import paramcontainer
 import priism.external.casa as casa
+from . import paramcontainer
 
 class ImageWriter(object):
     """
@@ -172,5 +172,5 @@ def parse_phasecenter(phasecenter_str):
             raise ValueError('Invalid phasecenter: "{0}"'.format(phasecenter_str))
     
     #print 'DEBUG rf={0} lon={1} lat={2}'.format(ref, lon, lat)
-    dir = me.direction(rf=ref, v0=lon, v1=lat)
-    return dir
+    direction = me.direction(rf=ref, v0=lon, v1=lat)
+    return direction

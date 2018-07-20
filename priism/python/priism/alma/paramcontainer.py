@@ -1,9 +1,6 @@
 from __future__ import absolute_import
 
-#import collections
-
 import priism.external.casa as casa
-
 import priism.core.paramcontainer as base_container
 import priism.core.datacontainer as datacontainer
                 
