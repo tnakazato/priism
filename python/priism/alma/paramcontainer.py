@@ -167,10 +167,6 @@ class ImageParamContainer(base_container.ParamContainer):
             # is even (which causes offset value to be non-integer)
             offsetu = int(nu) // 2 # make sure integer operation
             offsetv = int(nv) // 2 # make sure integer operation
-#             UVGridConfig = collections.namedtuple('UVGridCondig', 
-#                                                   ['cellu', 'cellv',
-#                                                    'nu', 'nv',
-#                                                    'offsetu', 'offsetv'])
             self._uvgridconfig = datacontainer.UVGridConfig(cellu=cellu,
                                                             cellv=cellv,
                                                             nu=nu,

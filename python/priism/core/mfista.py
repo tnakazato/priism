@@ -2,8 +2,6 @@ from __future__ import absolute_import
 
 import numpy
 
-# import almasparsemodeling.external.sakura as sakura
-# import almasparsemodeling.external.sparseimaging as pysparseimaging
 from . import sparseimaging
 
 class MfistaSolverBase(object):
