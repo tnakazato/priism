@@ -511,14 +511,14 @@ class VisibilityConverter(object):
             #        .|
             #        .|
             #        .|
-            # (nv-1)/2|           (0,0)
+            #     nv/2|           (0,0)
             #        .|
             #        .|
             #        2|
             #        1|
             #        0|(umin,vmin)      (umax,vmin)
             #         |__________________________
-            #          0 1 2 ...(nu-1)/2...nu-1 u
+            #          0 1 2 ......nu/2...nu-1 u
             u[irow] = u[irow] / delta_u + offset_u
             v[irow] = v[irow] / delta_v + offset_v
             
