@@ -14,12 +14,7 @@ class ImageWriter(object):
     def phase_direction_for_field(vis, field_id):
         with casa.OpenMSMetaData(vis) as msmd:
             pdir = msmd.phasecenter(field_id)
-        qa = casa.CreateCasaQuantity()
-        ra = qa.formxxx(pdir['m0'], 'hms')
-        dec = qa.formxxx(pdir['m1'], 'dms')
-        phase_direction = '{0} {1} {2}'.format(ra, dec, pdir['refer'])
-        
-        return phase_direction
+        return pdir
     
     @staticmethod
     def frequency_setup_for_spw(vis, spw_id, chan):
@@ -70,10 +65,10 @@ class ImageWriter(object):
         c = csys.newcoordsys(direction=True, spectral=True, stokes=self.imageparam.stokes)
         
         # direction coordinate
-        phasecenter = parse_phasecenter(self.imageparam.phasecenter)
+        phasecenter = self.imageparam.phasecenter
         print('DEBUG phasecenter={0}'.format(phasecenter))
         refframe = me.getref(phasecenter)
-        refpix = [0.5 * (x - 1) for x in self.imageparam.imsize]
+        refpix = [int(x) // 2 for x in self.imageparam.imsize]
         center = me.getvalue(phasecenter)
         refval = [center['m0']['value'], center['m1']['value']]
         q2s = lambda x: '{0} {1}'.format(x['value'], x['unit'])

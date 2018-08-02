@@ -195,6 +195,21 @@ class ImageParamContainer(object):
                                               offsetv=offsetv)
         return self._uvgridconfig
 
+    @property
+    def phasecenter_string(self):
+        value = ''
+        me = casa.CreateCasaMeasure()
+        if isinstance(self.phasecenter, str):
+            value = self.phasecenter
+        elif me.ismeasure(self.phasecenter):
+            qa = casa.CreateCasaQuantity()
+            ra = qa.formxxx(pdir['m0'], 'hms', prec=8)
+            dec = qa.formxxx(pdir['m1'], 'dms', prec=8)
+            phase_direction = '{0} {1} {2}'.format(ra, dec, pdir['refer'])
+            value = phase_direction
+        else:
+            value = str(self.phasecenter)
+        return value
             
 class ImageMetaInfoContainer(object):
     @staticmethod
