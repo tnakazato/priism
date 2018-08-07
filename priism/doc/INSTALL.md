@@ -88,20 +88,6 @@ available.
 PRIISM for ALMA (`priism.alma`) is supposed to run on CASA. If you want to 
 use `priism.alma`, CASA 5.0 or higher must be available.
 
----
-**NOTE**
-
-If network connection is not available, you need to obtain these 
-files by yourself and put them to the prescribed location. 
-Please see Installing section for detail.
-
-In case if you need to download files by hand, links below might be useful: 
-* Sakura library: [https://alma-intweb.mtk.nao.ac.jp/~nakazato/libsakura/libsakura-5.0.0.tgz](https://alma-intweb.mtk.nao.ac.jp/~nakazato/libsakura/libsakura-5.0.0.tgz)
-* googletest: [https://github.com/google/googletest/archive/master.zip](https://github.com/google/googletest/archive/master.zip)
-* sparseimaging library: [https://github.com/ikeda46/sparseimaging/archive/development.zip](https://github.com/ikeda46/sparseimaging/archive/development.zip)
-
----
-
 In addition to the dependency on PRIISM, there are several prerequisites from 
 Sakura and sparseimaging libraries. Sakura depends on FFTW3 and Eigen3 while 
 sparseimaging depends on FFTW3 and OpenBLAS. These libraries should be available.
@@ -196,8 +182,14 @@ There are various customization options for cmake. Please see cmake documentatio
 **NOTE**
 
 Usually, cmake will download source code for Sakura (+googletest) and sparseimaging. 
-If it doesn't happen, you need to obtain the source code from the link listed in the "Prerequisites" section. 
-Downloaded files should be put in the "build" directory. For example,
+If network connection is not available, you need to obtain these files by yourself.
+
+In case if you need to download files by hand, links below might be useful: 
+* Sakura library: [https://alma-intweb.mtk.nao.ac.jp/~nakazato/libsakura/libsakura-5.0.0.tgz](https://alma-intweb.mtk.nao.ac.jp/~nakazato/libsakura/libsakura-5.0.0.tgz)
+* googletest: [https://github.com/google/googletest/archive/master.zip](https://github.com/google/googletest/archive/master.zip)
+* sparseimaging library: [https://github.com/ikeda46/sparseimaging/archive/development.zip](https://github.com/ikeda46/sparseimaging/archive/development.zip)
+
+Downloaded files should be put under the "build" directory. For example,
 
     cd somewhere/network/is/available
     curl -L -O https://alma-intweb.mtk.nao.ac.jp/~nakazato/libsakura/libsakura-5.0.0.tgz
