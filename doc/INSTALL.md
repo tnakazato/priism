@@ -2,7 +2,7 @@
 
 ## Overview
 
-PRIISM is an imaging tool for radio interferometry based on sparse modeling technique. 
+PRIISM is an imaging tool for radio interferometry based on the sparse modeling technique. 
 It is implemented as a Python module so that it is able to work on various types of platforms.
 
 PRIISM is not only able to generate an image but also able to choose the best image from the 
@@ -12,25 +12,29 @@ by providing the visibility data with some configuration parameters.
 PRIISM consists of two submodules: `priism.core` and `priism.alma`. The former is generic module 
 that provides primitive interface to handle various types of data format while the latter is dedicated 
 module for processing ALMA data which is supposed to be working on CASA. 
-For `priism.core`, any visibility data must be converted to Numpy array before being fed to the module. 
-Output image is also in the form of Numpy array. 
+For `priism.core`, any visibility data must be converted to NumPy array before being fed to the module. 
+Output image is also in the form of NumPy array. 
 On the other hand, `priism.alma` accepts the visibility data as the MeasurementSet (MS) format, which is 
 data format for CASA. `priism.alma` equips some specific interface to handle data in MS format. 
 `priism.alma` first performs visibility gridding to put visibility data onto regularly spaced grid in 
-uv plane. Then the data will be processed using "core" functionality of the PRIISM (`priism.core`). 
-Finally, the output image array is exported as a FITS image with appropriate header information. 
-By using `priism.alma`, users can directly obtain the image from MS data, and they can immediately 
+uv plane. Then the output image is obtained from gridded visibility using "core" functionality of 
+the PRIISM (`priism.core`). 
+Finally, the output image, which is NumPy array, is exported as a FITS image with appropriate header 
+information. 
+By using `priism.alma`, users can directly obtain the FITS image from MS data, and they can immediately 
 analyse the result using the applications that support to process FITS images (such as CASA).
 
 PRIISM is simple to use, easy to install. There are two template script that consist of initialization, 
 configuration, and processing steps. These are dedicated for `priism.core` and `priism.alma`. 
-Scripts are so short that they are within 100 lines including comments and empty lines for readability. 
+Scripts are so short that they are within 60 lines including comments and empty lines for readability. 
 Users can use these scripts by just editing some lines according to their usage. The scripts should be 
 useful to learn how to use PRIISM interactively. 
 On install, PRIISM adopts cmake for easy install. As long as prerequisites for PRIISM are fulfilled, 
 cmake will configure your build automatically. Also, cmake provides a lot of customization options 
-so that the build suits your environment.
+to suits your environment.
 
+It is our hope that PRIISM lower the barrier to entry in the new imaging technique based on the 
+sparse modeling. 
 
 ## Supported Platform
 
@@ -69,7 +73,10 @@ prerequisites for both `priism` and CASA.
 ## Prerequisites
 
 PRIISM is built using cmake so cmake must be available. 
-PRIISM depends on Sakura and sparseimaging library for efficient processing. 
+PRIISM depends on Sakura and sparseimaging library. Sakura is for efficient 
+processing and data exchange between Python and C++ layers while the sparseimaging 
+library is the heart of the tool, which solves the problem based on the sparse 
+modeling. 
 Configuration file for PRIISM holds correct versions of these libraries and 
 download them during cmake configuration. 
 These libraries are compiled and installed with PRIISM.
@@ -131,7 +138,7 @@ The directory "priism" will be extracted.
 
 ### Building
 
-First move to the extracted directory and make "build" directory.
+First, move to the extracted directory and make "build" directory.
 
     cd priism
     mkdir build
@@ -175,8 +182,8 @@ Example: `-DPYTHON_ROOTDIR=/opt/share/casa/Release/casa-release-5.1.1-5.el7`
 **BUNDLE_CASA_APP** (macOS only)
 
 This option is a shortcut of `PYTHON_ROOTDIR` specific for macOS. 
-If it is set `ON`, cmake assumes that CASA is installed at standard location (`/Applications/CASA.app`) 
-and link to Python package associating with CASA.
+If it is set to `ON`, cmake assumes that CASA is installed at standard location (`/Applications/CASA.app`) 
+and PRIISM tries to link to Python package associating with CASA.
 Note that this option is only effective for macOS.
 
 Example: `-DBUNDLE_CASA_APP=ON`
@@ -216,7 +223,7 @@ PRIISM will now be available to the location specified by `CMAKE_INSTALL_PREFIX`
 
 ## Using PRIISM
 
-### setting PYTHONPATH
+### Setting PYTHONPATH
 First of all, you need to add following paths to `PYTHONPATH`. 
 
     <CMAKE_INSTALL_PREFIX>
@@ -228,7 +235,7 @@ and we use bash, the command to be executed is as follows.
 
     export PYTHONPATH=/usr/local/priism:/usr/local/priism/lib:$PYTHONPATH
 
-### importing module    
+### Importing module    
 Then, launch python or CASA and import appropriate module. For `priism.core`, 
 
     import priism.core as priism
@@ -243,7 +250,7 @@ will work. For `priism.alma`, you need to launch CASA.
     
 will enable you to use API for ALMA data.
 
-### template scripts
+### Template scripts
 
 In the test directory, there are two template scripts that demonstrates how to use PRIISM. 
 One is for `priism.core` while the other is for `priism.alma`.
