@@ -25,5 +25,14 @@ worker.cvforgridvis(L1_list, Ltsv_list, num_fold=num_fold,
                     summarize=True, figfile='cvresult_core.png',
                     datafile='cvresult_core.dat', maxiter=1000)
 
+# If you want to obtain the image array for a certain combination of L1 and Ltsv, 
+# commented out lines below should be useful. The first example is to iterate 
+# the loop 50000 times. The second example is to continue the process until 
+# the deviation from the previous steps becomes smaller than threshold computed 
+# from eps. Finally, output image array is stored in worker.imagearray.
+#worker.mfista(l1=1e0, ltsv=1e8, maxiter=50000)
+#worker.mfista(l1=1e0, ltsv=1e8, eps=1e-5)
+#image = worker.imagearray
+
 end_time = time.time()
 print('{0}: elapsed {1} sec'.format('cvrun_core.py', end_time-start_time))
