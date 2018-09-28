@@ -18,7 +18,7 @@ class VisibilitySubsetGenerator(object):
             # amplitude should be nonzero in active pixels
             grid_real = griddedvis.real
             grid_imag = griddedvis.imag
-            self.active_index = numpy.where(numpy.logical_and(grid_real != 0, grid_imag != 0))
+            self.active_index = numpy.where(numpy.logical_or(grid_real != 0, grid_imag != 0))
             self.num_active = len(self.active_index[0])
             print('num_active={0}'.format(self.num_active))
         
