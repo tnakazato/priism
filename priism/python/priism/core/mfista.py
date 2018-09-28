@@ -113,6 +113,9 @@ class MfistaSolverExternal(MfistaSolverBase):
             if self.initialimage is None or overwriteinitialimage:
                 self.initialimage = result.xout.copy()
         
+        # normalize resulting image
+        #self.normalize_result(inputs, result)
+        
         image = result.image
         # add degenerate axis (polarization and spectral)
         image = image.reshape((image.shape[0], image.shape[0], 1, 1))
@@ -121,6 +124,25 @@ class MfistaSolverExternal(MfistaSolverBase):
         image = numpy.fliplr(image)
 
         return image
+    
+    def normalize_result(self, vis_data, image_data):
+        """
+        Normalize resulting image according to Parseval's Theorem.
+        
+        vis_data -- input visiblity as the form of SparseImagingInputs
+        image_data -- output image as the form of SparseImagingResults
+        """
+        nx = image_data.nx
+        ny = image_data.ny
+        vis_real = vis_data.yreal
+        vis_imag = vis_data.yimag
+        img = image_data.xout
+        vis_sqsum = numpy.sum(numpy.square(vis_real)) + numpy.sum(numpy.square(vis_imag))
+        img_sqsum = numpy.sum(numpy.square(img))
+        factor = numpy.sqrt(vis_sqsum) / numpy.sqrt(nx * ny * img_sqsum)
+        print('Normalization factor is {}'.format(factor))
+        image_data.xout *= factor
+        
     
 def SolverFactory(mode='sparseimaging'):
     if mode == 'sparseimaging':
