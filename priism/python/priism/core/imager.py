@@ -357,7 +357,7 @@ class SparseModelingImager(object):
         plotter = PlotterClass(num_L1, num_Ltsv, sorted_l1_list, sorted_ltsv_list)
             
         if datafile is not None:
-            f = open('cvresult.dat', 'w')
+            f = open(datafile, 'w')
         else:
             f = open(os.devnull, 'w')
         print('# L1, Ltsv, MSE', file=f)
@@ -380,7 +380,8 @@ class SparseModelingImager(object):
                 result_Ltsv.append(Ltsv)
                 
                 # get full visibility image first
-                imagename = 'L1_{0}_Ltsv_{1}.{2}'.format(int(math.log10(L1)), int(math.log10(Ltsv)),
+                imagename = '{}_L1_{}_Ltsv_{}.{}'.format(imageprefix, 
+                                                         int(math.log10(L1)), int(math.log10(Ltsv)),
                                                          self.imagesuffix)
                 self.mfista(L1, Ltsv, maxiter=maxiter, eps=eps, clean_box=clean_box,
                             storeinitialimage=True, overwriteinitialimage=overwrite_initial)
