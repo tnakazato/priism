@@ -114,7 +114,7 @@ class MfistaSolverExternal(MfistaSolverBase):
                 self.initialimage = result.xout.copy()
         
         # normalize resulting image
-        #self.normalize_result(inputs, result)
+        self.normalize_result(inputs, result)
         
         image = result.image
         # add degenerate axis (polarization and spectral)
@@ -134,12 +134,7 @@ class MfistaSolverExternal(MfistaSolverBase):
         """
         nx = image_data.nx
         ny = image_data.ny
-        vis_real = vis_data.yreal
-        vis_imag = vis_data.yimag
-        img = image_data.xout
-        vis_sqsum = numpy.sum(numpy.square(vis_real)) + numpy.sum(numpy.square(vis_imag))
-        img_sqsum = numpy.sum(numpy.square(img))
-        factor = numpy.sqrt(vis_sqsum) / numpy.sqrt(nx * ny * img_sqsum)
+        factor = 1.0 / numpy.sqrt(nx * ny)
         print('Normalization factor is {}'.format(factor))
         image_data.xout *= factor
         
