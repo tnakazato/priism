@@ -168,11 +168,13 @@ class MeanSquareErrorEvaluator(object):
         cellv = uvgrid.cellv
         
         # Obtain visibility from image array
-        shifted_image = numpy.fft.fftshift(image[:,:,0,0])
+        image_flipped = numpy.fliplr(image[:,:,0,0])
+        shifted_image = numpy.fft.fftshift(image_flipped)
         shifted_imagefft = numpy.fft.fft2(shifted_image, norm='ortho')
         imagefft = numpy.fft.ifftshift(shifted_imagefft)
-        rmodel = numpy.flipud(imagefft.real.transpose())
-        imodel = numpy.flipud(imagefft.imag.transpose())
+        imagefft_transpose = imagefft.transpose()
+        rmodel = imagefft_transpose.real
+        imodel = imagefft_transpose.imag
         
         # Compute MSE
         mse = 0.0
