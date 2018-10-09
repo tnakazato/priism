@@ -73,20 +73,19 @@ class SakuraSolver(MfistaSolverBase):
         image_data = sakura.empty_aligned(image_shape, dtype=numpy.float64)
         sakura.solvemfista(self.l1, self.ltsqv, grid_data, image_data)
         
-class MfistaSolverExternal(MfistaSolverBase):
+class MfistaSolverFFT(MfistaSolverBase):
     """
-    Solver for sparse modeling using MFISTA algorithm
+    Solver for sparse modeling using MFISTA algorithm with FFT
     
     This depends on sparseimaging package written by Shiro Ikeda. 
     It calls C-function via wrapper class defined in external submodule.
-    (external.sparseimaging.executor.SparseImagingExecutor)
+    (priism.core.sparseimaging.SparseImagingExecutor)
     """
-    def __init__(self, mfistaparam, libpath=None):
+    def __init__(self, mfistaparam):
         """
         Constructor
         """
-        super(MfistaSolverExternal, self).__init__(mfistaparam)
-        self.libpath = libpath
+        super(MfistaSolverFFT, self).__init__(mfistaparam)
         
     def solve(self, grid_data, storeinitialimage=True, overwriteinitialimage=False):
         """
@@ -100,8 +99,7 @@ class MfistaSolverExternal(MfistaSolverBase):
         # TODO: nonnegative must be specified by the user
         executor = sparseimaging.SparseImagingExecutor(lambda_L1=self.l1,
                                                          lambda_TSV=self.ltsv,
-                                                         nonnegative=True,
-                                                         libpath=self.libpath)
+                                                         nonnegative=True)
         # TODO: define converter from gridded data to inputs
         inputs = sparseimaging.SparseImagingInputs.from_gridder_result(grid_data)
 
@@ -139,9 +137,11 @@ class MfistaSolverExternal(MfistaSolverBase):
         image_data.xout *= factor
         
     
-def SolverFactory(mode='sparseimaging'):
-    if mode == 'sparseimaging':
-        return MfistaSolverExternal
+def SolverFactory(mode='mfista_fft'):
+    if mode == 'mfista_fft':
+        return MfistaSolverFFT
+    elif mode == 'mfista_nufft':
+        raise NotImplementedError('MFISTA_NUFFT is not implemented yet.')
     elif mode == 'sakura':
         return SakuraSolver
     else:

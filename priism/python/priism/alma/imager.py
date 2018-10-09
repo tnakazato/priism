@@ -62,18 +62,18 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
 #     Core implementation of sparse modeling specialized for ALMA.
 #     It performs visibility gridding on uv-plane.
 #     """
-    def __init__(self, solver_name='sparseimaging'):
+    def __init__(self, solver='mfista_fft'):
         """
         Constructor
         
         Parameters:
-            external_solver use external solver by S. Ikeda. 
-                            Default is True since internal solver 
-                            is not ready yet.
-            libpath         (effective when external_solver is True)
-                            library path to external solver
+            solver  name of the solver
+                    choices are as follows.
+                      'mfista_fft'    MFISTA algorithm with FFT by S. Ikeda.
+                      'mfista_nufft'  MFISTA algorithm with NUFFT by S. Ikeda 
+                                       (to be implemented in future)
         """
-        super(AlmaSparseModelingImager, self).__init__(solver_name)
+        super(AlmaSparseModelingImager, self).__init__(solver)
         
     def selectdata(self, vis, field='', spw='', timerange='', uvrange='', antenna='', 
                   scan='', observation='', intent='', datacolumn='corrected'):
