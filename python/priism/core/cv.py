@@ -159,6 +159,8 @@ class MeanSquareErrorEvaluator(object):
         self.num_mse = 0
         
     def _evaluate_mse(self, visibility_cache, image, uvgrid):
+        import time
+        start_time = time.time()
         # UV grid configuration parameters
         offsetu = uvgrid.offsetu
         offsetv = uvgrid.offsetv
@@ -179,10 +181,8 @@ class MeanSquareErrorEvaluator(object):
         # Compute MSE
         mse = 0.0
         num_terms = 0
-        rinterp = scipy.interpolate.interp2d(numpy.arange(nv), numpy.arange(nu), rmodel)
-        iinterp = scipy.interpolate.interp2d(numpy.arange(nv), numpy.arange(nu), imodel)
-        uid = []
-        vid = []
+        rinterp = scipy.interpolate.RectBivariateSpline(numpy.arange(nv), numpy.arange(nu), rmodel)
+        iinterp = scipy.interpolate.RectBivariateSpline(numpy.arange(nv), numpy.arange(nu), imodel)
         for ws in visibility_cache:
             u = ws.u
             v = ws.v
@@ -190,16 +190,13 @@ class MeanSquareErrorEvaluator(object):
             idata = ws.idata
             pu = u / cellu + offsetu
             pv = v / cellv + offsetv
-            uid.append(pu)
-            vid.append(pv)
-            for p, q, x, y in zip(pu, pv, rdata, idata):
-                a = rinterp(p, q) # please take care about index order
-                b = iinterp(p, q)
-                dx = x - a
-                dy = y - b
-                mse += dx * dx + dy * dy
-                num_terms += 1
+            adx = rdata - rinterp(pv, pu, grid=False)
+            ady = idata - iinterp(pv, pu, grid=False)
+            mse += numpy.sum(numpy.square(adx)) + numpy.sum(numpy.square(ady))
+            num_terms += len(pu)
         mse /= num_terms
+        end_time = time.time()
+        print('Evaluate MSE: Elapsed {} sec'.format(end_time - start_time))
         return mse
             
         
