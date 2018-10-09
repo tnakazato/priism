@@ -1,15 +1,11 @@
 import time
-try:
-    import cPickle as pickle    
-except ImportError:
-    import pickle
 
 import priism
 
 start_time = time.time()
 
 # instantiate
-worker = priism.SparseModelingImager(solver_name='sparseimaging')
+worker = priism.SparseModelingImager(solver='mfista_fft')
 
 # import visibility data
 worker.importvis(filename='griddedvis.dat', flipped=False)

@@ -83,15 +83,18 @@ class SparseModelingImager(object):
         """
         return 'pickle'
     
-    def __init__(self, solver_name='sparseimaging'):
+    def __init__(self, solver='mfista_fft'):
         """
         Constructor
         
         Parameters:
-            solver_name    name of the solver. currently only 'sparseimaging' is supported.
-                      (default 'sparseimaging' ---> sparse imaging library written by S. Ikeda)
+            solver  name of the solver
+                    choices are as follows.
+                      'mfista_fft'    MFISTA algorithm with FFT by S. Ikeda.
+                      'mfista_nufft'  MFISTA algorithm with NUFFT by S. Ikeda 
+                                       (to be implemented in future)
        """
-        self.solver_name = solver_name
+        self.solver_name = solver
         self.__initialize()
     
     def __initialize(self):

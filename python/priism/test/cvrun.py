@@ -1,15 +1,11 @@
 import time
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
 
 import priism.alma
 
 start_time = time.time()
 
 # instantiate
-worker = priism.alma.AlmaSparseModelingImager(solver_name='sparseimaging')
+worker = priism.alma.AlmaSparseModelingImager(solver='mfista_fft')
 
 # select data
 worker.selectdata(vis='cyc3_hd142527_selfcal.ms',
