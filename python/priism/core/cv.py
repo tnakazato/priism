@@ -80,7 +80,7 @@ class GriddedVisibilitySubsetHandler(object):
         
         # random index 
         random_index = self.index_generator.get_subset_index(self.subset_id)
-        print('DEBUG_TN: subset ID {0} random_index = {1}'.format(self.subset_id, list(random_index)))
+        #print('DEBUG_TN: subset ID {0} random_index = {1}'.format(self.subset_id, list(random_index)))
         
         # uv location
         # assumption here is that the first index corresponds to v while
