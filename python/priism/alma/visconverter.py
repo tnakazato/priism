@@ -466,7 +466,9 @@ class VisibilityConverter(object):
         qa = casa.CreateCasaQuantity()
         speed_of_light = qa.constants('c')
         c = qa.convert(speed_of_light, 'm/s')['value']
-        nrow = chunk['data'].shape[2]
+        data_shape = chunk['data'].shape
+        nrow = data_shape[2]
+        nchan = data_shape[1]
         uvw = chunk['uvw']
         data_desc_ids = chunk['data_desc_id']
         uvgrid = self.imageparam.uvgridconfig
@@ -476,7 +478,7 @@ class VisibilityConverter(object):
         offset_v = uvgrid.offsetv
 
         # UVW conversion
-        u = sakura.empty_aligned((nrow,), dtype=uvw.dtype)
+        u = sakura.empty_aligned((nrow, nchan), dtype=uvw.dtype)
         v = sakura.empty_like_aligned(u)
         for irow in range(nrow):
             # TODO: phase rotation if image phasecenter is different from
@@ -492,9 +494,11 @@ class VisibilityConverter(object):
             #chan_width = (lsr_edge_frequency[1:] - lsr_edge_frequency[:-1]).mean()
             #freq_start = chan_freq[0] - chan_width / 2
             #freq_end = chan_freq[-1] + chan_width / 2
-            freq_start = lsr_edge_frequency[0]
-            freq_end = lsr_edge_frequency[-1]
-            center_freq = (freq_start + freq_end) / 2
+            #freq_start = lsr_edge_frequency[0]
+            #freq_end = lsr_edge_frequency[-1]
+            #center_freq = (freq_start + freq_end) / 2
+            center_freq = numpy.fromiter((numpy.mean(lsr_edge_frequency[i:i+2]) for i in range(nchan)), 
+                                         dtype=numpy.float64)
             u[irow] = u0 * center_freq / c # divided by wavelength
             v[irow] = v0 * center_freq / c # divided by wavelength
             
@@ -524,6 +528,49 @@ class VisibilityConverter(object):
             
         ws.u = u
         ws.v = v
+        
+    def flatten(self, working_set):
+        """
+        Generator yielding list of working_sets divided by spectral channels
+        """
+        nchan = working_set.nchan
+        nrow_ws = working_set.nrow
+        chan_image = numpy.unique(working_set.channel_map)
+        num_ws = len(chan_image)
+        for imchan in chan_image:
+            vischans = numpy.where(working_set.channel_map == imchan)[0]
+            nchan = len(vischans)
+            nrow = nrow_ws * nchan
+            ws_shape = (nrow, 1, 1,)
+            ws_shape2 = (nrow, 1,)
+            real = sakura.empty_aligned(ws_shape, dtype=working_set.rdata.dtype)
+            imag = sakura.empty_aligned(ws_shape, dtype=working_set.idata.dtype)
+            flag = sakura.empty_aligned(ws_shape, dtype=working_set.flag.dtype)
+            weight = sakura.empty_aligned(ws_shape2, dtype=working_set.weight.dtype)
+            row_flag = sakura.empty_aligned((nrow,), dtype=working_set.row_flag.dtype)
+            channel_map = sakura.empty_aligned((1,), dtype=working_set.channel_map.dtype)
+            u = sakura.empty_aligned((nrow,), dtype=working_set.u.dtype)
+            v = sakura.empty_like_aligned(u)
+            row_start = 0
+            for ichan in vischans:
+                row_end = row_start + nrow_ws
+                real[row_start:row_end, 0, 0] = working_set.rdata[:, 0, ichan]
+                imag[row_start:row_end, 0, 0] = working_set.idata[:, 0, ichan]
+                flag[row_start:row_end, 0, 0] = working_set.flag[:, 0, ichan]
+                weight[row_start:row_end, 0] = working_set.weight[:, ichan]
+                row_flag[row_start:row_end] = working_set.row_flag[:]
+                channel_map[0] = imchan
+                u[row_start:row_end] = working_set.u[:, ichan]
+                v[row_start:row_end] = working_set.v[:, ichan]
+                row_start = row_end
+                
+            ws = gridder.GridderWorkingSet(data_id=working_set.data_id, u=u, v=v,  
+                                           rdata=real, idata=imag, flag=flag,
+                                           weight=weight, row_flag=row_flag, 
+                                           channel_map=channel_map)
+            print('yielding channelized working set from channels {}'.format(vischans))
+            yield ws
+            
         
     def generate_working_set(self, chunk):
         """
@@ -572,7 +619,11 @@ class VisibilityConverter(object):
         # 3~5. UVW manipulation
         self.fill_uvw(working_set, chunk, lsr_frequency)
         
+        # EXTRA. convert channelized working set into a set of 
+        #        single-channel working set
+        working_set_list = list(self.flatten(working_set))
+        
         #print 'Working set data shape {0} polmap {1}'.format(working_set.rdata.shape,
         #                                                     working_set.pol_map)
         
-        return working_set
+        return working_set_list

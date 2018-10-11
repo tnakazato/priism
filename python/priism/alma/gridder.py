@@ -341,8 +341,15 @@ class VisibilityGridder(object):
         self.wgrid_imag[:] = 0
         self.wsum_real[:] = 0
         self.wsum_imag[:] = 0
+        
+    def grid(self, ws_list):
+        """
+        Accumulate data provided as a list of working set onto grid.
+        """
+        for ws in ws_list:
+            self.grid_ws(ws)
 
-    def grid(self, ws):
+    def grid_ws(self, ws):
         """
         Accumulate data provided as working set onto grid.
         """
