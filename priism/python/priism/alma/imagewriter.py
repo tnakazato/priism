@@ -51,6 +51,7 @@ class ImageWriter(object):
             raise ValueError('image array is not correct shape')
         
         ia.fromarray(pixels = arr, csys=csys.torecord())
+        ia.setbrightnessunit('Jy/pixel')
         status = ia.tofits(outfile=self.imageparam.imagename, optical=False, 
                            stokeslast=True, overwrite=overwrite)
         ia.done()
