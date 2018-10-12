@@ -328,7 +328,7 @@ class VisibilityConverter(object):
         weight_factor = 1.0
         #print 'LOG: SPW {0} chan_width * 2 = {1}, image_width = {2}'.format(
         #    spwid, chan_width * 2, image_width)
-        if abs(image_width) < 2.0 * abs(chan_width):
+        if abs(image_width) < 1.99 * abs(chan_width):
             #print 'LOG: do interpolation'
             # interpolation
             # TODO: array shape (order) should be compatible with sakura gridding function
