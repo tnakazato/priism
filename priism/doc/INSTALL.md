@@ -245,5 +245,6 @@ will enable you to use API for ALMA data.
 ### Template scripts
 
 In the test directory, there are two template scripts that demonstrates how to use PRIISM. 
-One is for `priism.core` while the other is for `priism.alma`.
+One is for `priism.core` while the other is for `priism.alma`. Name of the scripts are 
+`cvrun_core.py` and `cvrun.py`, respectively.
 
