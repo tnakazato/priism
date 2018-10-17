@@ -294,7 +294,8 @@ class SparseModelingImager(object):
         return data
 
     def cvforgridvis(self, l1_list, ltsv_list, num_fold=10, imageprefix='image', imagepolicy='full', 
-               summarize=True, figfile=None, datafile=None, maxiter=50000, eps=1.0e-5, clean_box=None):
+               summarize=True, figfile=None, datafile=None, maxiter=50000, eps=1.0e-5, clean_box=None,
+               resultasinitialimage=True):
         """
         Perform cross validation and search the best parameter for L1 and Ltsv from 
         the given list of these.
@@ -316,6 +317,7 @@ class SparseModelingImager(object):
             maxiter -- maximum number of iteration for MFISTA algorithm
             eps -- threshold factor for MFISTA algorithm
             clean_box -- clean box as a float array (default None)
+            resultasinitialimage -- keep resulting image as an initial condition for next run
         
         Output:
             dictionary containing best L1 (key: L1), best Ltsv (key;Ltsv), and
@@ -387,7 +389,8 @@ class SparseModelingImager(object):
                                                          int(math.log10(L1)), int(math.log10(Ltsv)),
                                                          self.imagesuffix)
                 self.mfista(L1, Ltsv, maxiter=maxiter, eps=eps, clean_box=clean_box,
-                            storeinitialimage=True, overwriteinitialimage=overwrite_initial)
+                            storeinitialimage=resultasinitialimage, 
+                            overwriteinitialimage=overwrite_initial)
                 self.exportimage(imagename, overwrite=True)
                 result_image.append(imagename)
                 
