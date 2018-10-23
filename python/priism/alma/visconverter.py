@@ -524,7 +524,11 @@ class VisibilityConverter(object):
             #         |__________________________
             #          0 1 2 ......nu/2...nu-1 u
             u[irow] = u[irow] / delta_u + offset_u
-            v[irow] = v[irow] / delta_v + offset_v
+            
+            # Sign of v must be inverted so that MFISTA routine generates 
+            # proper image. Otherwise, image will be flipped in the vertical 
+            # axis. 
+            v[irow] = -v[irow] / delta_v + offset_v
             
         ws.u = u
         ws.v = v

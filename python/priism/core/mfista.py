@@ -118,9 +118,6 @@ class MfistaSolverFFT(MfistaSolverBase):
         # add degenerate axis (polarization and spectral)
         image = image.reshape((image.shape[0], image.shape[0], 1, 1))
         
-        # flip longitude 
-        image = numpy.fliplr(image)
-
         return image
     
     def normalize_result(self, vis_data, image_data):
