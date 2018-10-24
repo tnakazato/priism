@@ -14,6 +14,7 @@ install(FILES
         priism/core/paramcontainer.py
         priism/core/sparseimaging.py
         priism/core/util.py
+        priism/core/version.py
         DESTINATION priism/core)
         
 install(FILES
