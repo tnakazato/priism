@@ -5,3 +5,5 @@ from .core import ResultingImageStorage
 from .core import UVGridConfig
 
 from .core import SparseModelingImager
+
+from .core import __version__
