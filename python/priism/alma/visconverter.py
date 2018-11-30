@@ -289,16 +289,22 @@ class VisibilityConverter(object):
             # use nominal LSRK frequency for image (channel boundary)
             nominal_lsr_frequency = self.nominal_lsr_frequency[field_id][data_desc_id]
             #nominal_lsr_width = self.nominal_lsr_width[field_id][data_desc_id]
-            for ichan in range(nchan):
-                # left boundary of start channel
-                channel_start = int(qstart['value']) + ichan * int(qwidth['value'])
-                # right boundary of end channel
-                channel_end = channel_start + int(qwidth['value'])
-                # center frequency of the range
-                image_freq[ichan] = (nominal_lsr_frequency[channel_start] + 
-                                     nominal_lsr_frequency[channel_end]) / 2.0
-            image_width = (nominal_lsr_frequency[1] - nominal_lsr_frequency[0]) \
-                            * int(qwidth['value'])
+            if nchan == 1 and width == -1:
+                # this is special setting that maps all visibility channels into
+                # single image channel
+                image_freq[0] = (nominal_lsr_frequency[-1] + nominal_lsr_frequency[0]) / 2.0
+                image_width = nominal_lsr_frequency[-1] - nominal_lsr_frequency[0]
+            else:
+                for ichan in range(nchan):
+                    # left boundary of start channel
+                    channel_start = int(qstart['value']) + ichan * int(qwidth['value'])
+                    # right boundary of end channel
+                    channel_end = channel_start + int(qwidth['value'])
+                    # center frequency of the range
+                    image_freq[ichan] = (nominal_lsr_frequency[channel_start] + 
+                                         nominal_lsr_frequency[channel_end]) / 2.0
+                image_width = (nominal_lsr_frequency[1] - nominal_lsr_frequency[0]) \
+                                * int(qwidth['value'])
         elif match_with(frequency_pattern):
             # frequency selection
             for ichan in range(nchan):
