@@ -179,7 +179,7 @@ class MeanSquareErrorEvaluator(object):
         
         # Compute MSE
         mse = 0.0
-        num_terms = 0
+        wsum = 0
         rinterp = scipy.interpolate.RectBivariateSpline(numpy.arange(nv), numpy.arange(nu), rmodel)
         iinterp = scipy.interpolate.RectBivariateSpline(numpy.arange(nv), numpy.arange(nu), imodel)
         for ws in visibility_cache:
@@ -187,13 +187,14 @@ class MeanSquareErrorEvaluator(object):
             v = ws.v
             rdata = ws.rdata
             idata = ws.idata
+            wdata = ws.weight
             pu = u / cellu + offsetu
             pv = v / cellv + offsetv
             adx = rdata - rinterp(pv, pu, grid=False)
             ady = idata - iinterp(pv, pu, grid=False)
-            mse += numpy.sum(numpy.square(adx)) + numpy.sum(numpy.square(ady))
-            num_terms += len(pu)
-        mse /= num_terms
+            mse += numpy.sum(wdata * numpy.square(adx)) + numpy.sum(wdata * numpy.square(ady))
+            wsum += numpy.sum(wdata)
+        mse /= wsum
         end_time = time.time()
         print('Evaluate MSE: Elapsed {} sec'.format(end_time - start_time))
         return mse
