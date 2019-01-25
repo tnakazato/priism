@@ -43,6 +43,24 @@ class SparseModelingImager(object):
             raise TypeError('Given value is not an instance of GriddedVisibilityStorage')
         
     @property
+    def workingset_list(self):
+        """
+        """
+        return getattr(self, '_workingset_list', None)
+    
+    @workingset_list.setter
+    def workingset_list(self, value):
+        if value is None:
+            self._workingset_list = None
+        elif isinstance(value, list):
+            if len(workingset_list) == 0 or isinstance(workingset_list[0], datacontainer.VisibilityWorkingSet):
+                self._workingset_list = value
+            else:
+                raise TypeError('Item of given list is not an instance of VisibilityWorkingSet')
+        else:
+            raise TypeError('Given value is not a list')
+        
+    @property
     def imagearray(self):
         """
         TODO
