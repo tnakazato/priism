@@ -114,7 +114,7 @@ class SparseModelingImager(object):
     
     def __initialize(self):
         # configuration
-        self.imparam = paramcontainer.ImparamContainer(imsize=100)
+        self.imparam = paramcontainer.SimpleImageParamContainer(imsize=100)
         self.visparams = []
         
         # working array
@@ -128,6 +128,14 @@ class SparseModelingImager(object):
         mfistaparam = paramcontainer.MfistaParamContainer(l1=0.0, ltsv=0.0)
         solver_cls = mfista.SolverFactory(self.solver_name)
         self.solver = solver_cls(mfistaparam, self.imparam)
+        
+    def __get_visibility_data(self):
+        visibility_data = None
+        if self.solver_name == 'mfista_fft':
+            visibility_data = self.griddedvis
+        elif self.solver_name == 'mfista_nufft':
+            visibility_data = self.working_set
+        return visibility_data
     
     def mfista(self, l1, ltsv, maxiter=50000, eps=1.0e-5, clean_box=None, 
                storeinitialimage=True, overwriteinitialimage=False):
@@ -147,15 +155,17 @@ class SparseModelingImager(object):
         self.mfistaparam = paramcontainer.MfistaParamContainer(l1=l1, ltsv=ltsv,
                                                                maxiter=maxiter, eps=eps,
                                                                clean_box=clean_box)
-        arr = self._mfista(self.mfistaparam, self.imparam, self.griddedvis,
+        visibility_data = self.__get_visibility_data()
+        arr = self._mfista(self.mfistaparam, self.imparam, visibility_data,
                            storeinitialimage=storeinitialimage, overwriteinitialimage=overwriteinitialimage)
         self.imagearray = datacontainer.ResultingImageStorage(arr)
     
-    def _mfista(self, mfistaparam, imparam, griddedvis, storeinitialimage=True, overwriteinitialimage=False):
-        assert griddedvis is not None
+    def _mfista(self, mfistaparam, imparam, visibility_data, storeinitialimage=True, overwriteinitialimage=False):
+        assert visibility_data is not None
+        assert hasattr(imparam, 'imsize')
         self.solver.mfistaparam = mfistaparam
-        self.solver.imparam = imparam
-        return self.solver.solve(griddedvis, storeinitialimage, overwriteinitialimage)
+        self.solver.imageparam = imparam
+        return self.solver.solve(visibility_data, storeinitialimage, overwriteinitialimage)
     
     def importvis(self, data=None, weight=None, filename=None, flipped=False, uvgrid=None):
         """
@@ -514,7 +524,7 @@ class SparseModelingImager(object):
             with subset_handler.generate_subset(subset_id=i) as subset:
             
                 # run MFISTA
-                imagearray = self._mfista(mfistaparam, 
+                imagearray = self._mfista(mfistaparam, self.imparam, 
                                           subset.visibility_active,
                                           False, False)
 
