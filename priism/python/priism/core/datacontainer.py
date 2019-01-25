@@ -150,11 +150,6 @@ class VisibilityWorkingSet(paramcontainer.ParamContainer):
     idata --- imaginary part of visibility data (nrow, npol, nchan)
     flag --- channelized flag (nrow, npol, nchan)
     weight --- visibility weight (nrow, nchan) 
-    row_flag --- row flag (nrow)
-    channel_map --- channel mapping between raw visibility
-                    and gridded visibility (nchan)
-    pol_map --- polarization mapping between raw visibility
-                and gridded visibility (npol)
     """
     def __init__(self, data_id=None, u=0.0, v=0.0, rdata=None, idata=None, 
                  weight=None):
