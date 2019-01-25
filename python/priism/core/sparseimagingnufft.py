@@ -114,46 +114,25 @@ class SparseImagingInputs(CTypesUtilMixIn):
         uv-coordinate value is flipped for FFTW?.
         """
         # infile is nominal value 
-        infile = 'workingset_list'
+        infile = 'working_set'
         
-        # m is the number of nonzero pixels
-        assert isinstance(obj, datacontainer.VisSet)
-        m = obj.nvis
-                
-#         # numpy.nonzero returns index as numpy.int64 
-#         # however, libmfista_fft requires index in 32bit integer
-#         # value check is performed here
-#         iint32 = numpy.iinfo(numpy.int32)
-#         if nonzeros[0].max() > iint32.max or nonzeros[0].min() < iint32.min:
-#             raise ValueError('Pixel index along V-axis exceeded int32 limit')
-#         if nonzeros[1].max() > iint32.max or nonzeros[1].min() < iint32.min:
-#             raise ValueError('Pixel index along U-axis exceeded int32 limit')
-#         
-#         # nx, ny
-#         grid_shape = gridder_result.shape
-#         nv, nu, npol, nchan = grid_shape
-#         assert npol == 1
-#         assert nchan == 1
-#         nx = nu
-#         ny = nv
+        # data is supposed to be a list of VisibilityWorkingSet
+        assert isinstance(data, datacontainer.VisibilityWorkingSet)
         
-        # TODO: u, v must be flipped?
-#         # flip u, v (grid indices) instead of visibility value
-#         # cast 64bit integer to 32bit integer
-#         unflipped_v = numpy.asarray(nonzeros[0], dtype=numpy.int32)
-#         unflipped_u = numpy.asarray(nonzeros[1], dtype=numpy.int32)
-#         u = shift_uvindex(nu, unflipped_u)
-#         v = shift_uvindex(nv, unflipped_v)
-#         
+        # m is the number of visibility data points
+        m = data.nrow
 
         # u, v
-        u = obj.u
-        v = obj.v
+        u = data.u
+        v = data.v
 
         # yreal, yimag 
-        yreal = obj.visr
-        yimag = obj.visi
+        yreal = data.rdata
+        yimag = data.idata
         
+        # noise is formed as 1 / sqrt(weight)
+        noise = 1.0 / numpy.sqrt(data.weight)
+
 #         # 20171102 suggestion by Ikeda-san
 #         # change sign according to pixel coordinate
 #         for i in range(len(yreal)):
@@ -162,10 +141,7 @@ class SparseImagingInputs(CTypesUtilMixIn):
 #             factor = (-1)**(j+k)
 #             yreal[i] *= factor
 #             yimag[i] *= factor
-        
-        # noise 
-        noise = obj.noise
-        
+                
         return SparseImagingInputs(infile, m, nx, ny, u, v, yreal, yimag, noise)
     
     def __init__(self, infile, M, NX, NY, u, v, yreal, yimag, noise):
