@@ -106,7 +106,7 @@ class SparseImagingInputs(CTypesUtilMixIn):
             return inputs
 
     @staticmethod
-    def from_gridder_result(gridder_result):
+    def from_gridder_result(gridder_result, nx=None, ny=None):
         """
         Convert GridderResult object into SparseImagingInputs object.
         uv-coordinate value is flipped for FFTW.
@@ -132,8 +132,14 @@ class SparseImagingInputs(CTypesUtilMixIn):
         nv, nu, npol, nchan = grid_shape
         assert npol == 1
         assert nchan == 1
-        nx = nu
-        ny = nv
+        if nx is None:
+            nx = nu
+        else:
+            assert nx == nu
+        if ny is None:
+            ny = nv
+        else:
+            assert ny == nv
         
         # TODO: u, v must be flipped
         # flip u, v (grid indices) instead of visibility value
@@ -161,6 +167,10 @@ class SparseImagingInputs(CTypesUtilMixIn):
         noise = 1.0 / numpy.sqrt(noise)
         
         return SparseImagingInputs(infile, m, nx, ny, u, v, yreal, yimag, noise)
+    
+    @staticmethod
+    def from_data(data, nx, ny):
+        return SparseImagingInputs.from_gridder_result(data, nx, ny)
     
     def __init__(self, infile, M, NX, NY, u, v, yreal, yimag, noise):
         self.infile = infile
@@ -240,6 +250,7 @@ class SparseImagingExecutor(object):
     """
     ./mfista_imaging_fft fft_data.txt 1 0.0 0.01 5e10 x.out -nonneg
     """
+    Inputs = SparseImagingInputs
     #default_path = '/Users/nakazato/development/sparseimaging/20170812.mfista/'
     default_path = os.path.dirname(__file__)
     #libname = 'mfista_imaging_fft'

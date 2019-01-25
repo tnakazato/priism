@@ -3,16 +3,18 @@ from __future__ import absolute_import
 import numpy
 
 from . import sparseimaging
+from . import sparseimagingnufft
 
 class MfistaSolverBase(object):
     """
     Solver for sparse modeling using MFISTA algorithm
     """
-    def __init__(self, mfistaparam):
+    def __init__(self, mfistaparam, imageparam):
         """
         Constructor
         """
         self.mfistaparam = mfistaparam
+        self.imageparam = imageparam
         self.initialimage = None
         
     def __from_param(self, name):
@@ -44,6 +46,18 @@ class MfistaSolverBase(object):
     @property
     def box_flag(self):
         return 0 if self.clean_box is None else 1
+    
+    @property
+    def imsize(self):
+        return self.imageparam.imsize
+    
+    @property
+    def nx(self):
+        return self.imsize[0]
+    
+    @property
+    def ny(self):
+        return self.imsize[1]
             
     def solve(self, grid_data):
         """
@@ -56,38 +70,19 @@ class MfistaSolverBase(object):
         """
         raise NotImplementedError('solve method shold be defined in each subclass.')
     
-class SakuraSolver(MfistaSolverBase):
-    def __init__(self, mfistaparam):
-        super(SakuraSolver, self).__init__(mfistaparam)
-        
-    def solve(self, grid_data):
-        """
-        Given complex visibility data, find the best image 
-        under the condition of 
-        
-            min{sum[(Fxi - yi)^2] + L1 |xi| + Ltsv TSV(x)} 
-        
-        Solve the problem using MFISTA algorithm.
-        """
-        image_shape = grid_data.shape
-        image_data = sakura.empty_aligned(image_shape, dtype=numpy.float64)
-        sakura.solvemfista(self.l1, self.ltsqv, grid_data, image_data)
-        
-class MfistaSolverFFT(MfistaSolverBase):
+class MfistaSolverTemplate(MfistaSolverBase):
     """
-    Solver for sparse modeling using MFISTA algorithm with FFT
+    Template class for sparse modeling solver.
+    """
+    Executor = None
     
-    This depends on sparseimaging package written by Shiro Ikeda. 
-    It calls C-function via wrapper class defined in external submodule.
-    (priism.core.sparseimaging.SparseImagingExecutor)
-    """
-    def __init__(self, mfistaparam):
+    def __init__(self, mfistaparam, imageparam):
         """
         Constructor
         """
-        super(MfistaSolverFFT, self).__init__(mfistaparam)
+        super(MfistaSolverTemplate, self).__init__(mfistaparam, imageparam)
         
-    def solve(self, grid_data, storeinitialimage=True, overwriteinitialimage=False):
+    def solve(self, visibility_data, storeinitialimage=True, overwriteinitialimage=False):
         """
         Given complex visibility data, find the best image 
         under the condition of 
@@ -96,12 +91,14 @@ class MfistaSolverFFT(MfistaSolverBase):
         
         Solve the problem using MFISTA algorithm.
         """
+        assert self.Executor is not None
+        
         # TODO: nonnegative must be specified by the user
-        executor = sparseimaging.SparseImagingExecutor(lambda_L1=self.l1,
-                                                         lambda_TSV=self.ltsv,
-                                                         nonnegative=True)
+        executor = Executor(lambda_L1=self.l1,
+                            lambda_TSV=self.ltsv,
+                            nonnegative=True)
         # TODO: define converter from gridded data to inputs
-        inputs = sparseimaging.SparseImagingInputs.from_gridder_result(grid_data)
+        inputs = self.Executor.Inputs.from_data(visibility_data, self.nx, self.ny)
 
         result = executor.run(inputs, initialimage=self.initialimage,
                               maxiter=self.maxiter, eps=self.eps, cl_box=self.clean_box)
@@ -132,7 +129,72 @@ class MfistaSolverFFT(MfistaSolverBase):
         factor = 1.0 / numpy.sqrt(nx * ny)
         print('Normalization factor is {}'.format(factor))
         image_data.xout *= factor
+
+
+class SakuraSolver(MfistaSolverBase):
+    def __init__(self, mfistaparam, imageparam):
+        super(SakuraSolver, self).__init__(mfistaparam, imageparam)
         
+    def solve(self, grid_data):
+        """
+        Given complex visibility data, find the best image 
+        under the condition of 
+        
+            min{sum[(Fxi - yi)^2] + L1 |xi| + Ltsv TSV(x)} 
+        
+        Solve the problem using MFISTA algorithm.
+        """
+        image_shape = grid_data.shape
+        image_data = sakura.empty_aligned(image_shape, dtype=numpy.float64)
+        sakura.solvemfista(self.l1, self.ltsqv, grid_data, image_data)
+        
+class MfistaSolverFFT(MfistaSolverTemplate):
+    """
+    Solver for sparse modeling using MFISTA algorithm with FFT
+    
+    This depends on sparseimaging package written by Shiro Ikeda. 
+    It calls C-function via wrapper class defined in external submodule.
+    (priism.core.sparseimaging.SparseImagingExecutor)
+    """
+    Executor = sparseimaging.SparseImagingExecutor
+    
+    def __init__(self, mfistaparam, imageparam):
+        """
+        Constructor
+        """
+        super(MfistaSolverFFT, self).__init__(mfistaparam, imageparam)
+        
+    def normalize_result(self, vis_data, image_data):
+        """
+        Normalize resulting image according to Parseval's Theorem.
+        
+        vis_data -- input visiblity as the form of SparseImagingInputs
+        image_data -- output image as the form of SparseImagingResults
+        """
+        nx = image_data.nx
+        ny = image_data.ny
+        factor = 1.0 / numpy.sqrt(nx * ny)
+        print('Normalization factor is {}'.format(factor))
+        image_data.xout *= factor
+
+
+class MfistaSolverNUFFT(MfistaSolverTemplate):
+    """
+    Solver for sparse modeling using MFISTA algorithm with NUFFT
+    
+    This depends on sparseimaging package written by Shiro Ikeda. 
+    It calls C-function via wrapper class defined in external submodule.
+    (priism.core.sparseimagingnufft.SparseImagingExecutor)
+     """
+    Executor = sparseimagingnufft.SparseImagingExecutor
+     
+    def __init__(self, mfistaparam, imageparam):
+         """
+         Constructor
+         """
+         super(MfistaSolverNUFFT, self).__init__(mfistaparam, imageparam)
+
+
     
 def SolverFactory(mode='mfista_fft'):
     if mode == 'mfista_fft':
