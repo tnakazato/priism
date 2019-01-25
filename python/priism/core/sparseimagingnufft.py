@@ -5,7 +5,7 @@ import os
 import numpy
 import ctypes
 
-import priism.core.datacontainer as datacontainer
+#import priism.core.datacontainer as datacontainer
 
 class CTypesUtilMixIn(object):
     def as_carray(self, attr):
@@ -117,12 +117,14 @@ class SparseImagingInputs(CTypesUtilMixIn):
         infile = 'working_set'
         
         # data is supposed to be a list of VisibilityWorkingSet
-        assert isinstance(data, datacontainer.VisibilityWorkingSet)
+        #assert isinstance(data, datacontainer.VisibilityWorkingSet)
         
         # m is the number of visibility data points
         m = data.nrow
 
-        # u, v
+        # TODO
+        # u, v: input values are in pixel coordinate
+        #       these values must be converted to the range [-pi,+pi]
         u = data.u
         v = data.v
 
