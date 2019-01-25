@@ -135,11 +135,11 @@ class SparseImagingInputs(CTypesUtilMixIn):
         if nx is None:
             nx = nu
         else:
-            assert nx == nu
+            assert nx == nu, 'nu = {}, nx = {}'.format(nu, nx)
         if ny is None:
             ny = nv
         else:
-            assert ny == nv
+            assert ny == nv, 'nv = {}, ny = {}'.format(nv, ny)
         
         # TODO: u, v must be flipped
         # flip u, v (grid indices) instead of visibility value
