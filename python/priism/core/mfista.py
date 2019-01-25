@@ -94,7 +94,7 @@ class MfistaSolverTemplate(MfistaSolverBase):
         assert self.Executor is not None
         
         # TODO: nonnegative must be specified by the user
-        executor = Executor(lambda_L1=self.l1,
+        executor = self.Executor(lambda_L1=self.l1,
                             lambda_TSV=self.ltsv,
                             nonnegative=True)
         # TODO: define converter from gridded data to inputs
