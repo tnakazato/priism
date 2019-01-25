@@ -3,103 +3,61 @@ from __future__ import absolute_import
 import numpy
 
 import priism.core.util as util
-import priism.core.paramcontainer as paramcontainer
+#import priism.core.paramcontainer as paramcontainer
 import priism.core.datacontainer as datacontainer
 #import priism.external.casa as casa
 import priism.external.sakura as sakura
 
-GridderWorkingSet = datacontainer.GridderWorkingSet
-# class GridderWorkingSet(paramcontainer.ParamContainer):
-#     """
-#     Working set for gridder
-#     
-#     NOTE: flag=True indicates *VALID* data
-#           flag=False indicates *INVALID* data
-#     
-#     u, v --- position in uv-plane (nrow)
-#     rdata --- real part of visibility data (nrow, npol, nchan)
-#     idata --- imaginary part of visibility data (nrow, npol, nchan)
-#     flag --- channelized flag (nrow, npol, nchan)
-#     weight --- visibility weight (nrow, nchan) 
-#     row_flag --- row flag (nrow)
-#     channel_map --- channel mapping between raw visibility
-#                     and gridded visibility (nchan)
-#     pol_map --- polarization mapping between raw visibility
-#                 and gridded visibility (npol)
-#     """
-#     def __init__(self, data_id=None, u=0.0, v=0.0, rdata=None, idata=None, 
-#                  flag=None, weight=None, row_flag=None, channel_map=None,
-#                  pol_map=None):
-#         self.InitContainer(locals())
-#         
-#     def __from_shape(self, axis=0):
-#         if self.rdata is None:
-#             return 0
-#         else:
-#             # should be numpy array
-#             shape = self.rdata.shape
-#             if len(shape) < axis + 1:
-#                 return 1
-#             else:
-#                 return shape[axis]    
-#     
-#     @property
-#     def nrow(self):
-#         return self.__from_shape(axis=0)
-#     
-#     @property
-#     def nchan(self):
-#         return self.__from_shape(axis=2)
-#     
-#     @property
-#     def npol(self):
-#         return self.__from_shape(axis=1)
-#     
-#     @property
-#     def start(self):
-#         return 0
-#     
-#     @property
-#     def end(self):
-#         return self.nrow - 1
-#     
-#     @property
-#     def data_id(self):
-#         if hasattr(self, '_data_id'):
-#             return self._data_id
-#         else:
-#             raise ValueError('invalid data_id: Undefined')
-#         
-#     @data_id.setter
-#     def data_id(self, value):
-#         if not isinstance(value, int):
-#             raise ValueError('invalid data_id ({0}). Should be int'.format(value))
-#         else:
-#             self._data_id = value
-#             
-#     @property
-#     def pol_map(self):
-#         if hasattr(self, '_pol_map'):
-#             return self._pol_map
-#         else:
-#             self._pol_map = sakura.empty_aligned((self.npol,), dtype=numpy.int32)
-#             self._pol_map[:] = numpy.arange(self.npol)
-#             return self._pol_map
-#     
-#     @pol_map.setter
-#     def pol_map(self, value):
-#         if value is None:
-#             #self._pol_map = sakura.empty_aligned((self.npol,), dtype=numpy.int32)
-#             #self._pol_map[:] = range(self.npol)
-#             pass
-#         else:
-#             try:
-#                 if len(value) == self.npol and isinstance(value[0], int):
-#                     self._pol_map = value
-#                 else:
-#                     raise
-#             except Exception as e:
-#                 raise ValueError('invalid pol_map ({0}). Should be int list or None.'.format(value))
+class GridderWorkingSet(datacontainer.VisibilityWorkingSet):
+    """
+    Working set for gridder
+    
+    NOTE: flag=True indicates *VALID* data
+          flag=False indicates *INVALID* data
+    
+    u, v --- position in uv-plane (nrow)
+    rdata --- real part of visibility data (nrow, npol, nchan)
+    idata --- imaginary part of visibility data (nrow, npol, nchan)
+    flag --- channelized flag (nrow, npol, nchan)
+    weight --- visibility weight (nrow, nchan) 
+    row_flag --- row flag (nrow)
+    channel_map --- channel mapping between raw visibility
+                    and gridded visibility (nchan)
+    pol_map --- polarization mapping between raw visibility
+                and gridded visibility (npol)
+    """
+    def __init__(self, data_id=None, u=0.0, v=0.0, rdata=None, idata=None, 
+                 flag=None, weight=None, row_flag=None, channel_map=None,
+                 pol_map=None):
+        super(GridderWorkingSet, self).__init__(data_id, u, v, rdata, idata, weight)
+        self.flag = flag
+        self.row_flag = row_flag
+        self.channel_map = channel_map
+        self.pol_map = pol_map
+        
+    @property
+    def pol_map(self):
+        if hasattr(self, '_pol_map'):
+            return self._pol_map
+        else:
+            self._pol_map = sakura.empty_aligned((self.npol,), dtype=numpy.int32)
+            self._pol_map[:] = numpy.arange(self.npol)
+            return self._pol_map
+    
+    @pol_map.setter
+    def pol_map(self, value):
+        if value is None:
+            #self._pol_map = sakura.empty_aligned((self.npol,), dtype=numpy.int32)
+            #self._pol_map[:] = range(self.npol)
+            pass
+        else:
+            try:
+                if len(value) == self.npol and isinstance(value[0], int):
+                    self._pol_map = value
+                else:
+                    raise
+            except Exception as e:
+                raise ValueError('invalid pol_map ({0}). Should be int list or None.'.format(value))
         
                 
 class GridFunctionUtil(object):
