@@ -162,8 +162,11 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
         """
         Read visibility data 
         """
-        self.workingset_list = []
-        
+        u = []
+        v = []
+        real = []
+        imag = []
+        weight = []
         interval=1.0e-16
         for visparam in self.visparams:
             reader = visreader.VisibilityReader(visparam)
@@ -173,7 +176,21 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
             else:
                 for chunk in reader.readvis(interval=interval):
                     ws_list = converter.generate_working_set(chunk)
-                    self.workingset_list.expand(ws_list)
+                    for ws in ws_list:
+                        flag = ws.flag
+                        valid = numpy.where(flag == True)
+                        u.expand(ws.u[valid[0]])
+                        v.expand(ws.v[valid[0]])
+                        real.expand(ws.rdata[valid])
+                        imag.expand(ws.idata[valid])
+                        weight.expand(ws.weight[(valid[0], valid[2])])
+                        
+        self.working_set = datacontainer.VisibilityWorkingSet(data_id=0,
+                                                              u=numpy.asarray(u),
+                                                              v=numpy.asarray(v),
+                                                              rdata=numpy.asarray(real),
+                                                              idata=numpy.asarray(imag),
+                                                              weight=numpy.asarray(weight))
         
 
     def exportimage(self, imagename, overwrite=False):
