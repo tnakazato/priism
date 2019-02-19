@@ -162,6 +162,49 @@ class SparseImagingInputs(CTypesUtilMixIn):
         
         return SparseImagingInputs(infile, m, nx, ny, u, v, yreal, yimag, noise)
     
+    @staticmethod
+    def from_visibility_working_set(visibility, imageparam):
+        """
+        Convert VisibilityWorkingSet object into SparseImagingInputs object.
+        uv-coordinate value is flipped for FFTW.
+        """
+        # infile is nominal value 
+        infile = 'visibility_working_set'
+        
+        # m is the number of visibility data
+        m = len(visibility.u)
+        
+        # nx, ny
+        nx = imageparam.imsize[0]
+        ny = imageparam.imsize[1]
+        nu = nx
+        nv = ny
+        
+        # flip u, v (grid indices) instead of visibility value
+        unflipped_v = numpy.asarray(visibility.v, dtype=numpy.int32)
+        unflipped_u = numpy.asarray(visibility.u, dtype=numpy.int32)
+        u = shift_uvindex(nu, unflipped_u)
+        v = shift_uvindex(nv, unflipped_v)
+    
+        # yreal, yimag are nonzero gridded visibility
+        yreal = visibility.rdata
+        yimag = visibility.idata
+        
+        # 20171102 suggestion by Ikeda-san
+        # change sign according to pixel coordinate
+        for i in range(m):
+            j = unflipped_v[i]
+            k = unflipped_u[i]
+            factor = (-1)**(j+k)
+            yreal[i] *= factor
+            yimag[i] *= factor
+
+        # noise is formed as 1 / sqrt(weight)
+        noise = visibility.weight
+        noise = 1.0 / numpy.sqrt(noise)
+        
+        return SparseImagingInputs(infile, m, nx, ny, u, v, yreal, yimag, noise)
+
     def __init__(self, infile, M, NX, NY, u, v, yreal, yimag, noise):
         self.infile = infile
         self.m = M
