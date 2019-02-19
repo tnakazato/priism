@@ -157,6 +157,7 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
                     working_set = converter.generate_working_set(chunk)
                     visgridder.grid(working_set)
         self.griddedvis = visgridder.get_result()
+        self.working_set = visgridder.get_result2()
     
     def exportimage(self, imagename, overwrite=False):
         """
