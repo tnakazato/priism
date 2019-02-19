@@ -146,7 +146,7 @@ class VisibilityWorkingSet(paramcontainer.ParamContainer):
           flag=False indicates *INVALID* data
     
     data_id --- arbitrary data ID
-    u, v --- position in uv-plane (nrow)
+    u, v --- position in uv-plane as pixel coordinate (nrow)
     rdata --- real part of visibility data (nrow, npol, nchan)
     idata --- imaginary part of visibility data (nrow, npol, nchan)
     weight --- visibility weight (nrow, nchan) 
