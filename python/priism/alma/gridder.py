@@ -15,6 +15,7 @@ class GridderWorkingSet(datacontainer.VisibilityWorkingSet):
     NOTE: flag=True indicates *VALID* data
           flag=False indicates *INVALID* data
     
+    data_id --- arbitrary data ID
     u, v --- position in uv-plane (nrow)
     rdata --- real part of visibility data (nrow, npol, nchan)
     idata --- imaginary part of visibility data (nrow, npol, nchan)
