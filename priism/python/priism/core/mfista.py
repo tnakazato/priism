@@ -87,7 +87,7 @@ class MfistaSolverFFT(MfistaSolverBase):
         """
         super(MfistaSolverFFT, self).__init__(mfistaparam)
         
-    def solve(self, grid_data, storeinitialimage=True, overwriteinitialimage=False):
+    def solve(self, visibility, imageparam, storeinitialimage=True, overwriteinitialimage=False):
         """
         Given complex visibility data, find the best image 
         under the condition of 
@@ -95,13 +95,18 @@ class MfistaSolverFFT(MfistaSolverBase):
             min{sum[(Fxi - yi)^2] + L1 |xi| + Ltsv TSV(x)} 
         
         Solve the problem using MFISTA algorithm.
+        
+        visibility -- visibility data 
+        imageparam -- image parameter
         """
         # TODO: nonnegative must be specified by the user
         executor = sparseimaging.SparseImagingExecutor(lambda_L1=self.l1,
                                                          lambda_TSV=self.ltsv,
                                                          nonnegative=True)
         # TODO: define converter from gridded data to inputs
-        inputs = sparseimaging.SparseImagingInputs.from_gridder_result(grid_data)
+        #inputs = sparseimaging.SparseImagingInputs.from_gridder_result(grid_data)
+        inputs = sparseimaging.SparseImagingInputs.from_visibility_working_set(visibility,
+                                                                               imageparam)
 
         result = executor.run(inputs, initialimage=self.initialimage,
                               maxiter=self.maxiter, eps=self.eps, cl_box=self.clean_box)

@@ -147,14 +147,14 @@ class SparseModelingImager(object):
         self.mfistaparam = paramcontainer.MfistaParamContainer(l1=l1, ltsv=ltsv,
                                                                maxiter=maxiter, eps=eps,
                                                                clean_box=clean_box)
-        arr = self._mfista(self.mfistaparam, self.griddedvis,
+        arr = self._mfista(self.mfistaparam, self.working_set,
                            storeinitialimage=storeinitialimage, overwriteinitialimage=overwriteinitialimage)
         self.imagearray = datacontainer.ResultingImageStorage(arr)
     
-    def _mfista(self, mfistaparam, griddedvis, storeinitialimage=True, overwriteinitialimage=False):
-        assert griddedvis is not None
+    def _mfista(self, mfistaparam, working_set, storeinitialimage=True, overwriteinitialimage=False):
+        assert working_set is not None
         self.solver.mfistaparam = mfistaparam
-        return self.solver.solve(griddedvis, storeinitialimage, overwriteinitialimage)
+        return self.solver.solve(working_set, self.imparam, storeinitialimage, overwriteinitialimage)
     
     def importvis(self, data=None, weight=None, filename=None, flipped=False, uvgrid=None):
         """
