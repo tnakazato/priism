@@ -16,7 +16,7 @@ class GridderWorkingSet(datacontainer.VisibilityWorkingSet):
           flag=False indicates *INVALID* data
     
     data_id --- arbitrary data ID
-    u, v --- position in uv-plane (nrow)
+    u, v --- position in uv-plane as pixel coordinate (nrow)
     rdata --- real part of visibility data (nrow, npol, nchan)
     idata --- imaginary part of visibility data (nrow, npol, nchan)
     flag --- channelized flag (nrow, npol, nchan)
@@ -384,6 +384,70 @@ class VisibilityGridder(object):
                                                         uvgrid_wreal, uvgrid_wimag,
                                                         self.num_ws)
         return result
+    
+    def get_result2(self):
+        # remove margin from grid array
+        grid_shape = self.grid_real.shape
+        outgrid_shape = (grid_shape[0] - 2 * self.convsupport, 
+                         grid_shape[1] - 2 * self.convsupport,
+                         grid_shape[2], grid_shape[3])
+        grid_real  =  self.grid_real[self.convsupport:-self.convsupport, self.convsupport:-self.convsupport, :, :]
+        grid_imag  =  self.grid_imag[self.convsupport:-self.convsupport, self.convsupport:-self.convsupport, :, :]
+        wgrid_real = self.wgrid_real[self.convsupport:-self.convsupport, self.convsupport:-self.convsupport, :, :]
+        wgrid_imag = self.wgrid_imag[self.convsupport:-self.convsupport, self.convsupport:-self.convsupport, :, :]
+        assert grid_real.shape == outgrid_shape
+        assert grid_imag.shape == outgrid_shape
+        assert wgrid_real.shape == outgrid_shape
+        assert wgrid_imag.shape == outgrid_shape
+        
+        nonzero_real = numpy.where(wgrid_real != 0.0)
+        nonzero_imag = numpy.where(wgrid_imag != 0.0)
+        
+        # uv location
+        # assumption here is that the first index corresponds to v while
+        # the second one corresponds u so that [i,j] represents 
+        # the value at uv location (j,i).
+        # since the array is C-contiguous, memory layout is contiguous 
+        # along u-axis. 
+        #
+        # | 9|10|11| 
+        # | 6| 7| 8|
+        # | 3| 4| 5|
+        # | 0| 1| 2|
+        npol = self.npol
+        nchan = self.nchan
+        data_id = 0
+        num_vis = len(nonzero_real[0])
+        u = sakura.empty_aligned((num_vis,), dtype=numpy.int32)
+        v = sakura.empty_like_aligned(u)
+        rdata = sakura.empty_aligned((num_vis,), dtype=numpy.float64)
+        idata = sakura.empty_like_aligned(rdata)
+        wdata = sakura.empty_like_aligned(rdata)
+        xpos = 0
+        for ipol in range(npol):
+            for ichan in range(nchan):
+                ir = numpy.where(numpy.logical_and(nonzero_real[2] == ipol, 
+                                                   nonzero_real[3] == ichan))
+                #ii = numpy.where(numpy.logical_and(nonzero_imag[2] == ipol,
+                #                                   nonzero_imag[3] == ichan))
+                xlen = len(v)
+                nextpos = xpos + xlen
+                v[xpos:nextpos] = nonzero_real[0][ir]
+                u[xpos:nextpos] = nonzero_real[1][ir]
+                rdata[xpos:nextpos] = grid_real[v, u, ipol, ichan]
+                idata[xpos:nextpos] = grid_imag[v, u, ipol, ichan]
+                wdata[xpos:nextpos] = wgrid_real[v, u, ipol, ichan]
+                xpos = nextpos
+        
+        rdata /= wdata
+        idata /= wdata
+        visibility_data = datacontainer.VisibilityWorkingSet(data_id=data_id,
+                                                             u=u,
+                                                             v=v,
+                                                             rdata=rdata,
+                                                             idata=idata,
+                                                             weight=wdata)
+        return visibility_data
     
 class CrossValidationVisibilityGridder(VisibilityGridder):
     """
