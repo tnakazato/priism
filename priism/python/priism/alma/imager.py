@@ -179,11 +179,11 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
                     for ws in ws_list:
                         flag = ws.flag
                         valid = numpy.where(flag == True)
-                        u.expand(ws.u[valid[0]])
-                        v.expand(ws.v[valid[0]])
-                        real.expand(ws.rdata[valid])
-                        imag.expand(ws.idata[valid])
-                        weight.expand(ws.weight[(valid[0], valid[2])])
+                        u.extend(ws.u[valid[0]])
+                        v.extend(ws.v[valid[0]])
+                        real.extend(ws.rdata[valid])
+                        imag.extend(ws.idata[valid])
+                        weight.extend(ws.weight[(valid[0], valid[2])])
                         
         self.working_set = datacontainer.VisibilityWorkingSet(data_id=0,
                                                               u=numpy.asarray(u),
