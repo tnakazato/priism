@@ -145,10 +145,10 @@ class VisibilityWorkingSet(paramcontainer.ParamContainer):
     NOTE: flag=True indicates *VALID* data
           flag=False indicates *INVALID* data
     
+    data_id --- arbitrary data ID
     u, v --- position in uv-plane (nrow)
     rdata --- real part of visibility data (nrow, npol, nchan)
     idata --- imaginary part of visibility data (nrow, npol, nchan)
-    flag --- channelized flag (nrow, npol, nchan)
     weight --- visibility weight (nrow, nchan) 
     """
     def __init__(self, data_id=None, u=0.0, v=0.0, rdata=None, idata=None, 
