@@ -491,10 +491,11 @@ class SparseModelingImager(object):
            
 
     def initializecv(self, num_fold=10):
-        assert self.griddedvis is not None
+        visibility_data = self.__get_visibility_data()
+        assert visibility_data is not None
         
         if (not hasattr(self, 'visset')) or self.visset is None:
-            self.visset = cv.VisibilitySubsetGenerator(self.griddedvis, num_fold) 
+            self.visset = cv.VisibilitySubsetGenerator(visibility_data, num_fold) 
     
     def finalizecv(self):
         self.visset = None
