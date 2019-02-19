@@ -200,7 +200,7 @@ def SolverFactory(mode='mfista_fft'):
     if mode == 'mfista_fft':
         return MfistaSolverFFT
     elif mode == 'mfista_nufft':
-        raise NotImplementedError('MFISTA_NUFFT is not implemented yet.')
+        return MfistaSolverNUFFT
     elif mode == 'sakura':
         return SakuraSolver
     else:
