@@ -480,10 +480,10 @@ class SparseModelingImager(object):
            
 
     def initializecv(self, num_fold=10):
-        assert self.griddedvis is not None
+        assert self.working_set is not None
         
         if (not hasattr(self, 'visset')) or self.visset is None:
-            self.visset = cv.VisibilitySubsetGenerator(self.griddedvis, num_fold) 
+            self.visset = cv.VisibilitySubsetGenerator(self.working_set, num_fold) 
     
     def finalizecv(self):
         self.visset = None
@@ -496,7 +496,7 @@ class SparseModelingImager(object):
         mfistaparam = paramcontainer.MfistaParamContainer(l1=l1, ltsv=ltsv,
                                                           maxiter=maxiter, eps=eps, 
                                                           clean_box=clean_box)
-        assert self.griddedvis is not None
+        assert self.working_set is not None
         
         evaluator = cv.MeanSquareErrorEvaluator()
         num_fold = self.visset.num_fold
@@ -505,8 +505,8 @@ class SparseModelingImager(object):
             # CV is disabled
             return -1.0
         
-        subset_handler = cv.GriddedVisibilitySubsetHandler(self.visset, 
-                                                           self.uvgridconfig)
+        subset_handler = cv.VisibilitySubsetHandler(self.visset, 
+                                                    self.uvgridconfig)
         
         for i in range(num_fold):
             # pick up subset for cross validation
