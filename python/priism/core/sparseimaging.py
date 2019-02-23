@@ -187,8 +187,8 @@ class SparseImagingInputs(CTypesUtilMixIn):
         v = shift_uvindex(nv, unflipped_v)
     
         # yreal, yimag are nonzero gridded visibility
-        yreal = visibility.rdata
-        yimag = visibility.idata
+        yreal = visibility.rdata.copy()
+        yimag = visibility.idata.copy()
         
         # 20171102 suggestion by Ikeda-san
         # change sign according to pixel coordinate
@@ -200,7 +200,7 @@ class SparseImagingInputs(CTypesUtilMixIn):
             yimag[i] *= factor
 
         # noise is formed as 1 / sqrt(weight)
-        noise = visibility.weight
+        noise = visibility.weight.copy()
         noise = 1.0 / numpy.sqrt(noise)
         
         return SparseImagingInputs(infile, m, nx, ny, u, v, yreal, yimag, noise)
