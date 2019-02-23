@@ -155,6 +155,9 @@ class VisibilityWorkingSet(paramcontainer.ParamContainer):
                  weight=None):
         self.InitContainer(locals())
         
+    def __len__(self):
+        return len(self.u)
+        
     def __from_shape(self, axis=0):
         if self.rdata is None:
             return 0
