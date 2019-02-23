@@ -101,8 +101,8 @@ class MfistaSolverFFT(MfistaSolverBase):
         """
         # TODO: nonnegative must be specified by the user
         executor = sparseimaging.SparseImagingExecutor(lambda_L1=self.l1,
-                                                         lambda_TSV=self.ltsv,
-                                                         nonnegative=True)
+                                                       lambda_TSV=self.ltsv,
+                                                       nonnegative=True)
         # TODO: define converter from gridded data to inputs
         #inputs = sparseimaging.SparseImagingInputs.from_gridder_result(grid_data)
         inputs = sparseimaging.SparseImagingInputs.from_visibility_working_set(visibility,
@@ -121,7 +121,7 @@ class MfistaSolverFFT(MfistaSolverBase):
         
         image = result.image
         # add degenerate axis (polarization and spectral)
-        image = image.reshape((image.shape[0], image.shape[0], 1, 1))
+        image = image.reshape((image.shape[0], image.shape[1], 1, 1))
         
         return image
     
