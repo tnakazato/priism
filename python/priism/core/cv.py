@@ -9,6 +9,176 @@ from . import util
 import priism.external.sakura as sakura
 
 class VisibilitySubsetGenerator(object):
+    def __init__(self, working_set, num_fold=10):
+        self.working_set = working_set
+        self.num_fold = num_fold
+    
+        # Visibility subset is meaningful only when num_fold > 1
+        if self.num_fold > 1:
+            # amplitude should be nonzero in active pixels
+            self.num_active = len(self.working_set)
+            self.active_index = range(self.num_active)
+            print('num_active={0}'.format(self.num_active))
+        
+            # random index 
+            self.index_generator = util.RandomIndexGenerator(self.num_active, self.num_fold)
+        else:
+            self.active_index = None
+            self.num_active = 0
+            self.index_generator = None
+
+class VisibilitySubsetHandler(object):
+    def __init__(self, visset, uvgridconfig):
+        # visset is VisibilitySubsetGenerator instance
+        assert isinstance(visset, VisibilitySubsetGenerator)
+        self.visibility = visset.working_set
+        self.index_generator = visset.index_generator
+        self.active_index = visset.active_index
+        self.uvgrid = uvgridconfig
+        self.num_fold = visset.num_fold
+        
+        if self.num_fold <= 1:
+            # Visibility subset generator is not properly configured
+            raise RuntimeError('VisibilitySubsetGenerator is not properly configured. '
+                               + 'Number of visibility subsets is less than 2 ({0})'.format(self.num_fold))
+        
+        self._clear()
+        
+    def _clear(self):
+        self.visibility_active = None
+        self.visibility_cache = None
+        #self.active_index = None
+        self.subset_id = None
+        
+        # grid data shape: (nv, nu, npol, nchan)
+        #grid_real = self.visibility.real
+        #grid_imag = self.visibility.imag
+        
+        # amplitude should be nonzero in active pixels
+        #self.active_index = numpy.where(numpy.logical_and(grid_real != 0, grid_imag != 0))
+        num_active = len(self.visibility)
+        print('num_active={0}'.format(num_active))
+    
+        # random index 
+        #self.index_generator = util.RandomIndexGenerator(num_active, self.num_fold)
+      
+    @contextlib.contextmanager
+    def generate_subset(self, subset_id):
+        self.subset_id = subset_id
+        
+        # grid data shape: (nv, nu, npol, nchan)
+        rdata = self.visibility.rdata
+        idata = self.visibility.idata
+        weight = self.visibility.weight
+        u = self.visibility.u
+        v = self.visibility.v
+        
+        # random index 
+        random_index = self.index_generator.get_subset_index(self.subset_id)
+        #print('DEBUG_TN: subset ID {0} random_index = {1}'.format(self.subset_id, list(random_index)))
+        
+        # mask array for active visibility
+        num_vis = len(self.visibility)
+        mask = numpy.zeros(num_vis, dtype=numpy.bool)
+        mask[:] = True
+        mask[random_index] = False
+        
+        # uv location
+        # assumption here is that the first index corresponds to v while
+        # the second one corresponds u so that [i,j] represents 
+        # the value at uv location (j,i).
+        # since the array is C-contiguous, memory layout is contiguous 
+        # along u-axis. 
+        #
+        # | 9|10|11| 
+        # | 6| 7| 8|
+        # | 3| 4| 5|
+        # | 0| 1| 2|
+#         uid = self.active_index[1][random_index]
+#         vid = self.active_index[0][random_index]
+#         cellu = self.uvgrid.cellu
+#         cellv = self.uvgrid.cellv
+#         offsetu = self.uvgrid.offsetu
+#         offsetv = self.uvgrid.offsetv
+#         nu = self.uvgrid.nu
+#         nv = self.uvgrid.nv
+#         assert gdata_shape[0] == nv
+#         assert gdata_shape[1] == nu
+#         #print 'subset ID {0}: uid{0}={1}; vid{0}={2}'.format(self.subset_id, uid.tolist(), vid.tolist())
+#         u[:] = (uid - offsetu) * cellu
+#         v[:] = (vid - offsetv) * cellv
+        
+        
+        # visibility data to be cached
+        # here, we assume npol == 1 (Stokes visibility I_v) and nchan == 1
+#         assert len(gdata_shape) == 4
+#         assert gdata_shape[2] == 1 # npol should be 1
+#         assert gdata_shape[3] == 1 # nchan should be 1 
+        num_subvis = len(random_index)
+        rcache = sakura.empty_aligned((num_subvis,), dtype=rdata.dtype)
+        icache = sakura.empty_like_aligned(rcache)
+        wcache = sakura.empty_like_aligned(rcache)
+        ucache = sakura.empty_aligned((num_subvis,), dtype=u.dtype)
+        vcache = sakura.empty_like_aligned(ucache)
+       
+        rcache[:] = rdata[random_index]
+        icache[:] = idata[random_index]
+        wcache[:] = weight[random_index]
+        ucache[:] = u[random_index]
+        vcache[:] = v[random_index]
+        
+        # generate subset
+        assert num_subvis < num_vis
+        num_active = num_vis - num_subvis
+        ractive = sakura.empty_aligned((num_active,), dtype=rdata.dtype)
+        iactive = sakura.empty_like_aligned(ractive)
+        wactive = sakura.empty_like_aligned(ractive)
+        uactive = sakura.empty_aligned((num_active,), dtype=u.dtype)
+        vactive = sakura.empty_like_aligned(uactive)
+        ractive[:] = rdata[mask]
+        iactive[:] = idata[mask]
+        wactive[:] = weight[mask]
+        uactive[:] = u[mask]
+        vactive[:] = v[mask]
+        self.visibility_active = datacontainer.VisibilityWorkingSet(data_id=0,
+                                                                    rdata=ractive,
+                                                                    idata=iactive,
+                                                                    weight=wactive,
+                                                                    u=uactive,
+                                                                    v=vactive)
+        
+        #self.__replace_with(self.visibility_active.rdata, random_index, 0.0)
+        #self.__replace_with(self.visibility_active.idata, random_index, 0.0)
+        #self.__replace_with(self.visibility_active.weight, random_index, 0.0)
+        self.visibility_cache = [datacontainer.VisibilityWorkingSet(data_id=0, # nominal data ID
+                                                                    rdata=rcache, 
+                                                                    idata=icache,
+                                                                    weight=wcache,
+                                                                    u=ucache,
+                                                                    v=vcache)]
+        
+        try:
+            yield self
+        finally:
+            #self.restore_visibility()
+            #self.visibility_active = self.visibility
+            self._clear()
+        
+    def restore_visibility(self):
+        if self.visibility_active is not None and self.visibility_cache is not None:
+            random_index = self.index_generator.get_subset_index(self.subset_id)
+            for cache in self.visibility_cache:
+                self.__replace_with(self.visibility.rdata, random_index, cache.rdata)
+                self.__replace_with(self.visibility.idata, random_index, cache.idata)
+                self.__replace_with(self.visibility.weight, random_index, cache.weight)
+            self._clear()
+            
+    def __replace_with(self, src, index_list, newval):
+        #replace_index = tuple([x[index_list] for x in self.active_index])
+        src[index_list] = newval
+
+
+class GriddedVisibilitySubsetGenerator(object):
     def __init__(self, griddedvis, num_fold=10):
         self.griddedvis = griddedvis
         self.num_fold = num_fold
@@ -35,8 +205,8 @@ class VisibilitySubsetGenerator(object):
 
 class GriddedVisibilitySubsetHandler(object):
     def __init__(self, visset, uvgridconfig):
-        # visset is VisibilitySubsetGenerator instance
-        assert isinstance(visset, VisibilitySubsetGenerator)
+        # visset is GriddedVisibilitySubsetGenerator instance
+        assert isinstance(visset, GriddedVisibilitySubsetGenerator)
         self.visibility = visset.griddedvis
         self.index_generator = visset.index_generator
         self.active_index = visset.active_index
@@ -162,12 +332,12 @@ class MeanSquareErrorEvaluator(object):
         import time
         start_time = time.time()
         # UV grid configuration parameters
-        offsetu = uvgrid.offsetu
-        offsetv = uvgrid.offsetv
-        nu = uvgrid.nu
-        nv = uvgrid.nv
-        cellu = uvgrid.cellu
-        cellv = uvgrid.cellv
+        #offsetu = uvgrid.offsetu
+        #offsetv = uvgrid.offsetv
+        #nu = uvgrid.nu
+        #nv = uvgrid.nv
+        #cellu = uvgrid.cellu
+        #cellv = uvgrid.cellv
         
         # Obtain visibility from image array
         shifted_image = numpy.fft.fftshift(image[:,:,0,0])
@@ -176,20 +346,22 @@ class MeanSquareErrorEvaluator(object):
         imagefft_transpose = imagefft.transpose()
         rmodel = imagefft_transpose.real
         imodel = imagefft_transpose.imag
+        nx = rmodel.shape[0]
+        ny = rmodel.shape[1]
         
         # Compute MSE
         mse = 0.0
         wsum = 0
-        rinterp = scipy.interpolate.RectBivariateSpline(numpy.arange(nv), numpy.arange(nu), rmodel)
-        iinterp = scipy.interpolate.RectBivariateSpline(numpy.arange(nv), numpy.arange(nu), imodel)
+        rinterp = scipy.interpolate.RectBivariateSpline(numpy.arange(nx), numpy.arange(ny), rmodel)
+        iinterp = scipy.interpolate.RectBivariateSpline(numpy.arange(nx), numpy.arange(ny), imodel)
         for ws in visibility_cache:
-            u = ws.u
-            v = ws.v
+            pu = ws.u
+            pv = ws.v
             rdata = ws.rdata
             idata = ws.idata
             wdata = ws.weight
-            pu = u / cellu + offsetu
-            pv = v / cellv + offsetv
+            #pu = u / cellu + offsetu
+            #pv = v / cellv + offsetv
             adx = rdata - rinterp(pv, pu, grid=False)
             ady = idata - iinterp(pv, pu, grid=False)
             mse += numpy.sum(wdata * numpy.square(adx)) + numpy.sum(wdata * numpy.square(ady))
