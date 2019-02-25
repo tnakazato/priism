@@ -506,8 +506,7 @@ class SparseModelingImager(object):
             # CV is disabled
             return -1.0
         
-        subset_handler = cv.VisibilitySubsetHandler(self.visset, 
-                                                    self.uvgridconfig)
+        subset_handler = cv.VisibilitySubsetHandler(self.visset)
         
         for subset in subset_handler.generate_subset(subset_id=0):
             
@@ -518,8 +517,7 @@ class SparseModelingImager(object):
 
                 # evaluate MSE (Mean Square Error)
                 mse = evaluator.evaluate_and_accumulate(subset.visibility_cache, 
-                                                        imagearray,
-                                                        self.uvgridconfig)
+                                                        imagearray)
              
         mean_mse = evaluator.get_mean_mse()
         
