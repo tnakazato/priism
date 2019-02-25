@@ -47,20 +47,11 @@ class VisibilitySubsetHandler(object):
     def _clear(self):
         self.visibility_active = None
         self.visibility_cache = None
-        #self.active_index = None
         self.subset_id = None
         
-        # grid data shape: (nv, nu, npol, nchan)
-        #grid_real = self.visibility.real
-        #grid_imag = self.visibility.imag
-        
         # amplitude should be nonzero in active pixels
-        #self.active_index = numpy.where(numpy.logical_and(grid_real != 0, grid_imag != 0))
         num_active = len(self.visibility)
         print('num_active={0}'.format(num_active))
-    
-        # random index 
-        #self.index_generator = util.RandomIndexGenerator(num_active, self.num_fold)
       
     @contextlib.contextmanager
     def generate_subset(self, subset_id):
@@ -94,26 +85,10 @@ class VisibilitySubsetHandler(object):
         # | 6| 7| 8|
         # | 3| 4| 5|
         # | 0| 1| 2|
-#         uid = self.active_index[1][random_index]
-#         vid = self.active_index[0][random_index]
-#         cellu = self.uvgrid.cellu
-#         cellv = self.uvgrid.cellv
-#         offsetu = self.uvgrid.offsetu
-#         offsetv = self.uvgrid.offsetv
-#         nu = self.uvgrid.nu
-#         nv = self.uvgrid.nv
-#         assert gdata_shape[0] == nv
-#         assert gdata_shape[1] == nu
-#         #print 'subset ID {0}: uid{0}={1}; vid{0}={2}'.format(self.subset_id, uid.tolist(), vid.tolist())
-#         u[:] = (uid - offsetu) * cellu
-#         v[:] = (vid - offsetv) * cellv
-        
+       
         
         # visibility data to be cached
         # here, we assume npol == 1 (Stokes visibility I_v) and nchan == 1
-#         assert len(gdata_shape) == 4
-#         assert gdata_shape[2] == 1 # npol should be 1
-#         assert gdata_shape[3] == 1 # nchan should be 1 
         num_subvis = len(random_index)
         rcache = sakura.empty_aligned((num_subvis,), dtype=rdata.dtype)
         icache = sakura.empty_like_aligned(rcache)
@@ -147,9 +122,6 @@ class VisibilitySubsetHandler(object):
                                                                     u=uactive,
                                                                     v=vactive)
         
-        #self.__replace_with(self.visibility_active.rdata, random_index, 0.0)
-        #self.__replace_with(self.visibility_active.idata, random_index, 0.0)
-        #self.__replace_with(self.visibility_active.weight, random_index, 0.0)
         self.visibility_cache = [datacontainer.VisibilityWorkingSet(data_id=0, # nominal data ID
                                                                     rdata=rcache, 
                                                                     idata=icache,
@@ -160,22 +132,20 @@ class VisibilitySubsetHandler(object):
         try:
             yield self
         finally:
-            #self.restore_visibility()
-            #self.visibility_active = self.visibility
             self._clear()
         
-    def restore_visibility(self):
-        if self.visibility_active is not None and self.visibility_cache is not None:
-            random_index = self.index_generator.get_subset_index(self.subset_id)
-            for cache in self.visibility_cache:
-                self.__replace_with(self.visibility.rdata, random_index, cache.rdata)
-                self.__replace_with(self.visibility.idata, random_index, cache.idata)
-                self.__replace_with(self.visibility.weight, random_index, cache.weight)
-            self._clear()
-            
-    def __replace_with(self, src, index_list, newval):
-        #replace_index = tuple([x[index_list] for x in self.active_index])
-        src[index_list] = newval
+#     def restore_visibility(self):
+#         if self.visibility_active is not None and self.visibility_cache is not None:
+#             random_index = self.index_generator.get_subset_index(self.subset_id)
+#             for cache in self.visibility_cache:
+#                 self.__replace_with(self.visibility.rdata, random_index, cache.rdata)
+#                 self.__replace_with(self.visibility.idata, random_index, cache.idata)
+#                 self.__replace_with(self.visibility.weight, random_index, cache.weight)
+#             self._clear()
+#             
+#     def __replace_with(self, src, index_list, newval):
+#         #replace_index = tuple([x[index_list] for x in self.active_index])
+#         src[index_list] = newval
 
 
 class GriddedVisibilitySubsetGenerator(object):
