@@ -509,9 +509,7 @@ class SparseModelingImager(object):
         subset_handler = cv.VisibilitySubsetHandler(self.visset, 
                                                     self.uvgridconfig)
         
-        for i in range(num_fold):
-            # pick up subset for cross validation
-            with subset_handler.generate_subset(subset_id=i) as subset:
+        for subset in subset_handler.generate_subset(subset_id=0):
             
                 # run MFISTA
                 imagearray = self._mfista(mfistaparam, 
