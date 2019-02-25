@@ -28,13 +28,12 @@ class VisibilitySubsetGenerator(object):
             self.index_generator = None
 
 class VisibilitySubsetHandler(object):
-    def __init__(self, visset, uvgridconfig):
+    def __init__(self, visset):
         # visset is VisibilitySubsetGenerator instance
         assert isinstance(visset, VisibilitySubsetGenerator)
         self.visibility = visset.working_set
         self.index_generator = visset.index_generator
         self.active_index = visset.active_index
-        self.uvgrid = uvgridconfig
         self.num_fold = visset.num_fold
         
         if self.num_fold <= 1:
@@ -287,16 +286,9 @@ class MeanSquareErrorEvaluator(object):
         self.mse_storage = numpy.empty(100, dtype=numpy.float64)
         self.num_mse = 0
         
-    def _evaluate_mse(self, visibility_cache, image, uvgrid):
+    def _evaluate_mse(self, visibility_cache, image):
         import time
         start_time = time.time()
-        # UV grid configuration parameters
-        #offsetu = uvgrid.offsetu
-        #offsetv = uvgrid.offsetv
-        #nu = uvgrid.nu
-        #nv = uvgrid.nv
-        #cellu = uvgrid.cellu
-        #cellv = uvgrid.cellv
         
         # Obtain visibility from image array
         shifted_image = numpy.fft.fftshift(image[:,:,0,0])
@@ -319,8 +311,6 @@ class MeanSquareErrorEvaluator(object):
             rdata = ws.rdata
             idata = ws.idata
             wdata = ws.weight
-            #pu = u / cellu + offsetu
-            #pv = v / cellv + offsetv
             adx = rdata - rinterp(pv, pu, grid=False)
             ady = idata - iinterp(pv, pu, grid=False)
             mse += numpy.sum(wdata * numpy.square(adx)) + numpy.sum(wdata * numpy.square(ady))
@@ -331,13 +321,13 @@ class MeanSquareErrorEvaluator(object):
         return mse
             
         
-    def evaluate_and_accumulate(self, visibility_cache, image, uvgridconfig):
+    def evaluate_and_accumulate(self, visibility_cache, image):
         """
         Evaluate MSE (Mean Square Error) from image which is a solution of MFISTA
         and visibility_cache provided as a set of GridderWorkingSet instance.
         """
         # TODO: evaluate MSE
-        mse = self._evaluate_mse(visibility_cache, image, uvgridconfig)
+        mse = self._evaluate_mse(visibility_cache, image)
         
         # register it
         if self.num_mse >= len(self.mse_storage):
