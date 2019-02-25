@@ -69,8 +69,8 @@ class SparseImagingInputs(CTypesUtilMixIn):
     """
     Container for sparseimaging inputs
     """
-    @staticmethod
-    def from_file(filename):
+    @classmethod
+    def from_file(cls, filename):
         with open(filename, 'r') as f:
             # read M
             M = exec_line(f, 'M')
@@ -102,11 +102,11 @@ class SparseImagingInputs(CTypesUtilMixIn):
                 noise[i] = numpy.double(values[4].strip())
                 #print '{0} {1} {2} {3}'.format(u[i], v[i], yreal[i], yimag[i], noise[i])
                 
-            inputs = SparseImagingInputs(filename, M, NX, NY, u, v, yreal, yimag, noise)
+            inputs = cls(filename, M, NX, NY, u, v, yreal, yimag, noise)
             return inputs
 
-    @staticmethod
-    def from_gridder_result(gridder_result):
+    @classmethod
+    def from_gridder_result(cls, gridder_result):
         """
         Convert GridderResult object into SparseImagingInputs object.
         uv-coordinate value is flipped for FFTW.
@@ -160,10 +160,10 @@ class SparseImagingInputs(CTypesUtilMixIn):
         noise = gridder_result.wreal[nonzeros]
         noise = 1.0 / numpy.sqrt(noise)
         
-        return SparseImagingInputs(infile, m, nx, ny, u, v, yreal, yimag, noise)
+        return cls(infile, m, nx, ny, u, v, yreal, yimag, noise)
     
-    @staticmethod
-    def from_visibility_working_set(visibility, imageparam):
+    @classmethod
+    def from_visibility_working_set(cls, visibility, imageparam):
         """
         Convert VisibilityWorkingSet object into SparseImagingInputs object.
         uv-coordinate value is flipped for FFTW.
@@ -203,7 +203,7 @@ class SparseImagingInputs(CTypesUtilMixIn):
         noise = visibility.weight.copy()
         noise = 1.0 / numpy.sqrt(noise)
         
-        return SparseImagingInputs(infile, m, nx, ny, u, v, yreal, yimag, noise)
+        return cls(infile, m, nx, ny, u, v, yreal, yimag, noise)
 
     def __init__(self, infile, M, NX, NY, u, v, yreal, yimag, noise):
         self.infile = infile
