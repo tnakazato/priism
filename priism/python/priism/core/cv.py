@@ -53,7 +53,6 @@ class VisibilitySubsetHandler(object):
         num_active = len(self.visibility)
         print('num_active={0}'.format(num_active))
       
-    @contextlib.contextmanager
     def generate_subset(self, subset_id):
         self.subset_id = subset_id
         
@@ -64,88 +63,78 @@ class VisibilitySubsetHandler(object):
         u = self.visibility.u
         v = self.visibility.v
         
-        # random index 
-        random_index = self.index_generator.get_subset_index(self.subset_id)
-        #print('DEBUG_TN: subset ID {0} random_index = {1}'.format(self.subset_id, list(random_index)))
-        
-        # mask array for active visibility
-        num_vis = len(self.visibility)
-        mask = numpy.zeros(num_vis, dtype=numpy.bool)
-        mask[:] = True
-        mask[random_index] = False
-        
-        # uv location
-        # assumption here is that the first index corresponds to v while
-        # the second one corresponds u so that [i,j] represents 
-        # the value at uv location (j,i).
-        # since the array is C-contiguous, memory layout is contiguous 
-        # along u-axis. 
-        #
-        # | 9|10|11| 
-        # | 6| 7| 8|
-        # | 3| 4| 5|
-        # | 0| 1| 2|
-       
-        
-        # visibility data to be cached
-        # here, we assume npol == 1 (Stokes visibility I_v) and nchan == 1
-        num_subvis = len(random_index)
-        rcache = sakura.empty_aligned((num_subvis,), dtype=rdata.dtype)
-        icache = sakura.empty_like_aligned(rcache)
-        wcache = sakura.empty_like_aligned(rcache)
-        ucache = sakura.empty_aligned((num_subvis,), dtype=u.dtype)
-        vcache = sakura.empty_like_aligned(ucache)
-       
-        rcache[:] = rdata[random_index]
-        icache[:] = idata[random_index]
-        wcache[:] = weight[random_index]
-        ucache[:] = u[random_index]
-        vcache[:] = v[random_index]
-        
-        # generate subset
-        assert num_subvis < num_vis
-        num_active = num_vis - num_subvis
-        ractive = sakura.empty_aligned((num_active,), dtype=rdata.dtype)
-        iactive = sakura.empty_like_aligned(ractive)
-        wactive = sakura.empty_like_aligned(ractive)
-        uactive = sakura.empty_aligned((num_active,), dtype=u.dtype)
-        vactive = sakura.empty_like_aligned(uactive)
-        ractive[:] = rdata[mask]
-        iactive[:] = idata[mask]
-        wactive[:] = weight[mask]
-        uactive[:] = u[mask]
-        vactive[:] = v[mask]
-        self.visibility_active = datacontainer.VisibilityWorkingSet(data_id=0,
-                                                                    rdata=ractive,
-                                                                    idata=iactive,
-                                                                    weight=wactive,
-                                                                    u=uactive,
-                                                                    v=vactive)
-        
-        self.visibility_cache = [datacontainer.VisibilityWorkingSet(data_id=0, # nominal data ID
-                                                                    rdata=rcache, 
-                                                                    idata=icache,
-                                                                    weight=wcache,
-                                                                    u=ucache,
-                                                                    v=vcache)]
-        
-        try:
-            yield self
-        finally:
-            self._clear()
-        
-#     def restore_visibility(self):
-#         if self.visibility_active is not None and self.visibility_cache is not None:
-#             random_index = self.index_generator.get_subset_index(self.subset_id)
-#             for cache in self.visibility_cache:
-#                 self.__replace_with(self.visibility.rdata, random_index, cache.rdata)
-#                 self.__replace_with(self.visibility.idata, random_index, cache.idata)
-#                 self.__replace_with(self.visibility.weight, random_index, cache.weight)
-#             self._clear()
-#             
-#     def __replace_with(self, src, index_list, newval):
-#         #replace_index = tuple([x[index_list] for x in self.active_index])
-#         src[index_list] = newval
+        for local_id in range(self.num_fold):
+            self.subset_id = local_id
+            
+            # random index 
+            random_index = self.index_generator.get_subset_index(self.subset_id)
+            #print('DEBUG_TN: subset ID {0} random_index = {1}'.format(self.subset_id, list(random_index)))
+            
+            # mask array for active visibility
+            num_vis = len(self.visibility)
+            mask = numpy.zeros(num_vis, dtype=numpy.bool)
+            mask[:] = True
+            mask[random_index] = False
+            
+            # uv location
+            # assumption here is that the first index corresponds to v while
+            # the second one corresponds u so that [i,j] represents 
+            # the value at uv location (j,i).
+            # since the array is C-contiguous, memory layout is contiguous 
+            # along u-axis. 
+            #
+            # | 9|10|11| 
+            # | 6| 7| 8|
+            # | 3| 4| 5|
+            # | 0| 1| 2|
+           
+            
+            # visibility data to be cached
+            # here, we assume npol == 1 (Stokes visibility I_v) and nchan == 1
+            num_subvis = len(random_index)
+            rcache = sakura.empty_aligned((num_subvis,), dtype=rdata.dtype)
+            icache = sakura.empty_like_aligned(rcache)
+            wcache = sakura.empty_like_aligned(rcache)
+            ucache = sakura.empty_aligned((num_subvis,), dtype=u.dtype)
+            vcache = sakura.empty_like_aligned(ucache)
+           
+            rcache[:] = rdata[random_index]
+            icache[:] = idata[random_index]
+            wcache[:] = weight[random_index]
+            ucache[:] = u[random_index]
+            vcache[:] = v[random_index]
+            
+            # generate subset
+            assert num_subvis < num_vis
+            num_active = num_vis - num_subvis
+            ractive = sakura.empty_aligned((num_active,), dtype=rdata.dtype)
+            iactive = sakura.empty_like_aligned(ractive)
+            wactive = sakura.empty_like_aligned(ractive)
+            uactive = sakura.empty_aligned((num_active,), dtype=u.dtype)
+            vactive = sakura.empty_like_aligned(uactive)
+            ractive[:] = rdata[mask]
+            iactive[:] = idata[mask]
+            wactive[:] = weight[mask]
+            uactive[:] = u[mask]
+            vactive[:] = v[mask]
+            self.visibility_active = datacontainer.VisibilityWorkingSet(data_id=0,
+                                                                        rdata=ractive,
+                                                                        idata=iactive,
+                                                                        weight=wactive,
+                                                                        u=uactive,
+                                                                        v=vactive)
+            
+            self.visibility_cache = [datacontainer.VisibilityWorkingSet(data_id=0, # nominal data ID
+                                                                        rdata=rcache, 
+                                                                        idata=icache,
+                                                                        weight=wcache,
+                                                                        u=ucache,
+                                                                        v=vcache)]
+            
+            try:
+                yield self
+            finally:
+                self._clear()
 
 
 class GriddedVisibilitySubsetGenerator(object):
