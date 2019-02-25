@@ -410,7 +410,7 @@ class SparseModelingImager(object):
                 result_image.append(imagename)
                 
                 # then evaluate MSE
-                mse = self.computegridmse(L1, Ltsv, maxiter, eps, clean_box)
+                mse = self.computemse(L1, Ltsv, maxiter, eps, clean_box)
                 result_mse.append(mse)
                 
                 print('L1 10^{0} Ltsv 10^{1}: MSE {2} FITS {3}'.format(int(math.log10(L1)),
@@ -488,10 +488,11 @@ class SparseModelingImager(object):
     def finalizecv(self):
         self.visset = None
     
-    def computegridmse(self, l1, ltsv, maxiter=50000, eps=1.0e-5, clean_box=None):
+    def computemse(self, l1, ltsv, maxiter=50000, eps=1.0e-5, clean_box=None):
         """
         Compute mean-square-error (MSE) on resulting image.
-        MSE is evaluated from gridded visibility.
+        MSE is evaluated from visibility data provided as VisibilityWorkingSet 
+        instance.
         """
         mfistaparam = paramcontainer.MfistaParamContainer(l1=l1, ltsv=ltsv,
                                                           maxiter=maxiter, eps=eps, 
@@ -525,43 +526,6 @@ class SparseModelingImager(object):
         mean_mse = evaluator.get_mean_mse()
         
         return mean_mse
-    
-    def computemse(self, num_fold=10):
-        """
-        Compute mean-square-error (MSE) on resulting image.
-        MSE is evaluated from raw visibility (i.e., prior to gridding).
-        """
-        raise NotImplementedError('Computation of MSE from raw visibility is future development.')
-#         assert self.griddedvis is not None
-#         
-#         evaluator = core.MeanSquareErrorEvaluator()
-#         visgridder = core.CrossValidationVisibilityGridder(self.gridparam, 
-#                                                            self.imparam, 
-#                                                            self.griddedvis.num_ws,
-#                                                            num_fold)
-#         
-#         for i in xrange(num_fold):
-#             for visparam in self.visparam:
-#                 reader = VisibilityReader(visparam)
-#                 converter = VisibilityConverter(visparam, self.imparam)
-#                 for working_set in sakura.paraMap(self.num_threads, 
-#                                            converter.generate_working_set, 
-#                                            reader.readvis()):
-#                     visgridder.grid(working_set, i)
-#             griddedvis = visgridder.get_result()
-#             visibility_cache = visgridder.get_visibility_cache()
-#             
-#             # run MFISTA
-#             imagearray = self._mfista(self.mfistaparam,
-#                                       griddedvis)
-#             
-#             # evaluate MSE (Mean Square Error)
-#             mse = evaluator.evaluate_and_accumulate(visibility_cache,
-#                                                     imagearray)
-#             
-#         mean_mse = evaluator.get_mean_mse()
-#         
-#         return mean_mse
     
     def computeapproximatemse(self):
         """
