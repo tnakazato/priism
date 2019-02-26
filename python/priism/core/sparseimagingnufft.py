@@ -5,185 +5,187 @@ import os
 import numpy
 import ctypes
 
+from . import sparseimagingbase
+
 #import priism.core.datacontainer as datacontainer
 
-class CTypesUtilMixIn(object):
-    def as_carray(self, attr):
-        array = getattr(self, attr)
-        return numpy.ctypeslib.as_ctypes(array)
+# class CTypesUtilMixIn(object):
+#     def as_carray(self, attr):
+#         array = getattr(self, attr)
+#         return numpy.ctypeslib.as_ctypes(array)
+#     
+#     
+# def exec_line(f, varname):
+#     line = f.readline()
+#     exec(line.rstrip('\n'))
+#     val = locals()[varname]
+#     #print '{0} = {1}'.format(varname, val)
+#     return val
+# 
+# def __shift_with(n, iarr, shift_term, inplace=True):
+#     if inplace:
+#         ret = iarr
+#     else:
+#         ret = numpy.zeros_like(iarr)
+#     ret = (iarr + shift_term) % n
+#     return ret
+#     
+# def shift_uvindex(n, iarr, inplace=True):
+#     """
+#     Assuming that input array index, iarr, is configured so that 
+#     zero-frequency term comes to the center, shift_uvindex shifts 
+#     iarr so that zero-frequency term comes to the first element. 
+#     It corresponds to numpy.fft.ifftshift.
+#     
+#     if n is odd:
+#         (a,b,c,d,e,f,g) -> (d,e,f,g,a,b,c)
+#     elif n is even:
+#         (a,b,c,d,e,f)   -> (d,e,f,a,b,c)
+#         
+#     n --- number of pixels along the axis
+#     iarr --- input array index
+#     inplace --- if True, iarr is edited instead to prepare output array
+#     """
+#     shift_term = n // 2
+#     return __shift_with(n, iarr, shift_term, inplace)
+# 
+# def rshift_uvindex(n, iarr, inplace=True):
+#     """
+#     Assuming that input array index, iarr, is configured so that 
+#     zero-frequency term comes to the first element, rshift_uvindex 
+#     shifts iarr so that zero-frequency term comes to the center. 
+#     It corresponds to numpy.fft.fftshift.
+#     
+#     if n is odd:
+#         (a,b,c,d,e,f,g) -> (e,f,g,a,b,c,d)
+#     elif n is even:
+#         (a,b,c,d,e,f)   -> (d,e,f,a,b,c)
+# 
+#     n --- number of pixels along the axis
+#     iarr --- input array index
+#     inplace --- if True, iarr is edited instead to prepare output array
+#     """
+#     shift_term = n // 2 + (n % 2)
+#     return __shift_with(n, iarr, shift_term, inplace)    
+#     
+# 
+# class SparseImagingInputs(CTypesUtilMixIn):
+#     """
+#     Container for sparseimaging inputs
+#     """
+#     @staticmethod
+#     def from_file(filename):
+#         with open(filename, 'r') as f:
+#             # read M
+#             M = exec_line(f, 'M')
+#             
+#             # read NX
+#             NX = exec_line(f, 'NX')
+#             
+#             # read NY
+#             NY = exec_line(f, 'NY')
+#             
+#             # skip headers
+#             f.readline()
+#             f.readline()
+#             f.readline()
+#             
+#             # read input data
+#             u = numpy.empty(M, dtype=numpy.float64)
+#             v = numpy.empty_like(u)
+#             yreal = numpy.empty(M, dtype=numpy.double)
+#             yimag = numpy.empty_like(yreal)
+#             noise = numpy.empty_like(yreal)
+#             for i in range(M):
+#                 line = f.readline()
+#                 values = line.split(',')
+#                 u[i] = numpy.float64(values[0].strip())
+#                 v[i] = numpy.float64(values[1].strip())
+#                 yreal[i] = numpy.double(values[2].strip())
+#                 yimag[i] = numpy.double(values[3].strip())
+#                 noise[i] = numpy.double(values[4].strip())
+#                 #print '{0} {1} {2} {3}'.format(u[i], v[i], yreal[i], yimag[i], noise[i])
+#                 
+#             inputs = SparseImagingInputs(filename, M, NX, NY, u, v, yreal, yimag, noise)
+#             return inputs
+# 
+#     @staticmethod
+#     def from_data(data, nx, ny):
+#         """
+#         Convert whatever object containing visibility data into SparseImagingInputs object.
+#         uv-coordinate value is flipped for FFTW?.
+#         """
+#         # infile is nominal value 
+#         infile = 'working_set'
+#         
+#         # data is supposed to be a list of VisibilityWorkingSet
+#         #assert isinstance(data, datacontainer.VisibilityWorkingSet)
+#         
+#         # m is the number of visibility data points
+#         m = data.nrow
+# 
+#         # TODO
+#         # u, v: input values are in pixel coordinate
+#         #       these values must be converted to the range [-pi,+pi]
+#         u = data.u
+#         v = data.v
+# 
+#         # yreal, yimag 
+#         yreal = data.rdata
+#         yimag = data.idata
+#         
+#         # noise is formed as 1 / sqrt(weight)
+#         noise = 1.0 / numpy.sqrt(data.weight)
+# 
+# #         # 20171102 suggestion by Ikeda-san
+# #         # change sign according to pixel coordinate
+# #         for i in range(len(yreal)):
+# #             j = nonzeros[0][i]
+# #             k = nonzeros[1][i]
+# #             factor = (-1)**(j+k)
+# #             yreal[i] *= factor
+# #             yimag[i] *= factor
+#                 
+#         return SparseImagingInputs(infile, m, nx, ny, u, v, yreal, yimag, noise)
+#     
+#     def __init__(self, infile, M, NX, NY, u, v, yreal, yimag, noise):
+#         """
+#         infile -- name of the input file (can be any string if on-memory input)
+#         M -- number of visibility data [int32]
+#         NX -- number of image pixels along horizontal direction [int32]
+#         NY -- number of image pixels along vertical direction [int32]
+#         u -- u data (-pi~+pi) [double]
+#         v -- v data (-pi~+pi) [double]
+#         yreal -- real part of the visibility data [double]
+#         yimag -- imaginary part of the visibility data [double]
+#         noise -- noise std of visibility data [double]
+#         """
+#         self.infile = infile
+#         self.m = M
+#         self.nx = NX
+#         self.ny = NY 
+#         self.u = u
+#         self.v = v
+#         self.yreal = yreal
+#         self.yimag = yimag
+#         self.noise = noise
+#         
+#     def export(self, filename):
+#         with open(filename, 'w') as f:
+#             print('M = {0}'.format(self.m), file=f)
+#             print('NX = {0}'.format(self.nx), file=f)
+#             print('NY = {0}'.format(self.ny), file=f)
+#             print('', file=f)
+#             print('u, v, y_r, y_i, noise_std_dev', file=f)
+#             print('', file=f)
+#             for i in range(self.m):
+#                 print('{0:e}, {1:e}, {2:e}, {3:e}, {4:e}'.format(self.u[i],
+#                                                                  self.v[i],
+#                                                                  self.yreal[i],
+#                                                                  self.yimag[i],
+#                                                                  self.noise[i]), file=f)
     
-    
-def exec_line(f, varname):
-    line = f.readline()
-    exec(line.rstrip('\n'))
-    val = locals()[varname]
-    #print '{0} = {1}'.format(varname, val)
-    return val
-
-def __shift_with(n, iarr, shift_term, inplace=True):
-    if inplace:
-        ret = iarr
-    else:
-        ret = numpy.zeros_like(iarr)
-    ret = (iarr + shift_term) % n
-    return ret
-    
-def shift_uvindex(n, iarr, inplace=True):
-    """
-    Assuming that input array index, iarr, is configured so that 
-    zero-frequency term comes to the center, shift_uvindex shifts 
-    iarr so that zero-frequency term comes to the first element. 
-    It corresponds to numpy.fft.ifftshift.
-    
-    if n is odd:
-        (a,b,c,d,e,f,g) -> (d,e,f,g,a,b,c)
-    elif n is even:
-        (a,b,c,d,e,f)   -> (d,e,f,a,b,c)
-        
-    n --- number of pixels along the axis
-    iarr --- input array index
-    inplace --- if True, iarr is edited instead to prepare output array
-    """
-    shift_term = n // 2
-    return __shift_with(n, iarr, shift_term, inplace)
-
-def rshift_uvindex(n, iarr, inplace=True):
-    """
-    Assuming that input array index, iarr, is configured so that 
-    zero-frequency term comes to the first element, rshift_uvindex 
-    shifts iarr so that zero-frequency term comes to the center. 
-    It corresponds to numpy.fft.fftshift.
-    
-    if n is odd:
-        (a,b,c,d,e,f,g) -> (e,f,g,a,b,c,d)
-    elif n is even:
-        (a,b,c,d,e,f)   -> (d,e,f,a,b,c)
-
-    n --- number of pixels along the axis
-    iarr --- input array index
-    inplace --- if True, iarr is edited instead to prepare output array
-    """
-    shift_term = n // 2 + (n % 2)
-    return __shift_with(n, iarr, shift_term, inplace)    
-    
-
-class SparseImagingInputs(CTypesUtilMixIn):
-    """
-    Container for sparseimaging inputs
-    """
-    @staticmethod
-    def from_file(filename):
-        with open(filename, 'r') as f:
-            # read M
-            M = exec_line(f, 'M')
-            
-            # read NX
-            NX = exec_line(f, 'NX')
-            
-            # read NY
-            NY = exec_line(f, 'NY')
-            
-            # skip headers
-            f.readline()
-            f.readline()
-            f.readline()
-            
-            # read input data
-            u = numpy.empty(M, dtype=numpy.float64)
-            v = numpy.empty_like(u)
-            yreal = numpy.empty(M, dtype=numpy.double)
-            yimag = numpy.empty_like(yreal)
-            noise = numpy.empty_like(yreal)
-            for i in range(M):
-                line = f.readline()
-                values = line.split(',')
-                u[i] = numpy.float64(values[0].strip())
-                v[i] = numpy.float64(values[1].strip())
-                yreal[i] = numpy.double(values[2].strip())
-                yimag[i] = numpy.double(values[3].strip())
-                noise[i] = numpy.double(values[4].strip())
-                #print '{0} {1} {2} {3}'.format(u[i], v[i], yreal[i], yimag[i], noise[i])
-                
-            inputs = SparseImagingInputs(filename, M, NX, NY, u, v, yreal, yimag, noise)
-            return inputs
-
-    @staticmethod
-    def from_data(data, nx, ny):
-        """
-        Convert whatever object containing visibility data into SparseImagingInputs object.
-        uv-coordinate value is flipped for FFTW?.
-        """
-        # infile is nominal value 
-        infile = 'working_set'
-        
-        # data is supposed to be a list of VisibilityWorkingSet
-        #assert isinstance(data, datacontainer.VisibilityWorkingSet)
-        
-        # m is the number of visibility data points
-        m = data.nrow
-
-        # TODO
-        # u, v: input values are in pixel coordinate
-        #       these values must be converted to the range [-pi,+pi]
-        u = data.u
-        v = data.v
-
-        # yreal, yimag 
-        yreal = data.rdata
-        yimag = data.idata
-        
-        # noise is formed as 1 / sqrt(weight)
-        noise = 1.0 / numpy.sqrt(data.weight)
-
-#         # 20171102 suggestion by Ikeda-san
-#         # change sign according to pixel coordinate
-#         for i in range(len(yreal)):
-#             j = nonzeros[0][i]
-#             k = nonzeros[1][i]
-#             factor = (-1)**(j+k)
-#             yreal[i] *= factor
-#             yimag[i] *= factor
-                
-        return SparseImagingInputs(infile, m, nx, ny, u, v, yreal, yimag, noise)
-    
-    def __init__(self, infile, M, NX, NY, u, v, yreal, yimag, noise):
-        """
-        infile -- name of the input file (can be any string if on-memory input)
-        M -- number of visibility data [int32]
-        NX -- number of image pixels along horizontal direction [int32]
-        NY -- number of image pixels along vertical direction [int32]
-        u -- u data (-pi~+pi) [double]
-        v -- v data (-pi~+pi) [double]
-        yreal -- real part of the visibility data [double]
-        yimag -- imaginary part of the visibility data [double]
-        noise -- noise std of visibility data [double]
-        """
-        self.infile = infile
-        self.m = M
-        self.nx = NX
-        self.ny = NY 
-        self.u = u
-        self.v = v
-        self.yreal = yreal
-        self.yimag = yimag
-        self.noise = noise
-        
-    def export(self, filename):
-        with open(filename, 'w') as f:
-            print('M = {0}'.format(self.m), file=f)
-            print('NX = {0}'.format(self.nx), file=f)
-            print('NY = {0}'.format(self.ny), file=f)
-            print('', file=f)
-            print('u, v, y_r, y_i, noise_std_dev', file=f)
-            print('', file=f)
-            for i in range(self.m):
-                print('{0:e}, {1:e}, {2:e}, {3:e}, {4:e}'.format(self.u[i],
-                                                                 self.v[i],
-                                                                 self.yreal[i],
-                                                                 self.yimag[i],
-                                                                 self.noise[i]), file=f)
-    
-class SparseImagingResults(CTypesUtilMixIn):
+class SparseImagingResults(sparseimagingbase.CTypesUtilMixIn):
     class MFISTAResult(ctypes.Structure):
         _fields_ = [('M', ctypes.c_int),
                     ('N', ctypes.c_int),
@@ -231,6 +233,7 @@ class SparseImagingResults(CTypesUtilMixIn):
 class SparseImagingExecutor(object):
     """
     """
+    Inputs = sparseimagingbase.SparseImagingInputs
     #default_path = '/Users/nakazato/development/sparseimaging/20170812.mfista/'
     default_path = os.path.dirname(__file__)
     #libname = 'mfista_imaging_fft'
@@ -280,12 +283,12 @@ class SparseImagingExecutor(object):
         print('Y-dim of image:       {0}'.format(inputs.ny))
         
         # inputs
-        u_dx = ctypes.pointer(inputs.as_carray('u'))
-        v_dx = ctypes.pointer(inputs.as_carray('v'))
+        u_idx = ctypes.pointer(inputs.as_carray('u'))
+        v_idx = ctypes.pointer(inputs.as_carray('v'))
         
-        vis_r = ctypes.pointer(inputs.as_carray('yreal'))
-        vis_i = ctypes.pointer(inputs.as_carray('yimag'))
-        vis_std = ctypes.pointer(inputs.as_carray('noise'))
+        y_r = ctypes.pointer(inputs.as_carray('yreal'))
+        y_i = ctypes.pointer(inputs.as_carray('yimag'))
+        noise_stdev = ctypes.pointer(inputs.as_carray('noise'))
         M = ctypes.c_int(inputs.m)
         NX = ctypes.c_int(inputs.nx)
         NY = ctypes.c_int(inputs.ny)
@@ -298,7 +301,7 @@ class SparseImagingExecutor(object):
         nonneg_flag = ctypes.c_int(1 if self.nonnegative else 0)
         box_flag = 0 if cl_box is None else 1
         if box_flag == 1:
-            cl_box = numpy.ctypeslib.as_ctypes(clean_box)
+            cl_box = numpy.ctypeslib.as_ctypes(cl_box)
         else:
             cl_box = numpy.ctypeslib.as_ctypes(numpy.zeros(1, dtype=numpy.float32))
         _box_flag = ctypes.c_int(box_flag)
@@ -310,7 +313,7 @@ class SparseImagingExecutor(object):
         mfista_result = ctypes.pointer(result.mfista_result)
         
         # run MFISTA
-        self._mfista.mfista_imaging_core_fft(u_idx, v_idx, y_r, y_i, noise_stdev,
+        self._mfista.mfista_imaging_core_nufft(u_idx, v_idx, y_r, y_i, noise_stdev,
                                              M, NX, NY, _maxiter, _eps,
                                              lambda_l1, lambda_tv, lambda_tsv, 
                                              cinit, xinit, xout, nonneg_flag, 
@@ -436,7 +439,7 @@ class SparseImagingExecutor(object):
                 noise[i] = numpy.double(values[4].strip())
                 #print '{0} {1} {2} {3}'.format(u[i], v[i], yreal[i], yimag[i], noise[i])
                 
-            inputs = SparseImagingInputs(infile, M, NX, NY, u, v, yreal, yimag, noise)
+            inputs = self.Inputs(infile, M, NX, NY, u, v, yreal, yimag, noise)
             return inputs
             
     
@@ -453,24 +456,24 @@ class SparseImagingExecutor(object):
         return img
     
 
-# utility
-def plot_inputs(inputs, interpolation='nearest', coverage=False):
-    areal = numpy.zeros((inputs.nx, inputs.ny,), dtype=numpy.float)
-    aimag = numpy.zeros_like(areal)
-    for i in range(inputs.m):
-        areal[inputs.u[i], inputs.v[i]] = inputs.yreal[i]
-        aimag[inputs.u[i], inputs.v[i]] = inputs.yimag[i]
-        
-    if coverage:
-        areal[areal.nonzero()] = 1.0
-        aimag[areal.nonzero()] = 1.0
-    
-    import pylab as pl
-    pl.figure('REAL')
-    pl.clf()
-    pl.imshow(areal, interpolation=interpolation)
-    pl.colorbar()
-    pl.figure('IMAG')
-    pl.clf()
-    pl.imshow(aimag, interpolation=interpolation)
-    pl.colorbar()
+# # utility
+# def plot_inputs(inputs, interpolation='nearest', coverage=False):
+#     areal = numpy.zeros((inputs.nx, inputs.ny,), dtype=numpy.float)
+#     aimag = numpy.zeros_like(areal)
+#     for i in range(inputs.m):
+#         areal[inputs.u[i], inputs.v[i]] = inputs.yreal[i]
+#         aimag[inputs.u[i], inputs.v[i]] = inputs.yimag[i]
+#         
+#     if coverage:
+#         areal[areal.nonzero()] = 1.0
+#         aimag[areal.nonzero()] = 1.0
+#     
+#     import pylab as pl
+#     pl.figure('REAL')
+#     pl.clf()
+#     pl.imshow(areal, interpolation=interpolation)
+#     pl.colorbar()
+#     pl.figure('IMAG')
+#     pl.clf()
+#     pl.imshow(aimag, interpolation=interpolation)
+#     pl.colorbar()
