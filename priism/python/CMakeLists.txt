@@ -13,6 +13,7 @@ install(FILES
         priism/core/mfista.py
         priism/core/paramcontainer.py
         priism/core/sparseimaging.py
+        priism/core/sparseimagingnufft.py
         priism/core/util.py
         priism/core/version.py
         DESTINATION priism/core)

@@ -159,6 +159,41 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
         self.griddedvis = visgridder.get_result()
         self.working_set = visgridder.get_result2()
     
+    def readvis(self, parallel=False):
+        """
+        Read visibility data 
+        """
+        u = []
+        v = []
+        real = []
+        imag = []
+        weight = []
+        interval=1.0e-16
+        for visparam in self.visparams:
+            reader = visreader.VisibilityReader(visparam)
+            converter = visconverter.VisibilityConverter(visparam, self.imparam)
+            if parallel:
+                raise NotImplementedError()
+            else:
+                for chunk in reader.readvis(interval=interval):
+                    ws_list = converter.generate_working_set(chunk)
+                    for ws in ws_list:
+                        flag = ws.flag
+                        valid = numpy.where(flag == True)
+                        u.extend(ws.u[valid[0]])
+                        v.extend(ws.v[valid[0]])
+                        real.extend(ws.rdata[valid])
+                        imag.extend(ws.idata[valid])
+                        weight.extend(ws.weight[(valid[0], valid[2])])
+                        
+        self.working_set = datacontainer.VisibilityWorkingSet(data_id=0,
+                                                              u=numpy.asarray(u),
+                                                              v=numpy.asarray(v),
+                                                              rdata=numpy.asarray(real),
+                                                              idata=numpy.asarray(imag),
+                                                              weight=numpy.asarray(weight))
+        
+
     def exportimage(self, imagename, overwrite=False):
         """
         Export MFISTA result as an image (FITS cube).
