@@ -23,3 +23,32 @@ class MfistaParamContainer(ParamContainer):
         Constructor
         """
         self.InitContainer(locals())
+
+class SimpleImageParamContainer(ParamContainer):
+    """
+    This is primitive image parameter container that 
+    specifies three-dimensional cube (imsize for spatial axes 
+    and nchan for spectral axis).
+    """
+    def __init__(self, imsize=100, nchan=-1):
+        self.InitContainer(locals())
+        
+    @property
+    def imsize(self):
+        return getattr(self, '_imsize', None)
+    
+    @imsize.setter
+    def imsize(self, value):
+        if hasattr(value, '__iter__'):
+            self._imsize = list(value)
+        else:
+            self._imsize = [int(value)]
+            
+        if len(self._imsize) == 0:
+            raise TypeError('given imsize is not correct')
+        elif len(self._imsize) == 1:
+            self._imsize = [self._imsize[0], self._imsize[0]]
+        else:
+            self._imsize = self._imsize[:2]
+    
+        

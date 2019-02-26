@@ -5,6 +5,8 @@ import os
 import numpy
 import ctypes
 
+#import priism.core.datacontainer as datacontainer
+
 class CTypesUtilMixIn(object):
     def as_carray(self, attr):
         array = getattr(self, attr)
@@ -69,8 +71,8 @@ class SparseImagingInputs(CTypesUtilMixIn):
     """
     Container for sparseimaging inputs
     """
-    @classmethod
-    def from_file(cls, filename):
+    @staticmethod
+    def from_file(filename):
         with open(filename, 'r') as f:
             # read M
             M = exec_line(f, 'M')
@@ -87,7 +89,7 @@ class SparseImagingInputs(CTypesUtilMixIn):
             f.readline()
             
             # read input data
-            u = numpy.empty(M, dtype=numpy.int32)
+            u = numpy.empty(M, dtype=numpy.float64)
             v = numpy.empty_like(u)
             yreal = numpy.empty(M, dtype=numpy.double)
             yimag = numpy.empty_like(yreal)
@@ -95,117 +97,67 @@ class SparseImagingInputs(CTypesUtilMixIn):
             for i in range(M):
                 line = f.readline()
                 values = line.split(',')
-                u[i] = numpy.int32(values[0].strip())
-                v[i] = numpy.int32(values[1].strip())
+                u[i] = numpy.float64(values[0].strip())
+                v[i] = numpy.float64(values[1].strip())
                 yreal[i] = numpy.double(values[2].strip())
                 yimag[i] = numpy.double(values[3].strip())
                 noise[i] = numpy.double(values[4].strip())
                 #print '{0} {1} {2} {3}'.format(u[i], v[i], yreal[i], yimag[i], noise[i])
                 
-            inputs = cls(filename, M, NX, NY, u, v, yreal, yimag, noise)
+            inputs = SparseImagingInputs(filename, M, NX, NY, u, v, yreal, yimag, noise)
             return inputs
 
-    @classmethod
-    def from_gridder_result(cls, gridder_result, imageparam):
+    @staticmethod
+    def from_data(data, nx, ny):
         """
-        Convert GridderResult object into SparseImagingInputs object.
-        uv-coordinate value is flipped for FFTW.
-        """
-        # infile is nominal value 
-        infile = 'gridder_result'
-        
-        # m is the number of nonzero pixels
-        nonzeros = numpy.nonzero(gridder_result.wreal)
-        m = len(nonzeros[0])
-        
-        # numpy.nonzero returns index as numpy.int64 
-        # however, libmfista_fft requires index in 32bit integer
-        # value check is performed here
-        iint32 = numpy.iinfo(numpy.int32)
-        if nonzeros[0].max() > iint32.max or nonzeros[0].min() < iint32.min:
-            raise ValueError('Pixel index along V-axis exceeded int32 limit')
-        if nonzeros[1].max() > iint32.max or nonzeros[1].min() < iint32.min:
-            raise ValueError('Pixel index along U-axis exceeded int32 limit')
-        
-        # nx, ny
-        grid_shape = gridder_result.shape
-        nv, nu, npol, nchan = grid_shape
-        assert npol == 1
-        assert nchan == 1
-        nx = nu
-        ny = nv
-        
-        # TODO: u, v must be flipped
-        # flip u, v (grid indices) instead of visibility value
-        # cast 64bit integer to 32bit integer
-        unflipped_v = numpy.asarray(nonzeros[0], dtype=numpy.int32)
-        unflipped_u = numpy.asarray(nonzeros[1], dtype=numpy.int32)
-        u = shift_uvindex(nu, unflipped_u)
-        v = shift_uvindex(nv, unflipped_v)
-        
-        # yreal, yimag are nonzero gridded visibility
-        yreal = gridder_result.real[nonzeros]
-        yimag = gridder_result.imag[nonzeros]
-        
-        # 20171102 suggestion by Ikeda-san
-        # change sign according to pixel coordinate
-        for i in range(len(yreal)):
-            j = nonzeros[0][i]
-            k = nonzeros[1][i]
-            factor = (-1)**(j+k)
-            yreal[i] *= factor
-            yimag[i] *= factor
-        
-        # noise is formed as 1 / sqrt(weight)
-        noise = gridder_result.wreal[nonzeros]
-        noise = 1.0 / numpy.sqrt(noise)
-        
-        return cls(infile, m, nx, ny, u, v, yreal, yimag, noise)
-    
-    @classmethod
-    def from_visibility_working_set(cls, visibility, imageparam):
-        """
-        Convert VisibilityWorkingSet object into SparseImagingInputs object.
-        uv-coordinate value is flipped for FFTW.
+        Convert whatever object containing visibility data into SparseImagingInputs object.
+        uv-coordinate value is flipped for FFTW?.
         """
         # infile is nominal value 
-        infile = 'visibility_working_set'
+        infile = 'working_set'
         
-        # m is the number of visibility data
-        m = len(visibility.u)
+        # data is supposed to be a list of VisibilityWorkingSet
+        #assert isinstance(data, datacontainer.VisibilityWorkingSet)
         
-        # nx, ny
-        nx = imageparam.imsize[0]
-        ny = imageparam.imsize[1]
-        nu = nx
-        nv = ny
-        
-        # flip u, v (grid indices) instead of visibility value
-        unflipped_v = numpy.asarray(visibility.v, dtype=numpy.int32)
-        unflipped_u = numpy.asarray(visibility.u, dtype=numpy.int32)
-        u = shift_uvindex(nu, unflipped_u)
-        v = shift_uvindex(nv, unflipped_v)
-    
-        # yreal, yimag are nonzero gridded visibility
-        yreal = visibility.rdata.copy()
-        yimag = visibility.idata.copy()
-        
-        # 20171102 suggestion by Ikeda-san
-        # change sign according to pixel coordinate
-        for i in range(m):
-            j = unflipped_v[i]
-            k = unflipped_u[i]
-            factor = (-1)**(j+k)
-            yreal[i] *= factor
-            yimag[i] *= factor
+        # m is the number of visibility data points
+        m = data.nrow
 
+        # TODO
+        # u, v: input values are in pixel coordinate
+        #       these values must be converted to the range [-pi,+pi]
+        u = data.u
+        v = data.v
+
+        # yreal, yimag 
+        yreal = data.rdata
+        yimag = data.idata
+        
         # noise is formed as 1 / sqrt(weight)
-        noise = visibility.weight.copy()
-        noise = 1.0 / numpy.sqrt(noise)
-        
-        return cls(infile, m, nx, ny, u, v, yreal, yimag, noise)
+        noise = 1.0 / numpy.sqrt(data.weight)
 
+#         # 20171102 suggestion by Ikeda-san
+#         # change sign according to pixel coordinate
+#         for i in range(len(yreal)):
+#             j = nonzeros[0][i]
+#             k = nonzeros[1][i]
+#             factor = (-1)**(j+k)
+#             yreal[i] *= factor
+#             yimag[i] *= factor
+                
+        return SparseImagingInputs(infile, m, nx, ny, u, v, yreal, yimag, noise)
+    
     def __init__(self, infile, M, NX, NY, u, v, yreal, yimag, noise):
+        """
+        infile -- name of the input file (can be any string if on-memory input)
+        M -- number of visibility data [int32]
+        NX -- number of image pixels along horizontal direction [int32]
+        NY -- number of image pixels along vertical direction [int32]
+        u -- u data (-pi~+pi) [double]
+        v -- v data (-pi~+pi) [double]
+        yreal -- real part of the visibility data [double]
+        yimag -- imaginary part of the visibility data [double]
+        noise -- noise std of visibility data [double]
+        """
         self.infile = infile
         self.m = M
         self.nx = NX
@@ -225,11 +177,11 @@ class SparseImagingInputs(CTypesUtilMixIn):
             print('u, v, y_r, y_i, noise_std_dev', file=f)
             print('', file=f)
             for i in range(self.m):
-                print('{0}, {1}, {2:e}, {3:e}, {4:e}'.format(self.u[i],
-                                                                   self.v[i],
-                                                                   self.yreal[i],
-                                                                   self.yimag[i],
-                                                                   self.noise[i]), file=f)
+                print('{0:e}, {1:e}, {2:e}, {3:e}, {4:e}'.format(self.u[i],
+                                                                 self.v[i],
+                                                                 self.yreal[i],
+                                                                 self.yimag[i],
+                                                                 self.noise[i]), file=f)
     
 class SparseImagingResults(CTypesUtilMixIn):
     class MFISTAResult(ctypes.Structure):
@@ -249,9 +201,6 @@ class SparseImagingResults(CTypesUtilMixIn):
                     ('l1cost', ctypes.c_double),
                     ('tvcost', ctypes.c_double),
                     ('tsvcost', ctypes.c_double),
-                    ('mean_sq_error', ctypes.c_double),
-                    ('looe_m', ctypes.c_double),
-                    ('Hessian_positive', ctypes.c_double),
                     ('finalcost', ctypes.c_double),
                     ('comp_time', ctypes.c_double),
                     ('residual', ctypes.c_void_p),
@@ -281,13 +230,11 @@ class SparseImagingResults(CTypesUtilMixIn):
 
 class SparseImagingExecutor(object):
     """
-    ./mfista_imaging_fft fft_data.txt 1 0.0 0.01 5e10 x.out -nonneg
     """
-    Inputs = SparseImagingInputs
     #default_path = '/Users/nakazato/development/sparseimaging/20170812.mfista/'
     default_path = os.path.dirname(__file__)
     #libname = 'mfista_imaging_fft'
-    libname = 'libmfista_fft.so'
+    libname = 'libmfista_nufft.so'
     def __init__(self, lambda_L1, lambda_TV=0.0, lambda_TSV=0.0, 
                  cinit=5e10, nonnegative=True,
                  libpath=None):
@@ -314,14 +261,13 @@ class SparseImagingExecutor(object):
         
         signature is 
         
-          mfista_imaging_core_fft(int *u_idx, int *v_idx,
-                 double *y_r, double *y_i, double *noise_stdev,
-                 int M, int NX, int NY, int maxiter, double eps,
-                 double lambda_l1, double lambda_tv, double lambda_tsv,
-                 double cinit, double *xinit, double *xout,
-                 int nonneg_flag, unsigned int fftw_plan_flag,
-                 int box_flag, float *cl_box,
-                 struct RESULT *mfista_result)
+        void mfista_imaging_core_nufft(double *u_dx, double *v_dy, 
+                   double *vis_r, double *vis_i, double *vis_std,
+                   int M, int Nx, int Ny, int maxiter, double eps,
+                   double lambda_l1, double lambda_tv, double lambda_tsv,
+                   double cinit, double *xinit, double *xout,
+                   int nonneg_flag, int box_flag, float *cl_box,
+                   struct RESULT *mfista_result)
         """
         # input summary
         print('lambda_l1 = {0}'.format(self.lambda_L1))
@@ -334,28 +280,28 @@ class SparseImagingExecutor(object):
         print('Y-dim of image:       {0}'.format(inputs.ny))
         
         # inputs
-        u_idx = ctypes.pointer(inputs.as_carray('u'))
-        v_idx = ctypes.pointer(inputs.as_carray('v'))
-        y_r = ctypes.pointer(inputs.as_carray('yreal'))
-        y_i = ctypes.pointer(inputs.as_carray('yimag'))
-        noise_stdev = ctypes.pointer(inputs.as_carray('noise'))
+        u_dx = ctypes.pointer(inputs.as_carray('u'))
+        v_dx = ctypes.pointer(inputs.as_carray('v'))
+        
+        vis_r = ctypes.pointer(inputs.as_carray('yreal'))
+        vis_i = ctypes.pointer(inputs.as_carray('yimag'))
+        vis_std = ctypes.pointer(inputs.as_carray('noise'))
         M = ctypes.c_int(inputs.m)
         NX = ctypes.c_int(inputs.nx)
         NY = ctypes.c_int(inputs.ny)
+        _maxiter = ctypes.c_int(maxiter)
+        _eps = ctypes.c_double(eps)
         lambda_l1 = ctypes.c_double(self.lambda_L1)
         lambda_tv = ctypes.c_double(self.lambda_TV)
         lambda_tsv = ctypes.c_double(self.lambda_TSV)
         cinit = ctypes.c_double(self.cinit)
         nonneg_flag = ctypes.c_int(1 if self.nonnegative else 0)
-        _maxiter = ctypes.c_int(maxiter)
-        _eps = ctypes.c_double(eps)
         box_flag = 0 if cl_box is None else 1
         if box_flag == 1:
             cl_box = numpy.ctypeslib.as_ctypes(clean_box)
         else:
             cl_box = numpy.ctypeslib.as_ctypes(numpy.zeros(1, dtype=numpy.float32))
         _box_flag = ctypes.c_int(box_flag)
-        fftw_plan_flag = ctypes.c_uint(65) # FFTW_ESTIMATE | FFTW_DESTROY_INPUT
         
         # outputs
         result = SparseImagingResults(inputs.nx, inputs.ny, initialimage=initialimage)
@@ -367,7 +313,7 @@ class SparseImagingExecutor(object):
         self._mfista.mfista_imaging_core_fft(u_idx, v_idx, y_r, y_i, noise_stdev,
                                              M, NX, NY, _maxiter, _eps,
                                              lambda_l1, lambda_tv, lambda_tsv, 
-                                             cinit, xinit, xout, nonneg_flag, fftw_plan_flag,
+                                             cinit, xinit, xout, nonneg_flag, 
                                              _box_flag, cl_box, 
                                              mfista_result)
         
