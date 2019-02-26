@@ -194,10 +194,10 @@ class MfistaSolverNUFFT(MfistaSolverTemplate):
     Executor = sparseimagingnufft.SparseImagingExecutor
      
     def __init__(self, mfistaparam, imageparam):
-         """
+        """
          Constructor
-         """
-         super(MfistaSolverNUFFT, self).__init__(mfistaparam, imageparam)
+        """
+        super(MfistaSolverNUFFT, self).__init__(mfistaparam, imageparam)
 
 
     
