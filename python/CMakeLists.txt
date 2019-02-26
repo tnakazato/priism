@@ -12,7 +12,8 @@ install(FILES
         priism/core/imager.py
         priism/core/mfista.py
         priism/core/paramcontainer.py
-        priism/core/sparseimaging.py
+        priism/core/sparseimagingbase.py
+        priism/core/sparseimagingfft.py
         priism/core/sparseimagingnufft.py
         priism/core/util.py
         priism/core/version.py
