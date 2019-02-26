@@ -129,14 +129,6 @@ class SparseModelingImager(object):
         solver_cls = mfista.SolverFactory(self.solver_name)
         self.solver = solver_cls(mfistaparam, self.imparam)
         
-    def __get_visibility_data(self):
-        visibility_data = None
-        if self.solver_name == 'mfista_fft':
-            visibility_data = self.griddedvis
-        elif self.solver_name == 'mfista_nufft':
-            visibility_data = self.working_set
-        return visibility_data
-    
     def mfista(self, l1, ltsv, maxiter=50000, eps=1.0e-5, clean_box=None, 
                storeinitialimage=True, overwriteinitialimage=False):
         """
