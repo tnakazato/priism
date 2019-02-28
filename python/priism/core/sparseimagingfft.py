@@ -7,6 +7,23 @@ import ctypes
 
 from . import sparseimagingbase
 
+class SparseImagingInputsFFT(sparseimagingbase.SparseImagingInputs):
+    @classmethod
+    def convert_uv(cls, imageparam, u, v):
+        # nx, ny
+        nx = imageparam.imsize[0]
+        ny = imageparam.imsize[1]
+        nu = nx
+        nv = ny
+        
+        # flip u, v (grid indices) instead of visibility value
+        unflipped_v = numpy.asarray(v, dtype=numpy.int32)
+        unflipped_u = numpy.asarray(u, dtype=numpy.int32)
+        converted_u = sparseimagingbase.shift_uvindex(nu, unflipped_u)
+        converted_v = sparseimagingbase.shift_uvindex(nv, unflipped_v)
+        
+        return converted_u, converted_v
+        
  
 class SparseImagingResults(sparseimagingbase.CTypesUtilMixIn):
     class MFISTAResult(ctypes.Structure):
@@ -60,7 +77,7 @@ class SparseImagingExecutor(object):
     """
     ./mfista_imaging_fft fft_data.txt 1 0.0 0.01 5e10 x.out -nonneg
     """
-    Inputs = sparseimagingbase.SparseImagingInputs
+    Inputs = SparseImagingInputsFFT
     #default_path = '/Users/nakazato/development/sparseimaging/20170812.mfista/'
     default_path = os.path.dirname(__file__)
     #libname = 'mfista_imaging_fft'

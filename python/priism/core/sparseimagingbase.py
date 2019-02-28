@@ -164,6 +164,10 @@ class SparseImagingInputs(CTypesUtilMixIn):
         return cls(infile, m, nx, ny, u, v, yreal, yimag, noise)
     
     @classmethod
+    def convert_uv(cls, imageparam, u, v):
+        raise NotImplementedError('convert_uv must be implemented in subclasses!')
+    
+    @classmethod
     def from_visibility_working_set(cls, visibility, imageparam):
         """
         Convert VisibilityWorkingSet object into SparseImagingInputs object.
@@ -178,14 +182,15 @@ class SparseImagingInputs(CTypesUtilMixIn):
         # nx, ny
         nx = imageparam.imsize[0]
         ny = imageparam.imsize[1]
-        nu = nx
-        nv = ny
+#         nu = nx
+#         nv = ny
         
-        # flip u, v (grid indices) instead of visibility value
-        unflipped_v = numpy.asarray(visibility.v, dtype=numpy.int32)
-        unflipped_u = numpy.asarray(visibility.u, dtype=numpy.int32)
-        u = shift_uvindex(nu, unflipped_u)
-        v = shift_uvindex(nv, unflipped_v)
+#         # flip u, v (grid indices) instead of visibility value
+#         unflipped_v = numpy.asarray(visibility.v, dtype=numpy.int32)
+#         unflipped_u = numpy.asarray(visibility.u, dtype=numpy.int32)
+#         u = shift_uvindex(nu, unflipped_u)
+#         v = shift_uvindex(nv, unflipped_v)
+        u, v = cls.convert_uv(imageparam, visibility.u, visibility.v)
     
         # yreal, yimag are nonzero gridded visibility
         yreal = visibility.rdata.copy()
@@ -194,8 +199,8 @@ class SparseImagingInputs(CTypesUtilMixIn):
         # 20171102 suggestion by Ikeda-san
         # change sign according to pixel coordinate
         for i in range(m):
-            j = unflipped_v[i]
-            k = unflipped_u[i]
+            j = visibility.v[i]
+            k = visibility.u[i]
             factor = (-1)**(j+k)
             yreal[i] *= factor
             yimag[i] *= factor
