@@ -102,8 +102,8 @@ class MfistaSolverTemplate(MfistaSolverBase):
                             nonnegative=True)
         # TODO: define converter from gridded data to inputs
         #inputs = sparseimaging.SparseImagingInputs.from_gridder_result(grid_data)
-        inputs = sparseimaging.SparseImagingInputs.from_visibility_working_set(visibility,
-                                                                               imageparam)
+        inputs = executor.Inputs.from_visibility_working_set(visibility,
+                                                             imageparam)
 
         result = executor.run(inputs, initialimage=self.initialimage,
                               maxiter=self.maxiter, eps=self.eps, cl_box=self.clean_box)
