@@ -189,9 +189,9 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
         self.working_set = datacontainer.VisibilityWorkingSet(data_id=0,
                                                               u=numpy.asarray(u),
                                                               v=numpy.asarray(v),
-                                                              rdata=numpy.asarray(real),
-                                                              idata=numpy.asarray(imag),
-                                                              weight=numpy.asarray(weight))
+                                                              rdata=numpy.asarray(real, dtype=numpy.float64),
+                                                              idata=numpy.asarray(imag, dtype=numpy.float64),
+                                                              weight=numpy.asarray(weight, dtype=numpy.float64))
         
 
     def exportimage(self, imagename, overwrite=False):
