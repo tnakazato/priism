@@ -24,54 +24,37 @@ class SparseImagingInputsFFT(sparseimagingbase.SparseImagingInputs):
         
         return converted_u, converted_v
         
+
  
-class SparseImagingResults(sparseimagingbase.CTypesUtilMixIn):
-    class MFISTAResult(ctypes.Structure):
-        _fields_ = [('M', ctypes.c_int),
-                    ('N', ctypes.c_int),
-                    ('NX', ctypes.c_int),
-                    ('NY', ctypes.c_int),
-                    ('N_active', ctypes.c_int),
-                    ('maxiter', ctypes.c_int),
-                    ('ITER', ctypes.c_int),
-                    ('nonneg', ctypes.c_int),
-                    ('lambda_l1', ctypes.c_double),
-                    ('lambda_tv', ctypes.c_double),
-                    ('lambda_tsv', ctypes.c_double),
-                    ('sq_error', ctypes.c_double),
-                    ('mean_sq_error', ctypes.c_double),
-                    ('l1cost', ctypes.c_double),
-                    ('tvcost', ctypes.c_double),
-                    ('tsvcost', ctypes.c_double),
-                    ('mean_sq_error', ctypes.c_double),
-                    ('looe_m', ctypes.c_double),
-                    ('Hessian_positive', ctypes.c_double),
-                    ('finalcost', ctypes.c_double),
-                    ('comp_time', ctypes.c_double),
-                    ('residual', ctypes.c_void_p),
-                    ('Lip_const', ctypes.c_double)]
+class MFISTAResultFFT(ctypes.Structure):
+    _fields_ = [('M', ctypes.c_int),
+                ('N', ctypes.c_int),
+                ('NX', ctypes.c_int),
+                ('NY', ctypes.c_int),
+                ('N_active', ctypes.c_int),
+                ('maxiter', ctypes.c_int),
+                ('ITER', ctypes.c_int),
+                ('nonneg', ctypes.c_int),
+                ('lambda_l1', ctypes.c_double),
+                ('lambda_tv', ctypes.c_double),
+                ('lambda_tsv', ctypes.c_double),
+                ('sq_error', ctypes.c_double),
+                ('mean_sq_error', ctypes.c_double),
+                ('l1cost', ctypes.c_double),
+                ('tvcost', ctypes.c_double),
+                ('tsvcost', ctypes.c_double),
+                ('mean_sq_error', ctypes.c_double),
+                ('looe_m', ctypes.c_double),
+                ('Hessian_positive', ctypes.c_double),
+                ('finalcost', ctypes.c_double),
+                ('comp_time', ctypes.c_double),
+                ('residual', ctypes.c_void_p),
+                ('Lip_const', ctypes.c_double)]
         
-    def __init__(self, nx, ny, initialimage=None):
-        self.nx = nx
-        self.ny = ny
-        nn = nx * ny
-        self.xinit = numpy.empty(nn, dtype=numpy.double)
-        if initialimage is None:
-            # by default, initially all pixels are 1.0
-            self.xinit[:] = 1.0
-        else:
-            # initial image is set by the user
-            assert isinstance(initialimage, numpy.ndarray) or isinstance(initialimage, list)
-            assert len(initialimage) == nn
-            self.xinit[:] = initialimage
-            
-        self.xout = numpy.empty_like(self.xinit)
-        self.mfista_result = self.MFISTAResult()
-        
-    @property
-    def image(self):
-        img = self.xout.reshape((self.nx,self.ny))
-        return img
+
+class SparseImagingResultsFFT(sparseimagingbase.SparseImagingResults):
+    ResultClass = MFISTAResultFFT
+
 
 class SparseImagingExecutor(object):
     """
@@ -152,7 +135,7 @@ class SparseImagingExecutor(object):
         fftw_plan_flag = ctypes.c_uint(65) # FFTW_ESTIMATE | FFTW_DESTROY_INPUT
         
         # outputs
-        result = SparseImagingResults(inputs.nx, inputs.ny, initialimage=initialimage)
+        result = SparseImagingResultsFFT(inputs.nx, inputs.ny, initialimage=initialimage)
         xinit = ctypes.pointer(result.as_carray('xinit'))
         xout = ctypes.pointer(result.as_carray('xout'))
         mfista_result = ctypes.pointer(result.mfista_result)
