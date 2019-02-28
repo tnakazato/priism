@@ -168,6 +168,10 @@ class SparseImagingInputs(CTypesUtilMixIn):
         raise NotImplementedError('convert_uv must be implemented in subclasses!')
     
     @classmethod
+    def convert_vis(cls, u, v, yreal, yimag):
+        raise NotImplementedError('convert_vis must be implemented in subclasses!')
+    
+    @classmethod
     def from_visibility_working_set(cls, visibility, imageparam):
         """
         Convert VisibilityWorkingSet object into SparseImagingInputs object.
@@ -182,28 +186,11 @@ class SparseImagingInputs(CTypesUtilMixIn):
         # nx, ny
         nx = imageparam.imsize[0]
         ny = imageparam.imsize[1]
-#         nu = nx
-#         nv = ny
         
-#         # flip u, v (grid indices) instead of visibility value
-#         unflipped_v = numpy.asarray(visibility.v, dtype=numpy.int32)
-#         unflipped_u = numpy.asarray(visibility.u, dtype=numpy.int32)
-#         u = shift_uvindex(nu, unflipped_u)
-#         v = shift_uvindex(nv, unflipped_v)
         u, v = cls.convert_uv(imageparam, visibility.u, visibility.v)
     
-        # yreal, yimag are nonzero gridded visibility
-        yreal = visibility.rdata.copy()
-        yimag = visibility.idata.copy()
         
-        # 20171102 suggestion by Ikeda-san
-        # change sign according to pixel coordinate
-        for i in range(m):
-            j = visibility.v[i]
-            k = visibility.u[i]
-            factor = (-1)**(j+k)
-            yreal[i] *= factor
-            yimag[i] *= factor
+        yreal, yimag = cls.convert_vis(visibility.u, visibility.v, visibility.rdata, visibility.idata)
 
         # noise is formed as 1 / sqrt(weight)
         noise = visibility.weight.copy()
@@ -238,30 +225,7 @@ class SparseImagingInputs(CTypesUtilMixIn):
                                                                    self.noise[i]), file=f)
     
 class SparseImagingResults(CTypesUtilMixIn):
-    class MFISTAResult(ctypes.Structure):
-        _fields_ = [('M', ctypes.c_int),
-                    ('N', ctypes.c_int),
-                    ('NX', ctypes.c_int),
-                    ('NY', ctypes.c_int),
-                    ('N_active', ctypes.c_int),
-                    ('maxiter', ctypes.c_int),
-                    ('ITER', ctypes.c_int),
-                    ('nonneg', ctypes.c_int),
-                    ('lambda_l1', ctypes.c_double),
-                    ('lambda_tv', ctypes.c_double),
-                    ('lambda_tsv', ctypes.c_double),
-                    ('sq_error', ctypes.c_double),
-                    ('mean_sq_error', ctypes.c_double),
-                    ('l1cost', ctypes.c_double),
-                    ('tvcost', ctypes.c_double),
-                    ('tsvcost', ctypes.c_double),
-                    ('mean_sq_error', ctypes.c_double),
-                    ('looe_m', ctypes.c_double),
-                    ('Hessian_positive', ctypes.c_double),
-                    ('finalcost', ctypes.c_double),
-                    ('comp_time', ctypes.c_double),
-                    ('residual', ctypes.c_void_p),
-                    ('Lip_const', ctypes.c_double)]
+    ResultClass = None
         
     def __init__(self, nx, ny, initialimage=None):
         self.nx = nx
@@ -278,12 +242,13 @@ class SparseImagingResults(CTypesUtilMixIn):
             self.xinit[:] = initialimage
             
         self.xout = numpy.empty_like(self.xinit)
-        self.mfista_result = self.MFISTAResult()
+        self.mfista_result = self.ResultClass()
         
     @property
     def image(self):
         img = self.xout.reshape((self.nx,self.ny))
         return img
+    
 
 class SparseImagingExecutor(object):
     """
