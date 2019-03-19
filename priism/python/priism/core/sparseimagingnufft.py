@@ -23,8 +23,8 @@ class SparseImagingInputsNUFFT(sparseimagingbase.SparseImagingInputs):
         v_converted = numpy.empty_like(u_converted)
         du = 2 * numpy.pi / (nu + 1)
         dv = 2 * numpy.pi / (nv + 1)
-        u_converted[:] = (u - offset_u) * du
-        v_converted[:] = (v - offset_v) * dv
+        u_converted[:] = - (u - offset_u) * du
+        v_converted[:] = - (v - offset_v) * dv
         
         return u_converted, v_converted
         
