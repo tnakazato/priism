@@ -4,21 +4,29 @@ project(priism)
 
 # download sparseimaging
 set(SPARSEIMAGING_DIR sparseimaging)
-set(SPARSEIMAGING_EXTRACT sparseimaging-development)
-set(SPARSEIMAGING_ZIP development.zip)
+#set(SPARSEIMAGING_EXTRACT sparseimaging-development)
+#set(SPARSEIMAGING_ZIP development.zip)
+set(SPARSEIMAGING_EXTRACT sparseimaging-smili)
+set(SPARSEIMAGING_ZIP smili.zip)
 if(NOT EXISTS ${PROJECT_SOURCE_DIR}/${SPARSEIMAGING_DIR})
   if(NOT EXISTS ${PROJECT_SOURCE_DIR}/${SPARSEIMAGING_EXTRACT})
     if(NOT EXISTS ${CMAKE_BINARY_DIR}/${SPARSEIMAGING_ZIP})
       message(STATUS "Sparseimaging is not downloaded yet")
-      set(SPARSEIMAGING_URL https://github.com/ikeda46/sparseimaging/archive/${SPARSEIMAGING_ZIP})
-      execute_process(COMMAND curl -L -O ${SPARSEIMAGING_URL}
-                      WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+      #set(SPARSEIMAGING_URL https://github.com/ikeda46/sparseimaging/archive/${SPARSEIMAGING_ZIP})
+      #execute_process(COMMAND curl -L -O ${SPARSEIMAGING_URL}
+      #                WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
     endif()
+    message(STATUS "Extracting sparseimaging code")
     execute_process(COMMAND unzip ${CMAKE_BINARY_DIR}/${SPARSEIMAGING_ZIP}
                     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
   endif()
-  execute_process(COMMAND ln -s "${SPARSEIMAGING_EXTRACT}" "${SPARSEIMAGING_DIR}"
+  #execute_process(COMMAND ln -s "${SPARSEIMAGING_EXTRACT}" "${SPARSEIMAGING_DIR}"
+  #                WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+  message(STATUS "Creating ${SPARSEIMAGING_DIR}")
+  execute_process(COMMAND mkdir ${SPARSEIMAGING_DIR}
                   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+  execute_process(COMMAND ln -s "../${SPARSEIMAGING_EXTRACT}" c
+                  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/${SPARSEIMAGING_DIR})
 endif()
 
 # download sakura
@@ -92,6 +100,7 @@ endif()
 
 # configure compile of sparseimaging to generate libmfista_fft.so
 add_custom_target(sparseimaging make -f makefile.priism libmfista_fft
+                  COMMAND make -f makefile.priism libmfista_nufft
                   WORKING_DIRECTORY ${SPARSEIMAGING_BUILD_DIR})             
 
 # add priism module
@@ -101,6 +110,8 @@ add_custom_target(priism ALL echo ""
 
 # install libmfista_fft.so
 install(PROGRAMS ${SPARSEIMAGING_BUILD_DIR}/libmfista_fft.so
+        DESTINATION priism/core)
+install(PROGRAMS ${SPARSEIMAGING_BUILD_DIR}/libmfista_nufft.so
         DESTINATION priism/core)
 
 # clean_all 
