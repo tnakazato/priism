@@ -124,16 +124,17 @@ class MfistaSolverTemplate(MfistaSolverBase):
     
     def normalize_result(self, vis_data, image_data):
         """
-        Normalize resulting image according to Parseval's Theorem.
-        
+        Normalize resulting image. Do nothing by default.
+         
         vis_data -- input visiblity as the form of SparseImagingInputs
         image_data -- output image as the form of SparseImagingResults
         """
-        nx = image_data.nx
-        ny = image_data.ny
-        factor = 1.0 / numpy.sqrt(nx * ny)
-        print('Normalization factor is {}'.format(factor))
-        image_data.xout *= factor
+        pass
+#         nx = image_data.nx
+#         ny = image_data.ny
+#         factor = 1.0 / numpy.sqrt(nx * ny)
+#         print('Normalization factor is {}'.format(factor))
+#         image_data.xout *= factor
 
 
 class SakuraSolver(MfistaSolverBase):
@@ -171,7 +172,8 @@ class MfistaSolverFFT(MfistaSolverTemplate):
         
     def normalize_result(self, vis_data, image_data):
         """
-        Normalize resulting image according to Parseval's Theorem.
+        Normalize resulting image. Multiply sqrt(Nx*Ny) to conpensate for 
+        the difference of normalization strategy of FFT.
         
         vis_data -- input visiblity as the form of SparseImagingInputs
         image_data -- output image as the form of SparseImagingResults
