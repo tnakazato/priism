@@ -1,0 +1,11 @@
+# build directory for cmake 
+build/
+
+# external code: libsakura
+libsakura/
+
+# external code: sparseimaging
+sparseimaging-smili/
+
+# compiled python code
+*.pyc
