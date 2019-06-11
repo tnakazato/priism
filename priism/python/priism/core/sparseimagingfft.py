@@ -24,6 +24,19 @@ class SparseImagingInputsFFT(sparseimagingbase.SparseImagingInputs):
         
         return converted_u, converted_v
         
+    @classmethod
+    def convert_vis(cls, u, v, yreal, yimag):
+        # 20171102 suggestion by Ikeda-san
+        # change sign according to pixel coordinate
+        rcopy = yreal.copy()
+        icopy = yimag.copy()
+        for i in range(len(rcopy)):
+            j = u[i]
+            k = v[i]
+            factor = (-1)**(j+k)
+            rcopy[i] *= factor
+            icopy[i] *= factor
+        return rcopy, icopy
 
  
 class MFISTAResultFFT(ctypes.Structure):
