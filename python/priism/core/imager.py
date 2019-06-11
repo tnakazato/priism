@@ -18,7 +18,6 @@ from . import datacontainer
 from . import paramcontainer
 from . import mfista
 from . import cv
-from . import sparseimaging
 
 class SparseModelingImager(object):
     """
@@ -190,18 +189,6 @@ class SparseModelingImager(object):
         
         if filename is not None:
             # filename is specified. read it.
-#             inputs = sparseimaging.SparseImagingInputs.from_file(filename)
-#             realdata = numpy.zeros((inputs.ny, inputs.nx, 1, 1), dtype=numpy.float)
-#             imagdata = numpy.zeros_like(realdata)
-#             realweight = numpy.zeros_like(realdata)
-#             for i in range(inputs.m):
-#                 realdata[inputs.v[i], inputs.u[i], 0, 0] = inputs.yreal[i]
-#                 imagdata[inputs.v[i], inputs.u[i], 0, 0] = inputs.yimag[i]
-#                 squared_noise = inputs.noise[i] * inputs.noise[i]
-#                 realweight[inputs.v[i], inputs.u[i], 0, 0] = 1 / squared_noise
-#             imagweight = None
-#             default_nu = inputs.nx
-#             default_nv = inputs.ny
             griddedvis = datacontainer.GriddedVisibilityStorage.importdata(filename)
             realdata = griddedvis.real
             imagdata = griddedvis.imag
