@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 import numpy
 
-from . import sparseimaging
+from . import sparseimagingfft
 from . import sparseimagingnufft
 
 class MfistaSolverBase(object):
@@ -100,8 +100,6 @@ class MfistaSolverTemplate(MfistaSolverBase):
         executor = self.Executor(lambda_L1=self.l1,
                             lambda_TSV=self.ltsv,
                             nonnegative=True)
-        # TODO: define converter from gridded data to inputs
-        #inputs = sparseimaging.SparseImagingInputs.from_gridder_result(grid_data)
         inputs = executor.Inputs.from_visibility_working_set(visibility,
                                                              imageparam)
 
@@ -160,9 +158,9 @@ class MfistaSolverFFT(MfistaSolverTemplate):
     
     This depends on sparseimaging package written by Shiro Ikeda. 
     It calls C-function via wrapper class defined in external submodule.
-    (priism.core.sparseimaging.SparseImagingExecutor)
+    (priism.core.sparseimagingfft.SparseImagingExecutor)
     """
-    Executor = sparseimaging.SparseImagingExecutor
+    Executor = sparseimagingfft.SparseImagingExecutor
     
     def __init__(self, mfistaparam, imageparam):
         """
