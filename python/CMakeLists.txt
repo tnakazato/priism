@@ -49,7 +49,8 @@ install(FILES
 install(FILES
         priism/test/__init__.py
         #priism/test/demo.py
-        priism/test/cvrun.py
+        priism/test/cvrun_fft.py
+        priism/test/cvrun_nufft.py
         priism/test/cvrun_core.py
         priism/test/runtest.py
         priism/test/test_gridder.py
