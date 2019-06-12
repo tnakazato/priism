@@ -71,7 +71,6 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
                     choices are as follows.
                       'mfista_fft'    MFISTA algorithm with FFT by S. Ikeda.
                       'mfista_nufft'  MFISTA algorithm with NUFFT by S. Ikeda 
-                                       (to be implemented in future)
         """
         super(AlmaSparseModelingImager, self).__init__(solver)
         
