@@ -7,6 +7,7 @@ import ctypes
 
 from . import sparseimagingbase
 
+
 class SparseImagingInputsFFT(sparseimagingbase.SparseImagingInputs):
     @classmethod
     def convert_uv(cls, imageparam, u, v):
@@ -15,15 +16,15 @@ class SparseImagingInputsFFT(sparseimagingbase.SparseImagingInputs):
         ny = imageparam.imsize[1]
         nu = nx
         nv = ny
-        
+
         # flip u, v (grid indices) instead of visibility value
         unflipped_v = numpy.asarray(v, dtype=numpy.int32)
         unflipped_u = numpy.asarray(u, dtype=numpy.int32)
         converted_u = sparseimagingbase.shift_uvindex(nu, unflipped_u)
         converted_v = sparseimagingbase.shift_uvindex(nv, unflipped_v)
-        
+
         return converted_u, converted_v
-        
+
     @classmethod
     def convert_vis(cls, u, v, yreal, yimag):
         # 20171102 suggestion by Ikeda-san
@@ -38,7 +39,7 @@ class SparseImagingInputsFFT(sparseimagingbase.SparseImagingInputs):
             icopy[i] *= factor
         return rcopy, icopy
 
- 
+
 class MFISTAResultFFT(ctypes.Structure):
     _fields_ = [('M', ctypes.c_int),
                 ('N', ctypes.c_int),
@@ -63,7 +64,7 @@ class MFISTAResultFFT(ctypes.Structure):
                 ('comp_time', ctypes.c_double),
                 ('residual', ctypes.c_void_p),
                 ('Lip_const', ctypes.c_double)]
-        
+
 
 class SparseImagingResultsFFT(sparseimagingbase.SparseImagingResults):
     ResultClass = MFISTAResultFFT
@@ -78,6 +79,7 @@ class SparseImagingExecutor(object):
     default_path = os.path.dirname(__file__)
     #libname = 'mfista_imaging_fft'
     libname = 'libmfista_fft.so'
+
     def __init__(self, lambda_L1, lambda_TV=0.0, lambda_TSV=0.0, 
                  cinit=5e10, nonnegative=True,
                  libpath=None):
@@ -86,8 +88,8 @@ class SparseImagingExecutor(object):
         self.lambda_TSV = lambda_TSV
         self.cinit = cinit
         self.nonnegative = nonnegative
-        self.libpath = self.default_path #if libpath is None else libpath
-        
+        self.libpath = self.default_path  # if libpath is None else libpath
+
         nx = None
         ny = None
         self.outfile = 'x.out'
@@ -96,14 +98,14 @@ class SparseImagingExecutor(object):
         cdll = ctypes.cdll
         _mfista_name = os.path.join(self.libpath, self.libname)
         self._mfista = cdll.LoadLibrary(_mfista_name)
-    
+
     def run(self, inputs, initialimage=None,
             maxiter=50000, eps=1.0e-5, cl_box=None):
         """
         Run MFISTA routine to get an image
-        
-        signature is 
-        
+
+        signature is
+
           mfista_imaging_core_fft(int *u_idx, int *v_idx,
                  double *y_r, double *y_i, double *noise_stdev,
                  int M, int NX, int NY, int maxiter, double eps,
@@ -122,7 +124,7 @@ class SparseImagingExecutor(object):
         print('number of u-v points: {0}'.format(inputs.m))
         print('X-dim of image:       {0}'.format(inputs.nx))
         print('Y-dim of image:       {0}'.format(inputs.ny))
-        
+
         # inputs
         u_idx = ctypes.pointer(inputs.as_carray('u'))
         v_idx = ctypes.pointer(inputs.as_carray('v'))
@@ -146,13 +148,13 @@ class SparseImagingExecutor(object):
             cl_box = numpy.ctypeslib.as_ctypes(numpy.zeros(1, dtype=numpy.float32))
         _box_flag = ctypes.c_int(box_flag)
         fftw_plan_flag = ctypes.c_uint(65) # FFTW_ESTIMATE | FFTW_DESTROY_INPUT
-        
+
         # outputs
         result = SparseImagingResultsFFT(inputs.nx, inputs.ny, initialimage=initialimage)
         xinit = ctypes.pointer(result.as_carray('xinit'))
         xout = ctypes.pointer(result.as_carray('xout'))
         mfista_result = ctypes.pointer(result.mfista_result)
-        
+
         # run MFISTA
         self._mfista.mfista_imaging_core_fft(u_idx, v_idx, y_r, y_i, noise_stdev,
                                              M, NX, NY, _maxiter, _eps,
@@ -160,15 +162,15 @@ class SparseImagingExecutor(object):
                                              cinit, xinit, xout, nonneg_flag, fftw_plan_flag,
                                              _box_flag, cl_box, 
                                              mfista_result)
-        
+
         # show IO filenames
         self._show_io_info(inputs, initialimage)
-        
+
         # show result
         self._show_result(result.mfista_result)
-        
+
         return result
-        
+
     def _show_io_info(self, inputs, initialimage=None):
         # show IO filenames
         print('')
@@ -183,8 +185,7 @@ class SparseImagingExecutor(object):
             print(' x was initialize by the user')
         #print ' x is saved to:          xout'
         print('')
-        
-        
+
     def _show_result(self, mfista_result):
         # show results
         print('')
@@ -198,7 +199,7 @@ class SparseImagingExecutor(object):
         print(' size of input vector:  {0}'.format(mfista_result.M))
         print(' size of output vector: {0}'.format(mfista_result.N))
         if mfista_result.NX != 0:
-            print('size of image:          {0} x {0}'.format(mfista_result.NX, 
+            print('size of image:          {0} x {1}'.format(mfista_result.NX, 
                                                              mfista_result.NY))
         print('')
         print('')
@@ -218,7 +219,7 @@ class SparseImagingExecutor(object):
         if mfista_result.lambda_tv != 0:
             print(' Lambda_tv: {0:e}'.format(mfista_result.lambda_tv))
         print(' MAXITER: {0}'.format(mfista_result.maxiter))
-        
+
         print(' Results:')
         print('')
         print(' # of iterations:       {0}'.format(mfista_result.ITER))
@@ -236,15 +237,14 @@ class SparseImagingExecutor(object):
             print(' TV cost:               {0:e}'.format(mfista_result.tvcost))
         print('')
         print(' LOOE:    Could not be computed because Hessian was not positive definite.')
-                
-                
+
     def _exec_line(self, f, varname):
         line = f.readline()
         exec(line.rstrip('\n'))
         val = locals()[varname]
         #print '{0} = {1}'.format(varname, val)
         return val
-    
+
     def read_input(self, infile):
         """
         Read input text data for FFT based MFISTA imaging
@@ -252,18 +252,18 @@ class SparseImagingExecutor(object):
         with open(infile, 'r') as f:
             # read M
             M = self._exec_line(f, 'M')
-            
+
             # read NX
             NX = self._exec_line(f, 'NX')
-            
+
             # read NY
             NY = self._exec_line(f, 'NY')
-            
+
             # skip headers
             f.readline()
             f.readline()
             f.readline()
-            
+
             # read input data
             u = numpy.empty(M, dtype=numpy.int32)
             v = numpy.empty_like(u)
@@ -279,42 +279,18 @@ class SparseImagingExecutor(object):
                 yimag[i] = numpy.double(values[3].strip())
                 noise[i] = numpy.double(values[4].strip())
                 #print '{0} {1} {2} {3}'.format(u[i], v[i], yreal[i], yimag[i], noise[i])
-                
+
             inputs = self.Inputs(infile, M, NX, NY, u, v, yreal, yimag, noise)
             return inputs
-            
-    
+
     def get_result(self, outfile):
         n = self.nx * self.ny
         arraydata = numpy.fromfile(outfile, dtype=numpy.double)
         assert len(arraydata) == n
-        
+
         img = arraydata.reshape((self.nx,self.ny))
-        
+
         # flip along longitude axis
         img = numpy.fliplr(img)
-        
-        return img
-    
 
-# # utility
-# def plot_inputs(inputs, interpolation='nearest', coverage=False):
-#     areal = numpy.zeros((inputs.nx, inputs.ny,), dtype=numpy.float)
-#     aimag = numpy.zeros_like(areal)
-#     for i in range(inputs.m):
-#         areal[inputs.u[i], inputs.v[i]] = inputs.yreal[i]
-#         aimag[inputs.u[i], inputs.v[i]] = inputs.yimag[i]
-#         
-#     if coverage:
-#         areal[areal.nonzero()] = 1.0
-#         aimag[areal.nonzero()] = 1.0
-#     
-#     import pylab as pl
-#     pl.figure('REAL')
-#     pl.clf()
-#     pl.imshow(areal, interpolation=interpolation)
-#     pl.colorbar()
-#     pl.figure('IMAG')
-#     pl.clf()
-#     pl.imshow(aimag, interpolation=interpolation)
-#     pl.colorbar()
+        return img
