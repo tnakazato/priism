@@ -1,13 +1,6 @@
 from __future__ import absolute_import
 
-import os
-import shutil
-import math
 import numpy
-import collections
-import pylab as pl
-import matplotlib
-import time
 
 from . import paramcontainer
 from . import gridder
@@ -20,6 +13,7 @@ import priism.external.casa as casa
 import priism.core.imager as core_imager
 import priism.core.datacontainer as datacontainer
 
+
 class AlmaSparseModelingResult(object):
     """
     This is a class to hold a result produced by AlmaSparseModeling
@@ -27,7 +21,7 @@ class AlmaSparseModelingResult(object):
     def __init__(self, imagename, cv=-1.0, acv=-1.0):
         """
         Constructor
-        
+
         Parameters:
             imagename  name of the FITS cube
             cv         associating cross validation
@@ -36,11 +30,12 @@ class AlmaSparseModelingResult(object):
         self.imagename = imagename
         self.cv = cv
         self.acv = acv
-        
+
     def __repr__(self):
         return 'imagename "{0}"\n'.format(self.imagename) \
              + '  cross validation           = {0}\n'.format(self.cv) \
              + '  cross validation (approx.) = {0}\n'.format(self.acv)
+
 
 class AlmaSparseModelingImager(core_imager.SparseModelingImager):
     """
@@ -57,7 +52,7 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
         Therefore, a suffix for image product should be 'fits'.
         """
         return 'fits'
-    
+
 #     """
 #     Core implementation of sparse modeling specialized for ALMA.
 #     It performs visibility gridding on uv-plane.
@@ -65,7 +60,7 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
     def __init__(self, solver='mfista_fft'):
         """
         Constructor
-        
+
         Parameters:
             solver  name of the solver
                     choices are as follows.
@@ -73,12 +68,12 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
                       'mfista_nufft'  MFISTA algorithm with NUFFT by S. Ikeda 
         """
         super(AlmaSparseModelingImager, self).__init__(solver)
-        
+
     def selectdata(self, vis, field='', spw='', timerange='', uvrange='', antenna='', 
-                  scan='', observation='', intent='', datacolumn='corrected'):
+                   scan='', observation='', intent='', datacolumn='corrected'):
         """
         Select visibility data.
-        
+
         Parameters:
             vis             name of measurement set
             field           field selection (default '' ---> all)
@@ -93,21 +88,21 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
         """
         visparam = paramcontainer.VisParamContainer.CreateContainer(**locals())
         self.visparams.append(visparam)
-    
+
     def defineimage(self, imsize=100, cell='1arcsec', phasecenter='', projection='SIN',
                     nchan=-1, start='', width='', outframe='LSRK', stokes='I'):
         """
         Define resulting image.
-        
+
         start, width, and nchan are defined as follows:
-        
+
           start=<center frequency of first image channel>
             |
         |-------|-------|-------| nchan=3
         |<----->|
           width=<constant channel width of image channel>
 
-        
+
         Parameters:
             imsize          number of pixels for the resulting image 
                             (default 100 ---> [100,100])
@@ -123,12 +118,12 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
         """
         self.imparam = paramcontainer.ImageParamContainer.CreateContainer(**locals()) 
         self.uvgridconfig = self.imparam.uvgridconfig
-    
+
     def configuregrid(self, convsupport, convsampling, gridfunction):
         if isinstance(gridfunction, str):
             gridfunction = gridder.GridFunctionUtil.sf(convsupport, convsampling)
         self.gridparam = paramcontainer.GridParamContainer.CreateContainer(**locals())
-    
+
     def gridvis(self, parallel=False):
         """
         Grid visibility data on uv-plane.
@@ -140,9 +135,9 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
         #     4. post-gridding data processing
         # 
         visgridder = gridder.VisibilityGridder(self.gridparam, self.imparam)
-        
+
         # workaround for strange behavior of ms iterator
-        interval=1.0e-16
+        interval = 1.0e-16
         for visparam in self.visparams:
             reader = visreader.VisibilityReader(visparam)
             converter = visconverter.VisibilityConverter(visparam, self.imparam)
@@ -157,7 +152,7 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
                     visgridder.grid(working_set)
         self.griddedvis = visgridder.get_result()
         self.working_set = visgridder.get_result2()
-    
+
     def readvis(self, parallel=False):
         """
         Read visibility data 
@@ -167,7 +162,7 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
         real = []
         imag = []
         weight = []
-        interval=1.0e-16
+        interval = 1.0e-16
         for visparam in self.visparams:
             reader = visreader.VisibilityReader(visparam)
             converter = visconverter.VisibilityConverter(visparam, self.imparam)
@@ -184,30 +179,29 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
                         real.extend(ws.rdata[valid])
                         imag.extend(ws.idata[valid])
                         weight.extend(ws.weight[(valid[0], valid[2])])
-                        
+
         self.working_set = datacontainer.VisibilityWorkingSet(data_id=0,
                                                               u=numpy.asarray(u),
                                                               v=numpy.asarray(v),
                                                               rdata=numpy.asarray(real, dtype=numpy.float64),
                                                               idata=numpy.asarray(imag, dtype=numpy.float64),
                                                               weight=numpy.asarray(weight, dtype=numpy.float64))
-        
 
     def exportimage(self, imagename, overwrite=False):
         """
         Export MFISTA result as an image (FITS cube).
         mfista must be executed beforehand.
-        
+
         Parameters:
             imagename  name of output image name
         """
         if self.imparam is None:
             raise RuntimeError('You have to define image configuration before export!')
         self.imparam.imagename = imagename
-        
+
         if self.imagearray is None:
             raise RuntimeError('You don\'t have an image array!')
-        
+
         # convert phasecenter if it is given as FIELD_ID
         vis = self.visparams[0].vis
         if isinstance(self.imparam.phasecenter, str) and self.imparam.phasecenter.isdigit():
@@ -218,22 +212,22 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
                                                                          field_id=field_id)
             self.imparam.phasecenter = phase_direction
         if (isinstance(self.imparam.start, str) and self.imparam.start.isdigit()) \
-            or isinstance(self.imparam.start, int):
+           or isinstance(self.imparam.start, int):
             # TODO: we need LSRK frequency
             start = self.imparam.start
             spw = int(self.visparams[0].as_msindex()['spw'][0])
             print('Use Freuquency for channel {0} spw {1}'.format(start, spw))
             cf, cw = imagewriter.ImageWriter.frequency_setup_for_spw(vis=vis, 
-                                                              spw_id=spw,
-                                                              chan=start)
+                                                                     spw_id=spw,
+                                                                     chan=start)
             self.imparam.start = cf
             self.imparam.width = cw
         imagemeta = paramcontainer.ImageMetaInfoContainer.fromvis(vis)
-        writer = imagewriter.ImageWriter(self.imparam, self.imagearray.data, imagemeta)
+        writer = imagewriter.ImageWriter(self.imparam, self.imagearray.data, 
+                                         imagemeta)
         writer.write(overwrite=overwrite)
-        
+
     def getimage(self, imagename):
         with casa.OpenImage(imagename) as ia:
             chunk = ia.getchunk()
         return datacontainer.ResultingImageStorage(chunk)
-    
