@@ -244,7 +244,12 @@ will enable you to use API for ALMA data.
 
 ### Template scripts
 
-In the test directory, there are two template scripts that demonstrates how to use PRIISM. 
-One is for `priism.core` while the other is for `priism.alma`. Name of the scripts are 
-`cvrun_core.py` and `cvrun.py`, respectively.
+In the test directory, there are several template scripts that demonstrates how to use PRIISM. 
+One is for `priism.core` while the others are for `priism.alma`. There are two versions of 
+solver: "mfista_fft" and "mfista_nufft". Their usages are bit different so you will find 
+template scripts for each solver. Name of the scripts are as follows:
+
+* `priism.core` (mfista_fft): `cvrun_core.py` 
+* `priism.alma` (mfista_fft): `cvrun_fft.py`
+* `priism.alma` (mfista_nufft): `cvrun_nufft.py`
 
