@@ -110,17 +110,22 @@ In summary, prerequisites for PRIISM is as follows:
 
 ### Downloading the Source
 
-Source code of PRIISM can be downloaded from the link below.
+You can either clone or download zipped archive of the soruce code from GitHub repository. If you clone the source code, you will get a directory named `priism`
+unless you rename it.
+If you download zipped source code, you will get a file named `priism-<branch_name>.zip`, which conatains `priism-<branch_name>` as a top-level directory.
 
-[https://alma-intweb.mtk.nao.ac.jp/~nakazato/almasparsemodeling/priism-0.0.0.tgz](https://alma-intweb.mtk.nao.ac.jp/~nakazato/almasparsemodeling/priism-0.0.0.tgz)
+---
+**NOTE**
 
-Source code is archived and compressed so that it must be extracted using tar command.
+If you download priism-0.1.2 or earlier, you will see additional directory layer at the top. More specifically, you will see the following two subdirectories at the top-level directory:
 
-    cd priism_root_dir
-    tar zxf priism-0.0.0.tgz
+    $ pwd
+    priism
+    $ ls
+    almasparsemodeling  priism
 
-In the example above, `priism_root_dir` is an arbitrary directory.
-The directory "priism" will be extracted.
+This is older directory structure and almasparsemodeling contains some initial code written at the dawn of the development. In that case, you can build and install priism just translating the directory `priism` into `priism/priism` in the following instruction.
+---
 
 ### Building
 
@@ -212,6 +217,7 @@ After you suceed to run cmake, subsequent steps to install PRIISM is just simple
 
 PRIISM will now be available to the location specified by `CMAKE_INSTALL_PREFIX`.
 
+###
 
 ## Using PRIISM
 
