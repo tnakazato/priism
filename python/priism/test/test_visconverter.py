@@ -145,7 +145,7 @@ class VisibilityConverterTest(utils.TestBase):
         expected_flag = numpy.ones(expected_shape, dtype=numpy.bool)
         for ipol in range(npol):
             expected_data += (chunk['data'][ipol:ipol + 1, start:end, :] \
-                * numpy.where(chunk['flag'][ipol:ipol + 1, start:end, :] is False, 0.5, 0.0)).transpose((2, 0, 1))
+                * numpy.where(chunk['flag'][ipol:ipol + 1, start:end, :] == False, 0.5, 0.0)).transpose((2, 0, 1))
             expected_flag = numpy.logical_and(expected_flag, chunk['flag'][ipol:ipol + 1, start:end, :])
         expected_flag = numpy.logical_not(expected_flag)
         eps = 1e-7
@@ -349,7 +349,7 @@ class VisibilityConverterTest(utils.TestBase):
         expected_flag = numpy.ones(expected_shape, dtype=numpy.bool)
         for ipol in range(npol):
             expected_data += (chunk['data'][ipol:ipol + 1, start:end, :] \
-                * numpy.where(chunk['flag'][ipol:ipol + 1, start:end, :] is False, 0.5, 0.0)).transpose((2, 0, 1))
+                * numpy.where(chunk['flag'][ipol:ipol + 1, start:end, :] == False, 0.5, 0.0)).transpose((2, 0, 1))
             expected_flag = numpy.logical_and(expected_flag, chunk['flag'][ipol:ipol + 1, start:end, :])
         eps = 1e-7
         self.assertMaxDiffLess(expected_data.real, ws.rdata, eps)

@@ -91,7 +91,7 @@ class VisibilityConverter(object):
         assert npol == 2
 
         # data
-        mask = numpy.where(flag_in is False, 0.5, 0.0)
+        mask = numpy.where(flag_in == False, 0.5, 0.0)
         data_out = (data_in * mask).sum(axis=0)
         real_out[:, 0, :] = data_out.real.transpose((1, 0))
         imag_out[:, 0, :] = data_out.imag.transpose((1, 0))
@@ -433,7 +433,7 @@ class VisibilityConverter(object):
                                  flag[:, :, ichan:ichan + 1], weight[:, ichan:ichan + 1])
 
         # row_flag
-        row_flag[:] = numpy.all(flag is True, axis=(1, 2,))
+        row_flag[:] = numpy.all(flag == True, axis=(1, 2,))
 
         # invert flag
         # reader definition:

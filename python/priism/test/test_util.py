@@ -70,7 +70,7 @@ class RandomIndexGeneratorTest(unittest.TestCase):
         random_index = generator.random_index
         self.assertEqual(num_ws, len(random_index))
         index_flag = numpy.zeros(num_ws, dtype=numpy.bool)
-        self.assertTrue(numpy.all(index_flag is False))
+        self.assertTrue(numpy.all(index_flag == False))
         delta_list = []
 
         # per subset check
@@ -104,7 +104,7 @@ class RandomIndexGeneratorTest(unittest.TestCase):
             index_flag[subset_index] = True
 
         # check if all index are included in any of subset
-        self.assertTrue(numpy.all(index_flag is True))
+        self.assertTrue(numpy.all(index_flag == True))
 
         # check if index spacing is not unique
         print(delta_list)

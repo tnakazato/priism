@@ -189,7 +189,7 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
                     ws_list = converter.generate_working_set(chunk)
                     for ws in ws_list:
                         flag = ws.flag
-                        valid = numpy.where(flag is True)
+                        valid = numpy.where(flag == True)
                         u.extend(ws.u[valid[0]])
                         v.extend(ws.v[valid[0]])
                         real.extend(ws.rdata[valid])
