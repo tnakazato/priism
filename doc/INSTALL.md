@@ -125,6 +125,7 @@ If you download priism-0.1.2 or earlier, you will see additional directory layer
     almasparsemodeling  priism
 
 This is older directory structure and almasparsemodeling contains some initial code written at the dawn of the development. In that case, you can build and install priism just translating the directory `priism` into `priism/priism` in the following instruction.
+
 ---
 
 ### Building
