@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 import collections
 
+
 # casa version
 def _get_casa_version():
     try:
@@ -19,10 +20,10 @@ def _get_casa_version():
                     if 'version' in buildinfo:
                         version_string = buildinfo['version']
                         break
-    except:
+    except Exception:
         version_string = 'NONE'
     #print(version_string)
-    
+
     # version string format: MAJOR.MINOR.PATCH-BUILD
     s = version_string.split('-')
     if len(s) != 2:
@@ -41,7 +42,9 @@ def _get_casa_version():
     CASAVersion = collections.namedtuple('CASAVersion', ['major', 'minor', 'patch', 'build'])
     return CASAVersion(major=major, minor=minor, patch=patch, build=build)
 
+
 casa_version = _get_casa_version()
+
 
 # Fail if CASA is not available, warn if CASA is too old
 if casa_version.major < 0:
@@ -64,4 +67,3 @@ from .casatools import SelectTableForRead
 from .casatools import OpenMS
 from .casatools import OpenMSMetaData
 from .casatools import OpenImage
-

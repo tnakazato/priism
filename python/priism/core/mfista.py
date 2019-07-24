@@ -90,7 +90,7 @@ class MfistaSolverTemplate(MfistaSolverBase):
         under the condition of
 
             min{sum[(Fxi - yi)^2] + L1 |xi| + Ltsv TSV(x)}
-        
+
         Solve the problem using MFISTA algorithm.
 
         visibility -- visibility data
@@ -154,7 +154,7 @@ class MfistaSolverFFT(MfistaSolverTemplate):
     """
     Solver for sparse modeling using MFISTA algorithm with FFT
 
-    This depends on sparseimaging package written by Shiro Ikeda. 
+    This depends on sparseimaging package written by Shiro Ikeda.
     It calls C-function via wrapper class defined in external submodule.
     (priism.core.sparseimagingfft.SparseImagingExecutor)
     """
@@ -168,7 +168,7 @@ class MfistaSolverFFT(MfistaSolverTemplate):
 
     def normalize_result(self, vis_data, image_data):
         """
-        Normalize resulting image. Multiply sqrt(Nx*Ny) to conpensate for 
+        Normalize resulting image. Multiply sqrt(Nx*Ny) to conpensate for
         the difference of normalization strategy of FFT.
 
         vis_data -- input visiblity as the form of SparseImagingInputs
@@ -185,7 +185,7 @@ class MfistaSolverNUFFT(MfistaSolverTemplate):
     """
     Solver for sparse modeling using MFISTA algorithm with NUFFT
 
-    This depends on sparseimaging package written by Shiro Ikeda. 
+    This depends on sparseimaging package written by Shiro Ikeda.
     It calls C-function via wrapper class defined in external submodule.
     (priism.core.sparseimagingnufft.SparseImagingExecutor)
      """

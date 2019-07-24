@@ -34,7 +34,7 @@ class SparseImagingInputsFFT(sparseimagingbase.SparseImagingInputs):
         for i in range(len(rcopy)):
             j = u[i]
             k = v[i]
-            factor = (-1)**(j+k)
+            factor = (-1)**(j + k)
             rcopy[i] *= factor
             icopy[i] *= factor
         return rcopy, icopy
@@ -80,7 +80,7 @@ class SparseImagingExecutor(object):
     #libname = 'mfista_imaging_fft'
     libname = 'libmfista_fft.so'
 
-    def __init__(self, lambda_L1, lambda_TV=0.0, lambda_TSV=0.0, 
+    def __init__(self, lambda_L1, lambda_TV=0.0, lambda_TSV=0.0,
                  cinit=5e10, nonnegative=True,
                  libpath=None):
         self.lambda_L1 = lambda_L1
@@ -158,9 +158,9 @@ class SparseImagingExecutor(object):
         # run MFISTA
         self._mfista.mfista_imaging_core_fft(u_idx, v_idx, y_r, y_i, noise_stdev,
                                              M, NX, NY, _maxiter, _eps,
-                                             lambda_l1, lambda_tv, lambda_tsv, 
+                                             lambda_l1, lambda_tv, lambda_tsv,
                                              cinit, xinit, xout, nonneg_flag, fftw_plan_flag,
-                                             _box_flag, cl_box, 
+                                             _box_flag, cl_box,
                                              mfista_result)
 
         # show IO filenames
@@ -199,7 +199,7 @@ class SparseImagingExecutor(object):
         print(' size of input vector:  {0}'.format(mfista_result.M))
         print(' size of output vector: {0}'.format(mfista_result.N))
         if mfista_result.NX != 0:
-            print('size of image:          {0} x {1}'.format(mfista_result.NX, 
+            print('size of image:          {0} x {1}'.format(mfista_result.NX,
                                                              mfista_result.NY))
         print('')
         print('')
@@ -288,7 +288,7 @@ class SparseImagingExecutor(object):
         arraydata = numpy.fromfile(outfile, dtype=numpy.double)
         assert len(arraydata) == n
 
-        img = arraydata.reshape((self.nx,self.ny))
+        img = arraydata.reshape((self.nx, self.ny))
 
         # flip along longitude axis
         img = numpy.fliplr(img)

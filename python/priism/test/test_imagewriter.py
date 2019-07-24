@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 
-import unittest
 import numpy
 import os
 
@@ -9,28 +8,29 @@ import priism.alma.imagewriter as imagewriter
 import priism.external.casa as casa
 import priism.test.utils as utils
 
+
 class ImageWriterTest(utils.TestBase):
     """
     Test suite for imagewriter
-    
+
        test_default_meta: imagewriter test with default image metadata
        test_coordsys: imagewriter coordsys handling test
        test_phasecenter: imagewriter phasecenter handling test
     """
-    
+
     imagename = 'ImageWriterTest.fits'
     result = None
-    
+
     def setUp(self):
         pass
-    
+
     def tearDown(self):
         #if os.path.exists(self.imagename):
         #    os.remove(self.imagename)
-            
+
         #self.assertFalse(os.path.exists(self.imagename))
         pass
-    
+
     def _get_reference(self, csys, reference_name, type, asdict=False):
         refdict = getattr(csys, reference_name)(type=type)
         #print '{0} for {1}: {2}'.format(reference_name, type, refdict)
@@ -38,46 +38,46 @@ class ImageWriterTest(utils.TestBase):
             return refdict
         else:
             return refdict['numeric']
-        
+
     def assertClose(self, actual, expected, eps=1.0e-11):
         if expected == 0.0:
             diff = abs(actual)
         else:
             diff = abs((actual - expected) / expected)
-        self.assertLess(diff, eps, 
+        self.assertLess(diff, eps,
                         msg='actual {0} expected {1} (diff {2}'.format(actual,
                                                                        expected,
                                                                        diff))
-    
+
     def _run_test(self, imageparam, arr, imagemeta=None):
         qa = casa.CreateCasaQuantity()
 
         writer = imagewriter.ImageWriter(imageparam,
                                          arr,
-                                         imagemeta) 
-        
+                                         imagemeta)
+
         if imagemeta is None:
             # default image metadata
             imagemeta = paramcontainer.ImageMetaInfoContainer()
-            
+
         status = writer.write(overwrite=True)
-        
+
         self.assertTrue(status)
         self.assertTrue(os.path.exists(self.imagename))
 
         self.result = self.imagename
-        
+
         ia = casa.CreateCasaImageAnalysis()
         ia.open(self.imagename)
         try:
             # image shape
-            expected_shape= (imageparam.imsize[0],
-                             imageparam.imsize[1],
-                             imageparam.nchan,
-                             1)
+            expected_shape = (imageparam.imsize[0],
+                              imageparam.imsize[1],
+                              imageparam.nchan,
+                              1)
             self.assertTrue(numpy.all(expected_shape == ia.shape()))
             csys = ia.coordsys()
-        
+
             # direction coordinate
             dirref = csys.referencecode(type='direction')[0]
             self.assertEqual(dirref, 'J2000')
@@ -101,7 +101,7 @@ class ImageWriterTest(utils.TestBase):
             #print cellx, celly
             self.assertClose(incr[0], cellx, eps)
             self.assertClose(incr[1], celly, eps)
-           
+
             # spectral coordinate
             specref = csys.referencecode(type='spectral')[0]
             self.assertEqual(specref, 'LSRK')
@@ -113,7 +113,7 @@ class ImageWriterTest(utils.TestBase):
             #self.assertEqual(incr, qa.convert(width, 'Hz')['value'])
             self.assertEqual(refval, qa.convert(imageparam.start, 'Hz')['value'])
             self.assertEqual(incr, qa.convert(imageparam.width, 'Hz')['value'])
-            
+
             # stokes coordinate
             refpix = self._get_reference(csys, 'referencepixel', 'stokes')
             refval = self._get_reference(csys, 'referencevalue', 'stokes')
@@ -121,7 +121,7 @@ class ImageWriterTest(utils.TestBase):
             self.assertEqual(refpix, 0.0)
             self.assertEqual(refval, 1.0)
             self.assertEqual(incr, 1.0)
-            
+
             # verify image meta data
             self.assertEqual(csys.observer(), imagemeta.observer)
             self.assertEqual(csys.telescope(), imagemeta.telescope)
@@ -130,22 +130,22 @@ class ImageWriterTest(utils.TestBase):
             obsdate = imagemeta.observing_date
             self.assertEqual(epoch['refer'], obsdate['refer'])
             self.assertClose(epoch['m0']['value'], obsdate['m0']['value'])
-            
+
             # image data
             chunk = ia.getchunk()
             imageshape = chunk.shape
             self.assertEqual(imageshape, expected_shape)
-            
-            shaped_chunk = chunk[:,:,:,0]
+
+            shaped_chunk = chunk[:, :, :, 0]
             print(shaped_chunk.shape, arr.shape)
             self.assertTrue(numpy.allclose(arr, shaped_chunk),
                             msg='expected {0} actual {1} (maxdiff {2})'.format(arr,
                                                                                shaped_chunk,
-                                                                               abs(arr-shaped_chunk).max()))
-       
+                                                                               abs(arr - shaped_chunk).max()))
+
         finally:
             ia.done()
-            
+
     def get_default_imageparam(self):
         qa = casa.CreateCasaQuantity()
         phasecenter = '9:00:00 -60.00.00 J2000'
@@ -153,7 +153,7 @@ class ImageWriterTest(utils.TestBase):
         start = qa.quantity('101GHz')
         width = qa.quantity('1MHz')
         nchan = 3
-        imsize = [10,9]
+        imsize = [10, 9]
         cell = '1arcsec'
         imageparam = paramcontainer.ImageParamContainer(imagename=self.imagename,
                                                         phasecenter=phasecenter,
@@ -164,9 +164,9 @@ class ImageWriterTest(utils.TestBase):
                                                         nchan=nchan,
                                                         outframe='LSRK',
                                                         stokes='I')
-                
+
         return imageparam
-    
+
     def make_image_array(self, imageparam):
         # image shape is (nx,ny,nstokes,nchan)
         imageshape = (imageparam.imsize[0],
@@ -181,26 +181,26 @@ class ImageWriterTest(utils.TestBase):
         arr = arr.reshape(imageshape)
 
         return arr
-        
+
     def test_default_meta(self):
         # default imageparam
         imageparam = self.get_default_imageparam()
-        
+
         # create image array
         arr = self.make_image_array(imageparam)
 
         # perform test with default imagemeta (None)
         self._run_test(imageparam, arr, None)
-        
+
     def test_custom_meta(self):
         me = casa.CreateCasaMeasure()
-        
+
         # default imageparam
         imageparam = self.get_default_imageparam()
-        
+
         # create image array
         arr = self.make_image_array(imageparam)
-        
+
         # custom imagemeta
         imagemeta = paramcontainer.ImageMetaInfoContainer(observer='Takeshi Nakazato',
                                                           telescope='NRO',
@@ -209,8 +209,7 @@ class ImageWriterTest(utils.TestBase):
 
         # perform test with default imagemeta (None)
         self._run_test(imageparam, arr, imagemeta)
-        
-        
+
     def test_coordsys(self):
         paramdict = {
             'imagename': 'test_coordsys.fits',
@@ -223,19 +222,19 @@ class ImageWriterTest(utils.TestBase):
             'width': '10MHz',
             'outframe': 'LSRK',
             'stokes': 'I'
-            }
-        imparam = paramcontainer.ImageParamContainer.CreateContainer(**paramdict) 
+        }
+        imparam = paramcontainer.ImageParamContainer.CreateContainer(**paramdict)
         print(imparam.imagename)
         self.assertEqual(imparam.imagename, paramdict['imagename'])
-        
-        imshape = (imparam.imsize[0], imparam.imsize[1], 
-                   imparam.nchan, 1,) 
+
+        imshape = (imparam.imsize[0], imparam.imsize[1],
+                   imparam.nchan, 1,)
         imarray = numpy.zeros(imshape, dtype=numpy.float32)
-        
+
         writer = imagewriter.ImageWriter(imageparam=imparam, imagearray=imarray)
         csys = writer._setup_coordsys()
         self.result = csys
-        
+
     def test_phasecenter(self):
         phasecenter_str = '15:30:0 -10.30.00 J2000'
         phasecenter_rec = imagewriter.parse_phasecenter(phasecenter_str)
@@ -243,17 +242,17 @@ class ImageWriterTest(utils.TestBase):
         lonstr, latstr, ref = phasecenter_str.split()
         qa = casa.CreateCasaQuantity()
         me = casa.CreateCasaMeasure()
-        
+
         lon = qa.convert(qa.quantity(lonstr), 'rad')
         # to make value in ranges [-pi, pi]
         pi = qa.constants('pi')['value']
-        lon['value'] = (lon['value'] + pi) % (2 * pi) - pi 
+        lon['value'] = (lon['value'] + pi) % (2 * pi) - pi
         lat = qa.quantity(latstr)
-        
+
         print(lon)
         print(lat)
         print(phasecenter_str)
-        
+
         self.assertEqual(me.gettype(phasecenter_rec), 'Direction')
         self.assertEqual(me.getref(phasecenter_rec), ref)
         phasecenter_value = me.getvalue(phasecenter_rec)
@@ -264,13 +263,12 @@ class ImageWriterTest(utils.TestBase):
         self.assertLess(diff, eps)
         self.assertTrue(qa.eq(lat, phasecenter_value['m1']))
 
+
 def suite():
     test_items = ['test_default_meta',
                   'test_default_meta',
                   'test_coordsys',
                   'test_phasecenter']
-    test_suite = utils.generate_suite(ImageWriterTest, 
-                                     test_items)
+    test_suite = utils.generate_suite(ImageWriterTest,
+                                      test_items)
     return test_suite
-
-    

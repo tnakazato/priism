@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 
-import numpy
 import atexit
 
 from .reductionhelper import paraMap
@@ -16,6 +15,7 @@ except NameError:
     print('LOG: initialize sakura...')
     print(libsakurapy)
     libsakurapy.initialize()
+
     def sakura_cleanup():
         print('LOG: clean up sakura...')
         libsakurapy.clean_up()

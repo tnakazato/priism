@@ -18,7 +18,7 @@ imsize = [128, 128]
 cell = ['0.06arcsec', '0.06arcsec']
 worker.defineimage(imsize=imsize,
                    cell=cell,
-                   phasecenter='0', #field ID 0
+                   phasecenter='0',  # field ID 0
                    nchan=1,
                    start=0,
                    width=1)
@@ -42,14 +42,14 @@ worker.cvforgridvis(L1_list, Ltsv_list, num_fold=num_fold,
                     summarize=True, figfile='cvresult.png',
                     datafile='cvresult.dat', maxiter=1000)
 
-# If you want to obtain the image for a certain combination of L1 and Ltsv, 
-# these two lines can be useful. You can control max number of iterations 
+# If you want to obtain the image for a certain combination of L1 and Ltsv,
+# these two lines can be useful. You can control max number of iterations
 # or threshold value for mfista. See cvrun_core.py for detail.
 #worker.mfista(l1=1e0, ltsv=1e8)
 #worker.exportimage(imagename='myimage.fits')
 
 end_time = time.time()
-print('{0}: elapsed {1} sec'.format('cvrun.py', end_time-start_time))
+print('{0}: elapsed {1} sec'.format('cvrun.py', end_time - start_time))
 
 # export griddedvis for non-CASA test
 #worker.griddedvis.exportdata('griddedvis.dat')

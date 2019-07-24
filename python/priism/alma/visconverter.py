@@ -9,9 +9,10 @@ import priism.external.casa as casa
 import priism.external.sakura as sakura
 from . import gridder
 
+
 class VisibilityConverter(object):
     """
-    VisibilityConverter implements a conversion between 
+    VisibilityConverter implements a conversion between
     raw visibility data to working set for gridder.
     """
     required_columns = ['time', 'uvw', 'field_id', 'data_desc_id',
@@ -25,36 +26,36 @@ class VisibilityConverter(object):
                            'GALACTO',
                            'LGROUP',
                            'CMB']
-        
+
     def __init__(self, visparam, imageparam):
         self.visparam = visparam
         self.imageparam = imageparam
-        
+
         self._warn_refocus()
-        
+
         self.inspect_data()
-        
+
     def _to_stokesI(self, data_in, flag_in, weight_in, weight_factor,
                     real_out, imag_out, flag_out, weight_out):
         """
-        Convert XXYY (or RRLL) correlations into Stokes Visibility I_v. 
-        Formula for conversion is, 
-        
-            I_v = (XX + YY) / 2 
-            W_I = 4 W_XX W_YY / (W_XX + W_YY) 
-            
+        Convert XXYY (or RRLL) correlations into Stokes Visibility I_v.
+        Formula for conversion is,
+
+            I_v = (XX + YY) / 2
+            W_I = 4 W_XX W_YY / (W_XX + W_YY)
+
         NOTE:
-           shape of input data are (npol, nchan, nrow) 
+           shape of input data are (npol, nchan, nrow)
            shape of output data are (nrow, npol, nchan)
         """
         npol = data_in.shape[0]
         nrow = data_in.shape[2]
-        
+
         if npol == 1:
             # single polarization, just copy
-            real_out[:] = data_in.real.transpose((2,0,1))
-            imag_out[:] = data_in.imag.transpose((2,0,1))
-            flag_out[:] = flag_in.transpose((2,0,1))
+            real_out[:] = data_in.real.transpose((2, 0, 1))
+            imag_out[:] = data_in.imag.transpose((2, 0, 1))
+            flag_out[:] = flag_in.transpose((2, 0, 1))
             for irow in range(nrow):
                 weight_out[irow] = weight_in[irow] * weight_factor
             return
@@ -62,31 +63,31 @@ class VisibilityConverter(object):
             # data might be full Stokes parameters (IQUV)
             # pick up Stokes I (first polarization component)
             # TODO: differentiate Stokes parameter and four correlations (XX,XY,YX,YY)
-            real_out[:] = data_in.real.transpose((2,0,1))[:,:1,:]
-            imag_out[:] = data_in.imag.transpose((2,0,1))[:,:1,:]
-            flag_out[:] = flag_in.transpose((2,0,1))[:,:1,:]
+            real_out[:] = data_in.real.transpose((2, 0, 1))[:, :1, :]
+            imag_out[:] = data_in.imag.transpose((2, 0, 1))[:, :1, :]
+            flag_out[:] = flag_in.transpose((2, 0, 1))[:, :1, :]
             #print weight_in.shape
             for irow in range(nrow):
                 weight_out[irow] = weight_in[0, irow] * weight_factor
             return
-        
+
         # here npol should be 2 (dual polarization XXYY or RRLL)
         assert npol == 2
-        
+
         # data
-        mask = numpy.where(flag_in == False, 0.5, 0.0)
+        mask = numpy.where(flag_in is False, 0.5, 0.0)
         data_out = (data_in * mask).sum(axis=0)
-        real_out[:,0,:] = data_out.real.transpose((1,0))
-        imag_out[:,0,:] = data_out.imag.transpose((1,0))
+        real_out[:, 0, :] = data_out.real.transpose((1, 0))
+        imag_out[:, 0, :] = data_out.imag.transpose((1, 0))
         del mask
         del data_out
-        
+
         # flag
         flag_out[:] = True
         for ipol in range(npol):
-            flag_out[:] = numpy.logical_and(flag_out, 
-                                            flag_in[ipol:ipol+1,:,:].transpose((2,0,1)))
-        
+            flag_out[:] = numpy.logical_and(flag_out,
+                                            flag_in[ipol:ipol + 1, :, :].transpose((2, 0, 1)))
+
         # weight
         # weight_in.shape = (npol, nrow)
         # weight_out.shape = (nrow, nchan)
@@ -94,24 +95,24 @@ class VisibilityConverter(object):
             w1 = weight_in[0, irow] * weight_factor
             w2 = weight_in[1, irow] * weight_factor
             weight_out[irow] = 4.0 * w1 * w2 / (w1 + w2)
-        
+
     def freq_ref_string(self, type_id):
         if type_id < 0 or len(self.frequency_reference) <= type_id:
             return 'UNDEFINED'
         else:
             return self.frequency_reference[type_id]
-    
+
     def inspect_data(self):
         """
         Inspect data given as a field 'vis' in visparam.
         """
         vis = self.visparam.vis
-        
+
         # make mapping between DATA_DESC_ID and SPECTRAL_WINDOW_ID/POLARIZATION_ID
         with casa.OpenTableForRead(os.path.join(vis, 'DATA_DESCRIPTION')) as tb:
             self.dd_spw_map = tb.getcol('SPECTRAL_WINDOW_ID')
             self.dd_pol_map = tb.getcol('POLARIZATION_ID')
-            
+
         # read spw information (channel freq, channel width, freq_ref)
         with casa.OpenTableForRead(os.path.join(vis, 'SPECTRAL_WINDOW')) as tb:
             meas_freq_ref = tb.getcol('MEAS_FREQ_REF')
@@ -122,7 +123,7 @@ class VisibilityConverter(object):
                 self.freq_ref[irow] = self.freq_ref_string(meas_freq_ref[irow])
                 self.chan_freq[irow] = tb.getcell('CHAN_FREQ', irow)
                 self.chan_width[irow] = tb.getcell('CHAN_WIDTH', irow)
-                
+
         # read field information
         with casa.OpenTableForRead(os.path.join(vis, 'FIELD')) as tb:
             self.field_dir = {}
@@ -134,11 +135,11 @@ class VisibilityConverter(object):
                 self.field_ref = 'J2000'
             for irow in range(tb.nrows()):
                 self.field_dir[irow] = tb.getcell('PHASE_DIR', irow)
-                
+
             all_fields = numpy.arange(tb.nrows(), dtype=numpy.int)
-        
+
         # nominal image LSRK frequency (will be used for channel selection)
-        # calculate based on 
+        # calculate based on
         #     - ALMA observatory position
         #     - nominal field direction (one of the TARGET)
         #     - observation start time (from OBSERVATION table?)
@@ -153,7 +154,7 @@ class VisibilityConverter(object):
                 field_ids = msmd.fieldsforintent(intent=self.visparam.intent)
                 if len(field_ids) == 0:
                     field_ids = all_fields
-            except:
+            except Exception:
                 field_ids = all_fields
             #nominal_field_id = field_ids[0]
         # data description id
@@ -168,7 +169,7 @@ class VisibilityConverter(object):
                                          data_desc_ids,
                                          _field_ids)
             self.nominal_lsr_frequency[field_id] = cf
-        
+
     def get_lsr_frequency(self, chunk):
         # sanity check
         # - all chunk entry should have same timestamp (mitigate in future?)
@@ -177,29 +178,29 @@ class VisibilityConverter(object):
         assert numpy.all(chunk['data_desc_id'] == chunk['data_desc_id'][0])
         # - all chunk entry should have same field (mitigate in fugure?)
         assert numpy.all(chunk['field_id'] == chunk['field_id'][0])
-        
-        # TODO: rewrite _get_lsr_frequency with the assumption that 
+
+        # TODO: rewrite _get_lsr_frequency with the assumption that
         #       time and data_desc_id is constant over the chunk
         times = chunk['time'][:1]
         data_desc_ids = chunk['data_desc_id'][:1]
         field_ids = chunk['field_id'][:1]
-        
+
         cf_lsr = self._get_lsr_frequency(times, data_desc_ids, field_ids)
         return cf_lsr[0]
-    
+
     def _get_lsr_frequency(self, times, data_desc_ids, field_ids):
         # sanity check
         # - consistency of chunk data length
         assert len(times) == len(data_desc_ids)
         assert len(times) == len(field_ids)
-        
+
         me = casa.CreateCasaMeasure()
         qa = casa.CreateCasaQuantity()
         # position measure -- observatory position of ALMA
         me.doframe(me.observatory('ALMA'))
 
         nchunk = len(times)
-        
+
         lsr_frequency = {}
         lsr_width = {}
         for i in range(nchunk):
@@ -245,16 +246,16 @@ class VisibilityConverter(object):
                 #print 'LOG converted = {0}'.format(lsr_frequency[i])
         #return lsr_frequency, lsr_width
         return lsr_frequency
-    
+
     def fill_data(self, ws, chunk, lsr_edge_frequency):
         qa = casa.CreateCasaQuantity()
-        
+
         lsr_frequency = (lsr_edge_frequency[1:] + lsr_edge_frequency[:-1]) / 2.0
-        
+
         # info from chunk
         field_id = chunk['field_id'][0]
         data_desc_id = chunk['data_desc_id'][0]
-        
+
         # get spectral channel selection parameter
         start = self.imageparam.start
         width = self.imageparam.width
@@ -271,7 +272,7 @@ class VisibilityConverter(object):
         velocity_pattern = re.compile(wavelength_pattern.pattern.replace('$', '/s$'))
         match_with = lambda pattern: pattern.match(start_unit) is not None and \
                                         pattern.match(width_unit) is not None
-                                        
+
         image_freq = numpy.empty(nchan, dtype=numpy.float64)
         image_width = 0.0
 
@@ -283,7 +284,7 @@ class VisibilityConverter(object):
         # |-------|-------|-------| nchan=3
         # |<----->|
         #   width=<constant channel width of image channel>
-        # 
+        #
         if len(start_unit) == 0 and len(width_unit) == 0:
             # channel selection
             # use nominal LSRK frequency for image (channel boundary)
@@ -301,7 +302,7 @@ class VisibilityConverter(object):
                     # right boundary of end channel
                     channel_end = channel_start + int(qwidth['value'])
                     # center frequency of the range
-                    image_freq[ichan] = (nominal_lsr_frequency[channel_start] + 
+                    image_freq[ichan] = (nominal_lsr_frequency[channel_start] +
                                          nominal_lsr_frequency[channel_end]) / 2.0
                 image_width = (nominal_lsr_frequency[1] - nominal_lsr_frequency[0]) \
                                 * int(qwidth['value'])
@@ -321,15 +322,15 @@ class VisibilityConverter(object):
         else:
             # invalid or mixed selection
             raise ValueError('image channel selection is invalid or not supported')
-    
+
         # map/interpolate
         data_desc_ids = chunk['data_desc_id']
         nchunk = len(data_desc_ids)
         spwid = self.dd_spw_map[data_desc_id]
         chan_width = self.chan_width[spwid][0]
 
-        # chunk holds WEIGHT column, which should store channelized weight, 
-        # 2 * df * dt (which equals 2 * EFFECTIVE_BW[0] * INTEVAL) so that 
+        # chunk holds WEIGHT column, which should store channelized weight,
+        # 2 * df * dt (which equals 2 * EFFECTIVE_BW[0] * INTEVAL) so that
         # weight scaling factor is 1.0 by default
         weight_factor = 1.0
         #print 'LOG: SPW {0} chan_width * 2 = {1}, image_width = {2}'.format(
@@ -347,7 +348,7 @@ class VisibilityConverter(object):
             row_flag = sakura.empty_aligned((nrow,), dtype=numpy.bool)
             channel_map = sakura.empty_aligned((nchan,), dtype=numpy.int32)
             channel_map[:] = numpy.arange(nchan, dtype=numpy.int32)
-            
+
             # real, image: linear interpolation
             #print 'LOG: lsr_frequency length {0} real.shape {1}'.format(
             #    len(lsr_frequency), chunk['data'].shape)
@@ -370,16 +371,16 @@ class VisibilityConverter(object):
         else:
             #print 'LOG: do channel mapping'
             # channel mapping
-            # if chunk frequency for i goes into image frequency cell for k, 
+            # if chunk frequency for i goes into image frequency cell for k,
             # i maps into k
-            image_freq_boundary = numpy.empty(nchan+1, dtype=numpy.float64)
+            image_freq_boundary = numpy.empty(nchan + 1, dtype=numpy.float64)
             image_freq_boundary[:-1] = image_freq - 0.5 * image_width
             image_freq_boundary[-1] = image_freq[-1] + 0.5 * image_width
             image_freq_min = image_freq_boundary.min()
             image_freq_max = image_freq_boundary.max()
             in_range = numpy.where(
                 numpy.logical_and(
-                    image_freq_min <= lsr_frequency, 
+                    image_freq_min <= lsr_frequency,
                     lsr_frequency <= image_freq_max))[0]
             nvischan = len(in_range)
             # accumulate N channels improves weight factor by N
@@ -406,35 +407,35 @@ class VisibilityConverter(object):
                     if b0 <= f and f <= b1:
                         channel_map[ichan] = chan_image
                         break
-                    
+
                 # fill in data
-                _data = chunk['data'][:,chan_chunk:chan_chunk+1,:]
-                _flag = chunk['flag'][:,chan_chunk:chan_chunk+1,:]
+                _data = chunk['data'][:, chan_chunk:chan_chunk + 1, :]
+                _flag = chunk['flag'][:, chan_chunk:chan_chunk + 1, :]
                 _weight = chunk['weight']
                 self._to_stokesI(_data, _flag, _weight, weight_factor,
-                                 real[:,:,ichan:ichan+1], imag[:,:,ichan:ichan+1],
-                                 flag[:,:,ichan:ichan+1], weight[:,ichan:ichan+1])
-        
+                                 real[:, :, ichan:ichan + 1], imag[:, :, ichan:ichan + 1],
+                                 flag[:, :, ichan:ichan + 1], weight[:, ichan:ichan + 1])
+
         # row_flag
-        row_flag[:] = numpy.all(flag == True, axis=(1,2,))
-        
-        # invert flag 
+        row_flag[:] = numpy.all(flag is True, axis=(1, 2,))
+
+        # invert flag
         # reader definition:
         #     True: INVALID
         #     False: *VALID*
-        # working set definition: 
+        # working set definition:
         #     True: *VALID*
         #     False: INVALID
         numpy.logical_not(row_flag, row_flag)
         numpy.logical_not(flag, flag)
-            
+
         ws.rdata = real
         ws.idata = imag
         ws.flag = flag
         ws.row_flag = row_flag
         ws.weight = weight
         ws.channel_map = channel_map
-    
+
     def _check_phasecenter(self, phasecenter):
         if isinstance(phasecenter, int):
             # integer that should indicate field ID
@@ -445,7 +446,7 @@ class VisibilityConverter(object):
                 # all characters are digits, it should indicate field ID
                 return
             else:
-                # string representation of 
+                # string representation of
                 raise ValueError('Invalid phasecenter value: \"{0}\".'.format(phasecenter)
                                  + 'Currently arbitrary phasecenter is not supported.'
                                  + 'Please specify field ID instead.')
@@ -456,11 +457,11 @@ class VisibilityConverter(object):
 
     def _warn_refocus(self):
         print('***WARN*** refocusing is disabled even if distance to the source is known.')
-    
+
     def fill_uvw(self, ws, chunk, lsr_edge_frequency):
         """
         Fill UV coordinate
-        
+
         ws -- working set to be filled
         chunk -- input data chunk
         lsr_edge_frequency -- channel edge frequency (LSRK)
@@ -468,7 +469,7 @@ class VisibilityConverter(object):
         phasecenter = self.imageparam.phasecenter
         self._check_phasecenter(phasecenter)
         #self._warn_refocus()
-        
+
         qa = casa.CreateCasaQuantity()
         speed_of_light = qa.constants('c')
         c = qa.convert(speed_of_light, 'm/s')['value']
@@ -490,7 +491,7 @@ class VisibilityConverter(object):
             # TODO: phase rotation if image phasecenter is different from
             #       the reference direction of the observation
             pass
-        
+
             # conversion from physical baseline length to the value
             # normalized by observing wavelength
             u0 = uvw[0, irow]
@@ -503,18 +504,18 @@ class VisibilityConverter(object):
             #freq_start = lsr_edge_frequency[0]
             #freq_end = lsr_edge_frequency[-1]
             #center_freq = (freq_start + freq_end) / 2
-            center_freq = numpy.fromiter((numpy.mean(lsr_edge_frequency[i:i+2]) for i in range(nchan)), 
+            center_freq = numpy.fromiter((numpy.mean(lsr_edge_frequency[i:i+2]) for i in range(nchan)),
                                          dtype=numpy.float64)
-            u[irow] = u0 * center_freq / c # divided by wavelength
-            v[irow] = v0 * center_freq / c # divided by wavelength
-            
+            u[irow] = u0 * center_freq / c  # divided by wavelength
+            v[irow] = v0 * center_freq / c  # divided by wavelength
+
             # TODO?: refocus UVW if distance to the source is known
             pass
-            
+
             # project uv-coordinate value onto gridding pixel plane
-            # pixel size is determined by an inverse of image extent 
+            # pixel size is determined by an inverse of image extent
             # along x (RA) and y (DEC) direction
-            # 
+            #
             #    v
             #     nv-1|(nmin,vmax)      (umax,vmax)
             #        .|
@@ -530,15 +531,15 @@ class VisibilityConverter(object):
             #         |__________________________
             #          0 1 2 ......nu/2...nu-1 u
             u[irow] = u[irow] / delta_u + offset_u
-            
-            # Sign of v must be inverted so that MFISTA routine generates 
-            # proper image. Otherwise, image will be flipped in the vertical 
-            # axis. 
+
+            # Sign of v must be inverted so that MFISTA routine generates
+            # proper image. Otherwise, image will be flipped in the vertical
+            # axis.
             v[irow] = -v[irow] / delta_v + offset_v
-            
+
         ws.u = u
         ws.v = v
-        
+
     def flatten(self, working_set):
         """
         Generator yielding list of working_sets divided by spectral channels
@@ -573,67 +574,66 @@ class VisibilityConverter(object):
                 u[row_start:row_end] = working_set.u[:, ichan]
                 v[row_start:row_end] = working_set.v[:, ichan]
                 row_start = row_end
-                
-            ws = gridder.GridderWorkingSet(data_id=working_set.data_id, u=u, v=v,  
+
+            ws = gridder.GridderWorkingSet(data_id=working_set.data_id, u=u, v=v,
                                            rdata=real, idata=imag, flag=flag,
-                                           weight=weight, row_flag=row_flag, 
+                                           weight=weight, row_flag=row_flag,
                                            channel_map=channel_map)
             print('yielding channelized working set from channels {}'.format(vischans))
             yield ws
-            
-        
+
     def generate_working_set(self, chunk):
         """
-        generate working set for gridder from the given data chunk 
+        generate working set for gridder from the given data chunk
         that is supposed to be produced by VisibilityReader.
-        
+
         Procedure to generate working set is as follows:
             1. visibility frequency conversion (from TOPO to LSRK in ALMA)
-            2. channel mapping between raw visibility in working set to 
+            2. channel mapping between raw visibility in working set to
                visibility grid coordinate or visibility interpolation
-            3. rotate phase if image phasecenter is different from 
+            3. rotate phase if image phasecenter is different from
                reference direction of observation
             4. refocus uvw if distance to source is known (maybe optional)
             5. convert UVW in metre into uv(w) coordinate
-        
+
         chunk -- data chunk produced by readvis
-        """ 
-        # sanity check 
-        # - chunk should contain all required data 
+        """
+        # sanity check
+        # - chunk should contain all required data
         for column in self.required_columns:
             assert column in chunk
         # - all chunk entry should have same timestamp (mitigate in future?)
         assert numpy.all(chunk['time'] == chunk['time'][0])
         # - all chunk entry should have same spw (mitigate in future?)
         assert numpy.all(chunk['data_desc_id'] == chunk['data_desc_id'][0])
-            
+
         #print 'Chunk ID {0} is valid'.format(chunk['chunk_id'])
-        
+
         # working set to be filled in
         chunk_id = chunk['chunk_id']
         working_set = gridder.GridderWorkingSet(data_id=chunk_id)
         print('LOG: generate working set for visibility chunk #{0}'.format(chunk_id))
-            
-        # 1. visibility frequency conversion 
+
+        # 1. visibility frequency conversion
         # get LSRK frequency at channel boundary
         # one LSRK frequency for one chunk
         lsr_frequency = self.get_lsr_frequency(chunk)
-        # returned frequency is for channel boundary so its length 
+        # returned frequency is for channel boundary so its length
         # should be greater than 1
         assert len(lsr_frequency) > 1
-        
-        # 2. channel mapping or regridding (i.e., fill data/flag/weight  
+
+        # 2. channel mapping or regridding (i.e., fill data/flag/weight
         #    with channel map. interpolating data if necessary)
         self.fill_data(working_set, chunk, lsr_frequency)
-        
+
         # 3~5. UVW manipulation
         self.fill_uvw(working_set, chunk, lsr_frequency)
-        
-        # EXTRA. convert channelized working set into a set of 
+
+        # EXTRA. convert channelized working set into a set of
         #        single-channel working set
         working_set_list = list(self.flatten(working_set))
-        
+
         #print 'Working set data shape {0} polmap {1}'.format(working_set.rdata.shape,
         #                                                     working_set.pol_map)
-        
+
         return working_set_list

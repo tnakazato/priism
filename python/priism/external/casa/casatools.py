@@ -4,32 +4,34 @@ import contextlib
 
 from taskinit import gentools, qa
 
+
 class CasaToolGenerator(object):
     @staticmethod
     def _Create(name):
         (tool,) = gentools([name])
         return tool
-    
+
     @staticmethod
     def CreateTable():
         return CasaToolGenerator._Create('tb')
-    
+
     @staticmethod
     def CreateImageAnalysis():
         return CasaToolGenerator._Create('ia')
-    
+
     @staticmethod
     def CreateCoordSys():
         return CasaToolGenerator._Create('cs')
-    
+
     @staticmethod
     def CreateMeasure():
         return CasaToolGenerator._Create('me')
-    
-    @staticmethod 
+
+    @staticmethod
     def CreateQuantity():
         return qa
-    
+
+
 @contextlib.contextmanager
 def OpenTableForRead(vis):
     (tb,) = gentools(['tb'])
@@ -38,7 +40,8 @@ def OpenTableForRead(vis):
         yield tb
     finally:
         tb.close()
-        
+
+
 @contextlib.contextmanager
 def OpenTableForReadWrite(vis):
     (tb,) = gentools(['tb'])
@@ -47,7 +50,8 @@ def OpenTableForReadWrite(vis):
         yield tb
     finally:
         tb.close()
-        
+
+
 @contextlib.contextmanager
 def SelectTableForRead(vis, taql):
     (tb,) = gentools(['tb'])
@@ -61,6 +65,7 @@ def SelectTableForRead(vis, taql):
     finally:
         tb.close()
 
+
 @contextlib.contextmanager
 def OpenMS(vis):
     (ms,) = gentools(['ms'])
@@ -70,6 +75,7 @@ def OpenMS(vis):
     finally:
         ms.close()
 
+
 @contextlib.contextmanager
 def OpenMSMetaData(vis):
     (msmd,) = gentools(['msmd'])
@@ -78,7 +84,8 @@ def OpenMSMetaData(vis):
         yield msmd
     finally:
         msmd.close()
-        
+
+
 @contextlib.contextmanager
 def OpenImage(imagename):
     (ia,) = gentools(['ia'])
@@ -87,4 +94,3 @@ def OpenImage(imagename):
         yield ia
     finally:
         ia.close()
-    

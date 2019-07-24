@@ -69,7 +69,7 @@ class SparseImagingExecutor(object):
     #libname = 'mfista_imaging_fft'
     libname = 'libmfista_nufft.so'
 
-    def __init__(self, lambda_L1, lambda_TV=0.0, lambda_TSV=0.0, 
+    def __init__(self, lambda_L1, lambda_TV=0.0, lambda_TSV=0.0,
                  cinit=5e10, nonnegative=True,
                  libpath=None):
         self.lambda_L1 = lambda_L1
@@ -95,7 +95,7 @@ class SparseImagingExecutor(object):
 
         signature is
 
-        void mfista_imaging_core_nufft(double *u_dx, double *v_dy, 
+        void mfista_imaging_core_nufft(double *u_dx, double *v_dy,
                    double *vis_r, double *vis_i, double *vis_std,
                    int M, int Nx, int Ny, int maxiter, double eps,
                    double lambda_l1, double lambda_tv, double lambda_tsv,
@@ -150,7 +150,7 @@ class SparseImagingExecutor(object):
                                                M, NX, NY, _maxiter, _eps,
                                                lambda_l1, lambda_tv, lambda_tsv,
                                                cinit, xinit, xout, nonneg_flag,
-                                               _box_flag, cl_box, 
+                                               _box_flag, cl_box,
                                                mfista_result)
 
         # show IO filenames
@@ -189,7 +189,7 @@ class SparseImagingExecutor(object):
         print(' size of input vector:  {0}'.format(mfista_result.M))
         print(' size of output vector: {0}'.format(mfista_result.N))
         if mfista_result.NX != 0:
-            print('size of image:          {0} x {1}'.format(mfista_result.NX, 
+            print('size of image:          {0} x {1}'.format(mfista_result.NX,
                                                              mfista_result.NY))
         print('')
         print('')
@@ -278,7 +278,7 @@ class SparseImagingExecutor(object):
         arraydata = numpy.fromfile(outfile, dtype=numpy.double)
         assert len(arraydata) == n
 
-        img = arraydata.reshape((self.nx,self.ny))
+        img = arraydata.reshape((self.nx, self.ny))
 
         # flip along longitude axis
         img = numpy.fliplr(img)

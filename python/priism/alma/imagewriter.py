@@ -6,6 +6,7 @@ import os
 import priism.external.casa as casa
 from . import paramcontainer
 
+
 class ImageWriter(object):
     """
     Create an FITS cube from given image array and coordinate information.
@@ -15,14 +16,14 @@ class ImageWriter(object):
         with casa.OpenMSMetaData(vis) as msmd:
             pdir = msmd.phasecenter(field_id)
         return pdir
-    
+
     @staticmethod
     def frequency_setup_for_spw(vis, spw_id, chan):
         with casa.OpenTableForRead(os.path.join(vis, 'SPECTRAL_WINDOW')) as tb:
             chan_freq = tb.getcell('CHAN_FREQ', spw_id)
             chan_width = tb.getcell('CHAN_WIDTH', spw_id)
         return '{0:16.12f}Hz'.format(chan_freq[chan]), '{0:16.12f}Hz'.format(chan_width[chan])
-        
+
     def __init__(self, imageparam, imagearray, imagemeta=None):
         self.imageparam = imageparam
         self.imagearray = imagearray
@@ -30,12 +31,12 @@ class ImageWriter(object):
             self.imagemeta = paramcontainer.ImageMetaInfoContainer()
         else:
             self.imagemeta = imagemeta
-        
+
     def write(self, overwrite=False):
-        ia = casa.CreateCasaImageAnalysis()        
+        ia = casa.CreateCasaImageAnalysis()
         # configure coordinate system
         csys = self._setup_coordsys()
-        
+
         # image array reshape
         imgshape = self.imagearray.shape
         if len(imgshape) == 2:
@@ -49,22 +50,22 @@ class ImageWriter(object):
             arr = self.imagearray
         else:
             raise ValueError('image array is not correct shape')
-        
-        ia.fromarray(pixels = arr, csys=csys.torecord())
+
+        ia.fromarray(pixels=arr, csys=csys.torecord())
         ia.setbrightnessunit('Jy/pixel')
-        status = ia.tofits(outfile=self.imageparam.imagename, optical=False, 
+        status = ia.tofits(outfile=self.imageparam.imagename, optical=False,
                            stokeslast=True, overwrite=overwrite)
         ia.done()
-        
+
         return status
-        
+
     def _setup_coordsys(self):
         csys = casa.CreateCasaCoordSys()
         me = casa.CreateCasaMeasure()
         qa = casa.CreateCasaQuantity()
-        
+
         c = csys.newcoordsys(direction=True, spectral=True, stokes=self.imageparam.stokes)
-        
+
         # direction coordinate
         phasecenter = self.imageparam.phasecenter
         print('DEBUG phasecenter={0}'.format(phasecenter))
@@ -80,15 +81,15 @@ class ImageWriter(object):
         sincr = list(map(q2s, incr))
         projection = self.imageparam.projection
         print('DEBUG refpix={0}, refval={1}'.format(refpix, refval))
-        c.setdirection(refcode=refframe, 
+        c.setdirection(refcode=refframe,
                        proj=projection,
                        refpix=refpix,
                        refval=srefval,
                        incr=sincr)
-        
+
         # spectral coordinate
         refframe = 'LSRK'
-        print('start {0} width {1}'.format(self.imageparam.start, 
+        print('start {0} width {1}'.format(self.imageparam.start,
                                            self.imageparam.width))
         start = qa.convert(self.imageparam.start, 'Hz')
         width = qa.convert(self.imageparam.width, 'Hz')
@@ -115,12 +116,12 @@ class ImageWriter(object):
             r[key]['wcs']['crval'] = start['value']
             r[key]['wcs']['cdelt'] = width['value']
             c.fromrecord(r)
-        
+
         # Stokes coordinate
         # currently only 'I' image is supported
         #c.setstokes('I')
         #c.setincrement(value=1, type='stokes')
-        
+
         # Meta info
         c.setobserver(self.imagemeta.observer)
         c.settelescope(self.imagemeta.telescope)
@@ -136,18 +137,19 @@ class ImageWriter(object):
             else:
                 c1 = (nchan - 1) // 2
                 rest_frequency = qa.quantity(f[c1], frequencies['unit'])
-                
+
         print('rest_frequency={0}'.format(rest_frequency))
         c.setrestfrequency(rest_frequency)
-        
+
         print(c.summary(list=False)[0])
 
         return c
-        
+
+
 def parse_phasecenter(phasecenter_str):
     qa = casa.CreateCasaQuantity()
     me = casa.CreateCasaMeasure()
-        
+
     if len(phasecenter_str) == 0:
         # defualt value '0:0:0 0.0.0 J2000'
         lat = qa.quantity(0.0, 'rad')
@@ -156,7 +158,7 @@ def parse_phasecenter(phasecenter_str):
     else:
         # expected format: "longitude latitude [ref]"
         s = phasecenter_str.split()
-        ref = 'J2000' # default reference is J2000
+        ref = 'J2000'  # default reference is J2000
         if len(s) == 3:
             lat = qa.quantity(s[1])
             lon = qa.quantity(s[0])
@@ -166,7 +168,7 @@ def parse_phasecenter(phasecenter_str):
             lon = qa.quantity(s[0])
         else:
             raise ValueError('Invalid phasecenter: "{0}"'.format(phasecenter_str))
-    
+
     #print 'DEBUG rf={0} lon={1} lat={2}'.format(ref, lon, lat)
     direction = me.direction(rf=ref, v0=lon, v1=lat)
     return direction

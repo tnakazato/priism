@@ -9,9 +9,10 @@ import collections
 import pylab as pl
 import matplotlib
 import time
+from argparse import ArgumentError
 try:
     import cPickle as pickle
-except:
+except Exception:
     import pickle
 
 from . import datacontainer
@@ -92,8 +93,8 @@ class SparseModelingImager(object):
     @property
     def imagesuffix(self):
         """
-        Suffix for the exported image. Default is 'pickle' since the export format is 
-        Python's cPickle object. Suffix can be customized depending on how to override 
+        Suffix for the exported image. Default is 'pickle' since the export format is
+        Python's cPickle object. Suffix can be customized depending on how to override
         exportimage method.
         """
         return 'pickle'
@@ -106,7 +107,7 @@ class SparseModelingImager(object):
             solver  name of the solver
                     choices are as follows.
                       'mfista_fft'    MFISTA algorithm with FFT by S. Ikeda.
-                      'mfista_nufft'  MFISTA algorithm with NUFFT by S. Ikeda 
+                      'mfista_nufft'  MFISTA algorithm with NUFFT by S. Ikeda
                                        (to be implemented in future)
        """
         self.solver_name = solver
@@ -129,7 +130,7 @@ class SparseModelingImager(object):
         solver_cls = mfista.SolverFactory(self.solver_name)
         self.solver = solver_cls(mfistaparam, self.imparam)
 
-    def mfista(self, l1, ltsv, maxiter=50000, eps=1.0e-5, clean_box=None, 
+    def mfista(self, l1, ltsv, maxiter=50000, eps=1.0e-5, clean_box=None,
                storeinitialimage=True, overwriteinitialimage=False):
         """
         Run MFISTA algorithm on gridded visibility data.
@@ -158,25 +159,25 @@ class SparseModelingImager(object):
 
     def importvis(self, data=None, weight=None, filename=None, flipped=False, uvgrid=None):
         """
-        Import visibility data. Users can provide visibility data either as numpy array 
+        Import visibility data. Users can provide visibility data either as numpy array
         (data and weight) or as filename that stores visibility data in a specified format.
-        Either data or filename should be specified. If both are specified, filename takes 
+        Either data or filename should be specified. If both are specified, filename takes
         priority.
 
         Parameters:
-            data     -- Visibility data as numpy complex array. Its shape must effectively 
+            data     -- Visibility data as numpy complex array. Its shape must effectively
                         be two-dimensional (nv, nu). For unflipped array, total power component
-                        (0,0) must be located at (nv//2, nu//2). For flipped array, order of 
-                        the array elements follows convention of FFTW3 library. 
-                        Additional axes (spectral and stokes) may be added but their length 
-                        must be 1. 
-            weight   -- Visibility weight (inverse square of sigma) as numpy array. Array 
-                        type can be either float or complex. If complex array is given, 
-                        its real part is interpreted as a weight for real part of the 
-                        visibility while the imaginary part is a weight for imaginary part. 
-                        Array shape must conform with data. None is also acceptable. 
+                        (0,0) must be located at (nv//2, nu//2). For flipped array, order of
+                        the array elements follows convention of FFTW3 library.
+                        Additional axes (spectral and stokes) may be added but their length
+                        must be 1.
+            weight   -- Visibility weight (inverse square of sigma) as numpy array. Array
+                        type can be either float or complex. If complex array is given,
+                        its real part is interpreted as a weight for real part of the
+                        visibility while the imaginary part is a weight for imaginary part.
+                        Array shape must conform with data. None is also acceptable.
                         In this case, equal weight (1.0) will be applied to all visibilities.
-            filename -- Name of the file that stores visibility data and weights. Format 
+            filename -- Name of the file that stores visibility data and weights. Format
                         should be as follows:
             flipped  -- Whether or not given data and weight are flipped for FFT.
             uvgrid   -- (Optional) Configuration of uv grid as a UVGridConfig instance.
@@ -238,7 +239,7 @@ class SparseModelingImager(object):
                 imagweight = newweight.imag
 
         # flip back operation if necessary
-        if flipped == True:
+        if flipped is True:
             realdata = numpy.fft.fftshift(realdata)
             imagdata = numpy.fft.fftshift(imagdata)
             realweight = numpy.fft.fftshift(realweight)
@@ -254,10 +255,10 @@ class SparseModelingImager(object):
             self.uvgridconfig = uvgrid
         else:
             # default grid configuration
-            nv = default_nv#datashape[0]
-            nu = default_nu#datashape[1]
+            nv = default_nv  # datashape[0]
+            nu = default_nu  # datashape[1]
             cell = 1.0
-            self.uvgridconfig = datacontainer.UVGridConfig(cellu=cell, cellv=cell, 
+            self.uvgridconfig = datacontainer.UVGridConfig(cellu=cell, cellv=cell,
                                                            nu=nu, nv=nv)
 
     def exportimage(self, imagename, overwrite=False):
@@ -271,7 +272,7 @@ class SparseModelingImager(object):
         if self.imagearray is None:
             raise RuntimeError('You don\'t have an image array!')
 
-        if os.path.exists(imagename) and overwrite == False:
+        if os.path.exists(imagename) and overwrite is False:
             raise RuntimeError('Cannot overwrite existing file "{}"'.format(imagename))
 
         with open(imagename, 'wb') as f:
@@ -292,11 +293,11 @@ class SparseModelingImager(object):
 
         return data
 
-    def cvforgridvis(self, l1_list, ltsv_list, num_fold=10, imageprefix='image', imagepolicy='full', 
+    def cvforgridvis(self, l1_list, ltsv_list, num_fold=10, imageprefix='image', imagepolicy='full',
                      summarize=True, figfile=None, datafile=None, maxiter=50000, eps=1.0e-5, clean_box=None,
                      resultasinitialimage=True):
         """
-        Perform cross validation and search the best parameter for L1 and Ltsv from 
+        Perform cross validation and search the best parameter for L1 and Ltsv from
         the given list of these.
 
         Inputs:
@@ -304,14 +305,14 @@ class SparseModelingImager(object):
             ltsv_list -- List of Ltsv values to examine
             num_fold -- number of visibility subsets for cross validation
             imageprefix -- prefix for output image
-                           imageprefix is used for the best image (<imageprefix>.fits) 
+                           imageprefix is used for the best image (<imageprefix>.fits)
             imagepolicy -- policy of output image ('full' or 'best')
                            full: keep all FITS image produced by cross validation
                            best: only keep FITS image corersponding to the best solution
             summarize -- generate summary plot if True
-            figfile -- name of summary figure of cross validation. 
+            figfile -- name of summary figure of cross validation.
                        None will not produce a file.
-            datafile -- name of output data file containing whole MSE values. 
+            datafile -- name of output data file containing whole MSE values.
                         None will not produce a file.
             maxiter -- maximum number of iteration for MFISTA algorithm
             eps -- threshold factor for MFISTA algorithm
@@ -382,11 +383,11 @@ class SparseModelingImager(object):
                 result_Ltsv.append(Ltsv)
 
                 # get full visibility image first
-                imagename = '{}_L1_{}_Ltsv_{}.{}'.format(imageprefix, 
+                imagename = '{}_L1_{}_Ltsv_{}.{}'.format(imageprefix,
                                                          int(math.log10(L1)), int(math.log10(Ltsv)),
                                                          self.imagesuffix)
                 self.mfista(L1, Ltsv, maxiter=maxiter, eps=eps, clean_box=clean_box,
-                            storeinitialimage=resultasinitialimage, 
+                            storeinitialimage=resultasinitialimage,
                             overwriteinitialimage=overwrite_initial)
                 self.exportimage(imagename, overwrite=True)
                 result_image.append(imagename)
@@ -403,7 +404,7 @@ class SparseModelingImager(object):
 
                 if summarize is True:
                     imagearray = self.getimage(imagename)
-                    data = numpy.squeeze(imagearray.data) #data will be 2D
+                    data = numpy.squeeze(imagearray.data)  # data will be 2D
                     plotter.plotimage(i, j, data, mse)
 
                 # As long as Ltsv is kept, initial image will not be updated
@@ -445,7 +446,7 @@ class SparseModelingImager(object):
         print('Elapsed {0} sec'.format(end_time - start_time))
 
         # copy the best image to final image
-        shutil.copy2(best_image, imageprefix+'.'+self.imagesuffix)
+        shutil.copy2(best_image, imageprefix + '.' + self.imagesuffix)
         if imagepolicy == 'full':
             # keep all intermediate images
             pass
@@ -463,7 +464,7 @@ class SparseModelingImager(object):
         assert self.working_set is not None
 
         if (not hasattr(self, 'visset')) or self.visset is None:
-            self.visset = cv.VisibilitySubsetGenerator(self.working_set, num_fold) 
+            self.visset = cv.VisibilitySubsetGenerator(self.working_set, num_fold)
 
     def finalizecv(self):
         self.visset = None
@@ -471,38 +472,37 @@ class SparseModelingImager(object):
     def computemse(self, l1, ltsv, maxiter=50000, eps=1.0e-5, clean_box=None):
         """
         Compute mean-square-error (MSE) on resulting image.
-        MSE is evaluated from visibility data provided as VisibilityWorkingSet 
+        MSE is evaluated from visibility data provided as VisibilityWorkingSet
         instance.
         """
         mfistaparam = paramcontainer.MfistaParamContainer(l1=l1, ltsv=ltsv,
-                                                          maxiter=maxiter, eps=eps, 
+                                                          maxiter=maxiter, eps=eps,
                                                           clean_box=clean_box)
         assert self.working_set is not None
-        
+
         evaluator = cv.MeanSquareErrorEvaluator()
         num_fold = self.visset.num_fold
-        
+
         if num_fold <= 1:
             # CV is disabled
             return -1.0
-        
-        subset_handler = cv.VisibilitySubsetHandler(self.visset)
-        
-        for subset in subset_handler.generate_subset(subset_id=0):
-            
-                # run MFISTA
-                imagearray = self._mfista(mfistaparam, 
-                                          subset.visibility_active,
-                                          False, False)
 
-                # evaluate MSE (Mean Square Error)
-                mse = evaluator.evaluate_and_accumulate(subset.visibility_cache, 
-                                                        imagearray)
-             
+        subset_handler = cv.VisibilitySubsetHandler(self.visset)
+
+        for subset in subset_handler.generate_subset(subset_id=0):
+
+            # run MFISTA
+            imagearray = self._mfista(mfistaparam,
+                                      subset.visibility_active,
+                                      False, False)
+            # evaluate MSE (Mean Square Error)
+            mse = evaluator.evaluate_and_accumulate(subset.visibility_cache,
+                                                    imagearray)
+
         mean_mse = evaluator.get_mean_mse()
-        
+
         return mean_mse
-    
+
     def computeapproximatemse(self):
         """
         Evaluate approximate mean-square-error (MSE) on resulting image.
@@ -510,7 +510,7 @@ class SparseModelingImager(object):
         raise NotImplementedError('Computation of Approximate MSE (LOOE) is not implemented yet.')
 #         assert self.griddedvis is not None
 #         evaluator = core.ApproximateCrossValidationEvaluator()
-#         
+#
 #         acv = evaluator.evaluate(self.griddedvis)
 #         return 0.0
 
@@ -530,7 +530,7 @@ class CVPlotter(object):
         dy = total_height / float(self.nv)
         self.dx = min(dx, dy)
         self.dy = self.dx
-        f = pl.figure(num='CVPlot', figsize=(8,8))
+        f = pl.figure(num='CVPlot', figsize=(8, 8))
         pl.clf()
         left = self.left_margin
         bottom = self.bottom_margin
@@ -545,12 +545,12 @@ class CVPlotter(object):
         outer_frame.yaxis.set_major_locator(matplotlib.ticker.FixedLocator(list(range(self.nv))))
         outer_frame.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda x, pos: int(math.log10(Ltsv_list[int(x)]))))
         outer_frame.yaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda x, pos: int(math.log10(L1_list[int(x)]))))
-        
+
         self.L1_list = L1_list
         self.Ltsv_list = Ltsv_list
-        
+
         self.axes_list = collections.defaultdict(dict)
-        
+
     def plotimage(self, row, column, data, mse):
         left = self.left_margin + column * self.dx
         bottom = self.bottom_margin + row * self.dy
@@ -561,7 +561,7 @@ class CVPlotter(object):
         a = pl.axes([left, bottom, width, height])
         a.imshow(numpy.flipud(data.transpose()))
         if mse >= 0.0:
-            a.text(nx-2, 5, '{:.5g}'.format(mse), ha='right', va='top', fontdict={'size': 'small', 'color': 'white'})
+            a.text(nx - 2, 5, '{:.5g}'.format(mse), ha='right', va='top', fontdict={'size': 'small', 'color': 'white'})
         a.xaxis.set_major_locator(matplotlib.ticker.NullLocator())
         a.yaxis.set_major_locator(matplotlib.ticker.NullLocator())
         self.axes_list[row][column] = a
@@ -575,27 +575,26 @@ class CVPlotter(object):
         for loc, spine in best_frame.spines.items():
             spine.set_color('red')
             spine.set_linewidth(3)
-            
+
     def draw(self):
         pl.draw()
-        
+
     def savefig(self, figfile):
         pl.savefig(figfile)
 
-        
+
 class NullPlotter(object):
     def __init__(self, *args, **kwargs):
         pass
-    
+
     def plotimage(self, *args, **kwargs):
         pass
-        
+
     def mark_bestimage(self, *args, **kwargs):
         pass
 
     def draw(self, *args, **kwargs):
         pass
-        
+
     def savefig(self, *args, **kwargs):
         pass
-    

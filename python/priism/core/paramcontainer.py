@@ -1,9 +1,10 @@
 from __future__ import absolute_import
 
+
 class ParamContainer(object):
     def InitContainer(self, kwargs):
         ignores = ('self',)
-        for k,v in kwargs.items():
+        for k, v in kwargs.items():
             if k not in ignores:
                 setattr(self, k, v)
 
@@ -24,31 +25,30 @@ class MfistaParamContainer(ParamContainer):
         """
         self.InitContainer(locals())
 
+
 class SimpleImageParamContainer(ParamContainer):
     """
-    This is primitive image parameter container that 
-    specifies three-dimensional cube (imsize for spatial axes 
+    This is primitive image parameter container that
+    specifies three-dimensional cube (imsize for spatial axes
     and nchan for spectral axis).
     """
     def __init__(self, imsize=100, nchan=-1):
         self.InitContainer(locals())
-        
+
     @property
     def imsize(self):
         return getattr(self, '_imsize', None)
-    
+
     @imsize.setter
     def imsize(self, value):
         if hasattr(value, '__iter__'):
             self._imsize = list(value)
         else:
             self._imsize = [int(value)]
-            
+
         if len(self._imsize) == 0:
             raise TypeError('given imsize is not correct')
         elif len(self._imsize) == 1:
             self._imsize = [self._imsize[0], self._imsize[0]]
         else:
             self._imsize = self._imsize[:2]
-    
-        

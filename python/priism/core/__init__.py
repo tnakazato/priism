@@ -7,4 +7,3 @@ from .datacontainer import ResultingImageStorage
 from .datacontainer import UVGridConfig
 
 from .imager import SparseModelingImager
-

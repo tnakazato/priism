@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 import libsakurapy
 
+
 def grid(working_set, gridfunction, convsupport, convsampling, weight_only,
          grid_real, grid_imag, wgrid_real, wgrid_imag, wsum_real, wsum_imag):
     #print 'LOG: sakura gridding function is called for real'
@@ -28,10 +29,10 @@ def grid(working_set, gridfunction, convsupport, convsampling, weight_only,
         False,
         len(gridfunction),
         gridfunction,
-        grid_real.shape[2], # npol_out
-        grid_real.shape[3], # nchan_out
-        grid_real.shape[1], # nh
-        grid_real.shape[0], # nv
+        grid_real.shape[2],  # npol_out
+        grid_real.shape[3],  # nchan_out
+        grid_real.shape[1],  # nh
+        grid_real.shape[0],  # nv
         wsum_real,
         wgrid_real,
         grid_real)
@@ -58,16 +59,16 @@ def grid(working_set, gridfunction, convsupport, convsampling, weight_only,
         False,
         len(gridfunction),
         gridfunction,
-        grid_imag.shape[2], # npol_out
-        grid_imag.shape[3], # nchan_out
-        grid_imag.shape[1], # nh
-        grid_imag.shape[0], # nv
+        grid_imag.shape[2],  # npol_out
+        grid_imag.shape[3],  # nchan_out
+        grid_imag.shape[1],  # nh
+        grid_imag.shape[0],  # nv
         wsum_imag,
         wgrid_imag,
         grid_imag)
-        
+
+
 def solvemfista(l1, ltsqv, grid_data, image_data):
     grid_real = grid_data.real
     grid_imag = grid_data.imag
     print('LOG: solvemfista(l1, ltsqv, grid_real, grid_imag, image_data)')
-    

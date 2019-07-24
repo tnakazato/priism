@@ -33,22 +33,22 @@ class AlmaSparseModelingResult(object):
 
     def __repr__(self):
         return 'imagename "{0}"\n'.format(self.imagename) \
-             + '  cross validation           = {0}\n'.format(self.cv) \
-             + '  cross validation (approx.) = {0}\n'.format(self.acv)
+               + '  cross validation           = {0}\n'.format(self.cv) \
+               + '  cross validation (approx.) = {0}\n'.format(self.acv)
 
 
 class AlmaSparseModelingImager(core_imager.SparseModelingImager):
     """
-    AlmaSparseModelingImager inherits all core functions from its parent. 
-    It performs visibility gridding on uv-plane. 
-    It additionally equips to compute direct and approximate cross 
-    validation of resulting image as well as a function to export 
+    AlmaSparseModelingImager inherits all core functions from its parent.
+    It performs visibility gridding on uv-plane.
+    It additionally equips to compute direct and approximate cross
+    validation of resulting image as well as a function to export
     resulting image as an FITS cube.
     """
     @property
     def imagesuffix(self):
         """
-        Image product of AlmaSparseModelingImage is FITS file. 
+        Image product of AlmaSparseModelingImage is FITS file.
         Therefore, a suffix for image product should be 'fits'.
         """
         return 'fits'
@@ -65,11 +65,11 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
             solver  name of the solver
                     choices are as follows.
                       'mfista_fft'    MFISTA algorithm with FFT by S. Ikeda.
-                      'mfista_nufft'  MFISTA algorithm with NUFFT by S. Ikeda 
+                      'mfista_nufft'  MFISTA algorithm with NUFFT by S. Ikeda
         """
         super(AlmaSparseModelingImager, self).__init__(solver)
 
-    def selectdata(self, vis, field='', spw='', timerange='', uvrange='', antenna='', 
+    def selectdata(self, vis, field='', spw='', timerange='', uvrange='', antenna='',
                    scan='', observation='', intent='', datacolumn='corrected'):
         """
         Select visibility data.
@@ -104,7 +104,7 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
 
 
         Parameters:
-            imsize          number of pixels for the resulting image 
+            imsize          number of pixels for the resulting image
                             (default 100 ---> [100,100])
             cell            pixel size for the resulting image
                             (default '1arcsec' ---> ['1arcsec', '1arcsec']
@@ -116,7 +116,7 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
             outframe        output frequency reference frame (fixed to 'LSRK')
             stokes          stokes parameter (fixed to 'I')
         """
-        self.imparam = paramcontainer.ImageParamContainer.CreateContainer(**locals()) 
+        self.imparam = paramcontainer.ImageParamContainer.CreateContainer(**locals())
         self.uvgridconfig = self.imparam.uvgridconfig
 
     def configuregrid(self, convsupport, convsampling, gridfunction):
@@ -133,7 +133,7 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
         #     2. pre-gridding data processing
         #     3. give the data to gridder
         #     4. post-gridding data processing
-        # 
+        #
         visgridder = gridder.VisibilityGridder(self.gridparam, self.imparam)
 
         # workaround for strange behavior of ms iterator
@@ -142,8 +142,8 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
             reader = visreader.VisibilityReader(visparam)
             converter = visconverter.VisibilityConverter(visparam, self.imparam)
             if parallel:
-                for working_set in sakura.paraMap(self.num_threads, 
-                                                  converter.generate_working_set, 
+                for working_set in sakura.paraMap(self.num_threads,
+                                                  converter.generate_working_set,
                                                   reader.readvis(interval=interval)):
                     visgridder.grid(working_set)
             else:
@@ -155,7 +155,7 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
 
     def readvis(self, parallel=False):
         """
-        Read visibility data 
+        Read visibility data
         """
         u = []
         v = []
@@ -173,7 +173,7 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
                     ws_list = converter.generate_working_set(chunk)
                     for ws in ws_list:
                         flag = ws.flag
-                        valid = numpy.where(flag == True)
+                        valid = numpy.where(flag is True)
                         u.extend(ws.u[valid[0]])
                         v.extend(ws.v[valid[0]])
                         real.extend(ws.rdata[valid])
@@ -208,8 +208,8 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
             print('Use PHASE_DIR for FIELD {0}'.format(self.imparam.phasecenter))
             # take first MS
             field_id = int(self.imparam.phasecenter)
-            phase_direction = imagewriter.ImageWriter.phase_direction_for_field(vis=vis, 
-                                                                         field_id=field_id)
+            phase_direction = imagewriter.ImageWriter.phase_direction_for_field(vis=vis,
+                                                                                field_id=field_id)
             self.imparam.phasecenter = phase_direction
         if (isinstance(self.imparam.start, str) and self.imparam.start.isdigit()) \
            or isinstance(self.imparam.start, int):
@@ -217,13 +217,13 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
             start = self.imparam.start
             spw = int(self.visparams[0].as_msindex()['spw'][0])
             print('Use Freuquency for channel {0} spw {1}'.format(start, spw))
-            cf, cw = imagewriter.ImageWriter.frequency_setup_for_spw(vis=vis, 
+            cf, cw = imagewriter.ImageWriter.frequency_setup_for_spw(vis=vis,
                                                                      spw_id=spw,
                                                                      chan=start)
             self.imparam.start = cf
             self.imparam.width = cw
         imagemeta = paramcontainer.ImageMetaInfoContainer.fromvis(vis)
-        writer = imagewriter.ImageWriter(self.imparam, self.imagearray.data, 
+        writer = imagewriter.ImageWriter(self.imparam, self.imagearray.data,
                                          imagemeta)
         writer.write(overwrite=overwrite)
 

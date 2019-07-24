@@ -32,9 +32,9 @@ def __shift_with(n, iarr, shift_term, inplace=True):
 
 def shift_uvindex(n, iarr, inplace=True):
     """
-    Assuming that input array index, iarr, is configured so that 
-    zero-frequency term comes to the center, shift_uvindex shifts 
-    iarr so that zero-frequency term comes to the first element. 
+    Assuming that input array index, iarr, is configured so that
+    zero-frequency term comes to the center, shift_uvindex shifts
+    iarr so that zero-frequency term comes to the first element.
     It corresponds to numpy.fft.ifftshift.
 
     if n is odd:
@@ -52,9 +52,9 @@ def shift_uvindex(n, iarr, inplace=True):
 
 def rshift_uvindex(n, iarr, inplace=True):
     """
-    Assuming that input array index, iarr, is configured so that 
-    zero-frequency term comes to the first element, rshift_uvindex 
-    shifts iarr so that zero-frequency term comes to the center. 
+    Assuming that input array index, iarr, is configured so that
+    zero-frequency term comes to the first element, rshift_uvindex
+    shifts iarr so that zero-frequency term comes to the center.
     It corresponds to numpy.fft.fftshift.
 
     if n is odd:
@@ -67,7 +67,7 @@ def rshift_uvindex(n, iarr, inplace=True):
     inplace --- if True, iarr is edited instead to prepare output array
     """
     shift_term = n // 2 + (n % 2)
-    return __shift_with(n, iarr, shift_term, inplace)    
+    return __shift_with(n, iarr, shift_term, inplace)
 
 
 class SparseImagingInputs(CTypesUtilMixIn):
@@ -157,7 +157,7 @@ class SparseImagingInputs(CTypesUtilMixIn):
         for i in range(len(yreal)):
             j = nonzeros[0][i]
             k = nonzeros[1][i]
-            factor = (-1)**(j+k)
+            factor = (-1)**(j + k)
             yreal[i] *= factor
             yimag[i] *= factor
 
@@ -181,7 +181,7 @@ class SparseImagingInputs(CTypesUtilMixIn):
         Convert VisibilityWorkingSet object into SparseImagingInputs object.
         uv-coordinate value is flipped for FFTW.
         """
-        # infile is nominal value 
+        # infile is nominal value
         infile = 'visibility_working_set'
 
         # m is the number of visibility data
@@ -222,10 +222,10 @@ class SparseImagingInputs(CTypesUtilMixIn):
             print('', file=f)
             for i in range(self.m):
                 print('{0}, {1}, {2:e}, {3:e}, {4:e}'.format(self.u[i],
-                                                                   self.v[i],
-                                                                   self.yreal[i],
-                                                                   self.yimag[i],
-                                                                   self.noise[i]), file=f)
+                                                             self.v[i],
+                                                             self.yreal[i],
+                                                             self.yimag[i],
+                                                             self.noise[i]), file=f)
 
 
 class SparseImagingResults(CTypesUtilMixIn):
@@ -250,7 +250,7 @@ class SparseImagingResults(CTypesUtilMixIn):
 
     @property
     def image(self):
-        img = self.xout.reshape((self.nx,self.ny))
+        img = self.xout.reshape((self.nx, self.ny))
         return img
 
 
@@ -264,7 +264,7 @@ class SparseImagingExecutor(object):
     #libname = 'mfista_imaging_fft'
     libname = 'libmfista_fft.so'
 
-    def __init__(self, lambda_L1, lambda_TV=0.0, lambda_TSV=0.0, 
+    def __init__(self, lambda_L1, lambda_TV=0.0, lambda_TSV=0.0,
                  cinit=5e10, nonnegative=True,
                  libpath=None):
         self.lambda_L1 = lambda_L1
@@ -272,7 +272,7 @@ class SparseImagingExecutor(object):
         self.lambda_TSV = lambda_TSV
         self.cinit = cinit
         self.nonnegative = nonnegative
-        self.libpath = self.default_path #if libpath is None else libpath
+        self.libpath = self.default_path  # if libpath is None else libpath
 
         nx = None
         ny = None
@@ -331,7 +331,7 @@ class SparseImagingExecutor(object):
         else:
             cl_box = numpy.ctypeslib.as_ctypes(numpy.zeros(1, dtype=numpy.float32))
         _box_flag = ctypes.c_int(box_flag)
-        fftw_plan_flag = ctypes.c_uint(65) # FFTW_ESTIMATE | FFTW_DESTROY_INPUT
+        fftw_plan_flag = ctypes.c_uint(65)  # FFTW_ESTIMATE | FFTW_DESTROY_INPUT
 
         # outputs
         result = SparseImagingResults(inputs.nx, inputs.ny, initialimage=initialimage)
@@ -342,9 +342,9 @@ class SparseImagingExecutor(object):
         # run MFISTA
         self._mfista.mfista_imaging_core_fft(u_idx, v_idx, y_r, y_i, noise_stdev,
                                              M, NX, NY, _maxiter, _eps,
-                                             lambda_l1, lambda_tv, lambda_tsv, 
+                                             lambda_l1, lambda_tv, lambda_tsv,
                                              cinit, xinit, xout, nonneg_flag, fftw_plan_flag,
-                                             _box_flag, cl_box, 
+                                             _box_flag, cl_box,
                                              mfista_result)
 
         # show IO filenames
