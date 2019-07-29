@@ -131,7 +131,7 @@ class SparseModelingImager(object):
 
     def __initialize(self):
         # configuration
-        self.imparam = paramcontainer.SimpleImageParamContainer(imsize=100)
+        self.imparam = None
         self.visparams = []
 
         # working array
@@ -144,7 +144,7 @@ class SparseModelingImager(object):
         # create MFISTA instance with dummy parameter
         mfistaparam = paramcontainer.MfistaParamContainer(l1=0.0, ltsv=0.0)
         solver_cls = mfista.SolverFactory(self.solver_name)
-        self.solver = solver_cls(mfistaparam, self.imparam)
+        self.solver = solver_cls(mfistaparam)
 
     def mfista(self, l1, ltsv, maxiter=50000, eps=1.0e-5, clean_box=None,
                storeinitialimage=True, overwriteinitialimage=False):
@@ -267,6 +267,8 @@ class SparseModelingImager(object):
                                                                  wgrid_real=realweight,
                                                                  wgrid_imag=imagweight)
         self.working_set = datacontainer.grid2ws(realdata, imagdata, realweight, imagweight)
+
+        self.imparam = paramcontainer.SimpleImageParamContainer(imsize=[default_nu, default_nv])
 
         if uvgrid is not None:
             self.uvgridconfig = uvgrid

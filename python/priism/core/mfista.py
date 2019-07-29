@@ -26,12 +26,11 @@ class MfistaSolverBase(object):
     """
     Solver for sparse modeling using MFISTA algorithm
     """
-    def __init__(self, mfistaparam, imageparam):
+    def __init__(self, mfistaparam):
         """
         Constructor
         """
         self.mfistaparam = mfistaparam
-        self.imageparam = imageparam
         self.initialimage = None
 
     def __from_param(self, name):
@@ -64,18 +63,6 @@ class MfistaSolverBase(object):
     def box_flag(self):
         return 0 if self.clean_box is None else 1
 
-    @property
-    def imsize(self):
-        return self.imageparam.imsize
-
-    @property
-    def nx(self):
-        return self.imsize[0]
-
-    @property
-    def ny(self):
-        return self.imsize[1]
-
     def solve(self, grid_data):
         """
         Given complex visibility data, find the best image
@@ -94,11 +81,11 @@ class MfistaSolverTemplate(MfistaSolverBase):
     """
     Executor = None
 
-    def __init__(self, mfistaparam, imageparam):
+    def __init__(self, mfistaparam):
         """
         Constructor
         """
-        super(MfistaSolverTemplate, self).__init__(mfistaparam, imageparam)
+        super(MfistaSolverTemplate, self).__init__(mfistaparam)
 
     def solve(self, visibility, imageparam, storeinitialimage=True, overwriteinitialimage=False):
         """
@@ -149,8 +136,8 @@ class MfistaSolverTemplate(MfistaSolverBase):
 
 
 class SakuraSolver(MfistaSolverBase):
-    def __init__(self, mfistaparam, imageparam):
-        super(SakuraSolver, self).__init__(mfistaparam, imageparam)
+    def __init__(self, mfistaparam):
+        super(SakuraSolver, self).__init__(mfistaparam)
 
     def solve(self, grid_data):
         """
@@ -176,11 +163,11 @@ class MfistaSolverFFT(MfistaSolverTemplate):
     """
     Executor = sparseimagingfft.SparseImagingExecutor
 
-    def __init__(self, mfistaparam, imageparam):
+    def __init__(self, mfistaparam):
         """
         Constructor
         """
-        super(MfistaSolverFFT, self).__init__(mfistaparam, imageparam)
+        super(MfistaSolverFFT, self).__init__(mfistaparam)
 
     def normalize_result(self, vis_data, image_data):
         """
@@ -207,11 +194,11 @@ class MfistaSolverNUFFT(MfistaSolverTemplate):
      """
     Executor = sparseimagingnufft.SparseImagingExecutor
 
-    def __init__(self, mfistaparam, imageparam):
+    def __init__(self, mfistaparam):
         """
          Constructor
         """
-        super(MfistaSolverNUFFT, self).__init__(mfistaparam, imageparam)
+        super(MfistaSolverNUFFT, self).__init__(mfistaparam)
 
 
 def SolverFactory(mode='mfista_fft'):
