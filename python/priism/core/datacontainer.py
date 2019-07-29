@@ -20,6 +20,7 @@ from __future__ import print_function
 import math
 import numpy
 
+import priism.external.sakura as sakura
 from . import paramcontainer
 
 
@@ -213,3 +214,62 @@ class VisibilityWorkingSet(paramcontainer.ParamContainer):
             raise ValueError('invalid data_id ({0}). Should be int'.format(value))
         else:
             self._data_id = value
+
+
+def grid2ws(grid_real, grid_imag, wgrid_real, wgrid_imag):
+    """convert gridder result into workingset instance
+
+    Arguments:
+        grid_real {numpy.ndarray} -- real part of the visibility
+        grid_imag {numpy.ndarray} -- imaginary part of the visibility
+        wgrid_real {numpy.ndarray} -- weight of the visibility
+        wgrid_imag {numpy.ndarray} -- weight of the visibility
+
+    Returns:
+        VisibilityWorkingSet -- visibility working set
+    """
+    gridshape = grid_real.shape
+    nonzero_real = numpy.where(wgrid_real != 0.0)
+    nonzero_imag = numpy.where(wgrid_imag != 0.0)
+    # uv location
+    # assumption here is that the first index corresponds to v while
+    # the second one corresponds u so that [i,j] represents
+    # the value at uv location (j,i).
+    # since the array is C-contiguous, memory layout is contiguous
+    # along u-axis.
+    #
+    # | 9|10|11|
+    # | 6| 7| 8|
+    # | 3| 4| 5|
+    # | 0| 1| 2|
+    npol = gridshape[2]
+    nchan = gridshape[3]
+    data_id = 0
+    num_vis = len(nonzero_real[0])
+    u = sakura.empty_aligned((num_vis,), dtype=numpy.int32)
+    v = sakura.empty_like_aligned(u)
+    rdata = sakura.empty_aligned((num_vis,), dtype=numpy.float64)
+    idata = sakura.empty_like_aligned(rdata)
+    wdata = sakura.empty_like_aligned(rdata)
+    xpos = 0
+    for ipol in range(npol):
+        for ichan in range(nchan):
+            ir = numpy.where(numpy.logical_and(nonzero_real[2] == ipol,
+                                               nonzero_real[3] == ichan))
+            #ii = numpy.where(numpy.logical_and(nonzero_imag[2] == ipol,
+            #                                   nonzero_imag[3] == ichan))
+            xlen = len(v)
+            nextpos = xpos + xlen
+            v[xpos:nextpos] = nonzero_real[0][ir]
+            u[xpos:nextpos] = nonzero_real[1][ir]
+            rdata[xpos:nextpos] = grid_real[v, u, ipol, ichan]
+            idata[xpos:nextpos] = grid_imag[v, u, ipol, ichan]
+            wdata[xpos:nextpos] = wgrid_real[v, u, ipol, ichan]
+            xpos = nextpos
+    visibility_data = VisibilityWorkingSet(data_id=data_id,
+                                           u=u,
+                                           v=v,
+                                           rdata=rdata,
+                                           idata=idata,
+                                           weight=wdata)
+    return visibility_data

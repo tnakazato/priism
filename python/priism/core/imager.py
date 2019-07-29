@@ -266,6 +266,7 @@ class SparseModelingImager(object):
                                                                  grid_imag=imagdata,
                                                                  wgrid_real=realweight,
                                                                  wgrid_imag=imagweight)
+        self.working_set = datacontainer.grid2ws(realdata, imagdata, realweight, imagweight)
 
         if uvgrid is not None:
             self.uvgridconfig = uvgrid
