@@ -22,6 +22,7 @@ import collections
 # casa version
 def _get_casa_version():
     try:
+        # first, try accessing casa dictionary
         import inspect
         version_string = 'NONE'
         frames = inspect.getouterframes(inspect.currentframe())
@@ -36,8 +37,18 @@ def _get_casa_version():
                     if 'version' in buildinfo:
                         version_string = buildinfo['version']
                         break
+        raise Exception('no appropriate frame found')
     except Exception:
-        version_string = 'NONE'
+        try:
+            # then, try using casac module
+            import casac
+            _casac = casac.casac()
+            utils = _casac.utils()
+            version_string = utils.version_info().strip()
+            #print(version_string)
+        except Exception:
+            # no casa found...
+            version_string = 'NONE'
     #print(version_string)
 
     # version string format: MAJOR.MINOR.PATCH-BUILD

@@ -18,39 +18,48 @@ from __future__ import absolute_import
 
 import contextlib
 
-from taskinit import gentools, qa
+import casac
+_casac = casac.casac()
 
 
 class CasaToolGenerator(object):
     @staticmethod
     def _Create(name):
-        (tool,) = gentools([name])
+        tool = getattr(_casac, name)()
         return tool
 
     @staticmethod
     def CreateTable():
-        return CasaToolGenerator._Create('tb')
+        return CasaToolGenerator._Create('table')
+
+    @staticmethod
+    def CreateMS():
+        return CasaToolGenerator._Create('ms')
+
+    @staticmethod
+    def CreateMSMetaData():
+        return CasaToolGenerator._Create('msmetadata')
 
     @staticmethod
     def CreateImageAnalysis():
-        return CasaToolGenerator._Create('ia')
+        return CasaToolGenerator._Create('image')
 
     @staticmethod
     def CreateCoordSys():
-        return CasaToolGenerator._Create('cs')
+        return CasaToolGenerator._Create('coordsys')
 
     @staticmethod
     def CreateMeasure():
-        return CasaToolGenerator._Create('me')
+        return CasaToolGenerator._Create('measures')
 
     @staticmethod
     def CreateQuantity():
-        return qa
+        return CasaToolGenerator._Create('quanta')
 
 
 @contextlib.contextmanager
 def OpenTableForRead(vis):
-    (tb,) = gentools(['tb'])
+    tb = CasaToolGenerator.CreateTable()
     tb.open(vis, nomodify=True)
     try:
         yield tb
@@ -60,7 +69,7 @@ def OpenTableForRead(vis):
 
 @contextlib.contextmanager
 def OpenTableForReadWrite(vis):
-    (tb,) = gentools(['tb'])
+    tb = CasaToolGenerator.CreateTable()
     tb.open(vis, nomodify=False)
     try:
         yield tb
@@ -70,7 +79,7 @@ def OpenTableForReadWrite(vis):
 
 @contextlib.contextmanager
 def SelectTableForRead(vis, taql):
-    (tb,) = gentools(['tb'])
+    tb = CasaToolGenerator.CreateTable()
     tb.open(vis, nomodify=False)
     try:
         tsel = tb.query(taql)
@@ -84,7 +93,7 @@ def SelectTableForRead(vis, taql):
 
 @contextlib.contextmanager
 def OpenMS(vis):
-    (ms,) = gentools(['ms'])
+    ms = CasaToolGenerator.CreateMS()
     ms.open(vis)
     try:
         yield ms
@@ -94,7 +103,7 @@ def OpenMS(vis):
 
 @contextlib.contextmanager
 def OpenMSMetaData(vis):
-    (msmd,) = gentools(['msmd'])
+    msmd = CasaToolGenerator.CreateMSMetaData()
     msmd.open(vis)
     try:
         yield msmd
@@ -104,7 +113,7 @@ def OpenMSMetaData(vis):
 
 @contextlib.contextmanager
 def OpenImage(imagename):
-    (ia,) = gentools(['ia'])
+    ia = CasaToolGenerator.CreateImageAnalysis()
     ia.open(imagename)
     try:
         yield ia
