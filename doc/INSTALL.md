@@ -15,9 +15,10 @@ module for processing ALMA data which is supposed to be working on CASA.
 For `priism.core`, any visibility data must be converted to NumPy array before being fed to the module.
 Output image is also in the form of NumPy array.
 On the other hand, `priism.alma` accepts the visibility data as the MeasurementSet (MS) format, which is
-data format for CASA. `priism.alma` equips some specific interface to handle data in MS format.
+data format for CASA or any python environment (python, ipython, Jupyter Notebook etc.) that has an access to core module of casa, i.e. python environment that can import `casac` module. `priism.alma` equips some specific interface to handle data in MS format.
 `priism.alma` first performs visibility gridding to put visibility data onto regularly spaced grid in
-uv plane. Then the output image is obtained from gridded visibility using "core" functionality of
+uv plane ("FFT" solver). `priism.alma` also has an option to solve raw visibility data ("NUFFT" solver).
+Then the output image is obtained from gridded visibility using "core" functionality of
 the PRIISM (`priism.core`).
 Finally, the output image, which is NumPy array, is exported as a FITS image with appropriate header
 information.
@@ -67,8 +68,9 @@ prerequisites for both `priism` and CASA.
 * Red Hat Enterprise Linux 7 (RHEL7) with CASA 5.0.0
 * Red Hat Enterprise Linux 7 (RHEL7) with CASA 5.1.1
 * Red Hat Enterprise Linux 7 (RHEL7) with CASA 5.3.0
-* Red Hat Enterprise Linux 7 (RHEL7) with CASA 5.4.0 (prerelease)
+* Red Hat Enterprise Linux 7 (RHEL7) with CASA 5.4.0
 * macOS 10.12 with CASA 5.1.1
+* Red Hat Enterprise Linux 7 (RHEL7) with python 2.7 plus `casac` module included in CASA 5.4.0
 
 ## Prerequisites
 
@@ -85,7 +87,7 @@ library, during cmake configuration.
 These online materials are downloaded by curl command so curl must also be
 available.
 
-PRIISM for ALMA (`priism.alma`) is supposed to run on CASA. If you want to
+PRIISM for ALMA (`priism.alma`) is supposed to run on CASA or python environment with `casac` module. If you want to
 use `priism.alma`, CASA 5.0 or higher must be available.
 
 In addition to the dependency on PRIISM, there are several prerequisites from
@@ -243,7 +245,7 @@ or simply,
 
     import priism
 
-will work. For `priism.alma`, you need to launch CASA.
+will work. For `priism.alma`, you need to launch CASA or python that can import `casac` module.
 
     import priism.alma
 
