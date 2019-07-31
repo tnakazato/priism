@@ -267,3 +267,9 @@ PRIISM is licensed under GPLv3 as described in COPYING.
 ## Contact
 
 If you have any questions about PRIISM, please contact Takeshi Nakazato at National Astronomical Observatory of Japan ([@tnakazato](https://github.com/tnakazato) on GitHub).
+
+## Acknowledgement
+
+## Reference
+
+ADASS proceedings?
