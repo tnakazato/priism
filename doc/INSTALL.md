@@ -262,6 +262,32 @@ template scripts for each solver. Name of the scripts are as follows:
 * `priism.alma` (mfista_fft): `cvrun_fft.py`
 * `priism.alma` (mfista_nufft): `cvrun_nufft.py`
 
+### Running `priism.alma` outside CASA
+
+When you run `priism.alma` on python environment (i.e. outside CASA, such as python, ipython, Jupyter Notebook, etc.), you must be able to import `casac`, which 
+is a Python binding of CASA toolkit implemented as a set of C++ classes. To do that, you have to do either,
+
+* add a path to `casac.py` to `PYTHONPATH` environment variable before starting python, or 
+* add the path to `sys.path` after you launch python. 
+
+In addition, you have to tell `casac` module where the measures data is located at. There are several ways for this. Here, some examples are shown. The first option is to put the following entry into `~/.casa/rc` file.
+
+    measures.directory: /path/to/casa/measures/data
+
+Note that this is using global configuration file so that it affects to your CASA environment as well as the environment for PRIISM. If this is not desirable, you can localize the scope of the above configuration by using `CASARCFILES` environment variable. First step for localizing the configuration is to create the configuration file that contains the above line. The file should be named or located so that CASA cannot recognize (because it will be globally effective if you name it or put it in the location so that CASA can recognize). One simple way would be to create the configuration file at the current working directory. Then, you can use `CASARCFILES` to tell `casac` module what files it should look for. Here is an example.
+
+    # create configuration file at the working directory
+    $ vi .casarc
+    $ cat .casarc
+    measures.directory: /path/to/casa/measures/data
+    # set CASARCFILES environment variable
+    $ export CASARCFILES=.casarc
+    
+This should be effective only under this directory and will not affect global CASA settings. For more information on the configuration of `casac` module, please see the following link:
+
+http://casacore.github.io/casacore/classcasacore_1_1Aipsrc.html
+
+
 ## License
 
 PRIISM is licensed under GPLv3 as described in COPYING.
