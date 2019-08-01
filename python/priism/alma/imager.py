@@ -133,7 +133,6 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
             stokes          stokes parameter (fixed to 'I')
         """
         self.imparam = paramcontainer.ImageParamContainer.CreateContainer(**locals())
-        self.uvgridconfig = self.imparam.uvgridconfig
 
     def configuregrid(self, convsupport, convsampling, gridfunction):
         if isinstance(gridfunction, str):

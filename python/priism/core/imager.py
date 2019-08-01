@@ -90,21 +90,6 @@ class SparseModelingImager(object):
         else:
             raise TypeError('Given value is not an instance of ResultingImageStorage')
 
-    @property
-    def uvgridconfig(self):
-        """
-        TODO
-        """
-        return getattr(self, '_uvgridconfig', None)
-
-    @uvgridconfig.setter
-    def uvgridconfig(self, value):
-        if value is None:
-            self._uvgridconfig = None
-        elif isinstance(value, datacontainer.UVGridConfig):
-            self._uvgridconfig = value
-        else:
-            raise TypeError('Given value is not an instance of UVGridConfig')
 
     @property
     def imagesuffix(self):
@@ -173,7 +158,7 @@ class SparseModelingImager(object):
         self.solver.mfistaparam = mfistaparam
         return self.solver.solve(working_set, self.imparam, storeinitialimage, overwriteinitialimage)
 
-    def importvis(self, data=None, weight=None, filename=None, flipped=False, uvgrid=None):
+    def importvis(self, data=None, weight=None, filename=None, flipped=False):
         """
         Import visibility data. Users can provide visibility data either as numpy array
         (data and weight) or as filename that stores visibility data in a specified format.
@@ -196,7 +181,6 @@ class SparseModelingImager(object):
             filename -- Name of the file that stores visibility data and weights. Format
                         should be as follows:
             flipped  -- Whether or not given data and weight are flipped for FFT.
-            uvgrid   -- (Optional) Configuration of uv grid as a UVGridConfig instance.
         """
         if data is None and filename is None:
             raise RuntimeError('data or filename must be specified')
@@ -269,16 +253,6 @@ class SparseModelingImager(object):
         self.working_set = datacontainer.grid2ws(realdata, imagdata, realweight, imagweight)
 
         self.imparam = paramcontainer.SimpleImageParamContainer(imsize=[default_nu, default_nv])
-
-        if uvgrid is not None:
-            self.uvgridconfig = uvgrid
-        else:
-            # default grid configuration
-            nv = default_nv  # datashape[0]
-            nu = default_nu  # datashape[1]
-            cell = 1.0
-            self.uvgridconfig = datacontainer.UVGridConfig(cellu=cell, cellv=cell,
-                                                           nu=nu, nv=nv)
 
     def exportimage(self, imagename, overwrite=False):
         """
