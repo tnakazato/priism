@@ -47,8 +47,13 @@ def _get_casa_version():
             version_string = utils.version_info().strip()
             #print(version_string)
         except Exception:
-            # no casa found...
-            version_string = 'NONE'
+            try:
+                # this could be CASA 6 environment
+                import casatools
+                version_string = casatools.ctsys.version_string()
+            except Exception:
+                # no casa found...
+                version_string = 'NONE'
     #print(version_string)
 
     # version string format: MAJOR.MINOR.PATCH-BUILD

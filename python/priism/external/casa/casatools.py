@@ -18,8 +18,14 @@ from __future__ import absolute_import
 
 import contextlib
 
-import casac
-_casac = casac.casac()
+try:
+    # CASA 5
+    import casac
+    _casac = casac.casac()
+except Exception:
+    # CASA 6
+    import casatools
+    _casac = casatools
 
 
 class CasaToolGenerator(object):
