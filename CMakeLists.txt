@@ -41,7 +41,7 @@ endif()
 
 # download sakura
 set(SAKURA_DIR libsakura)
-set(SAKURA_TAR libsakura-5.0.0.tgz)
+set(SAKURA_TAR libsakura-5.0.7.tgz)
 if(NOT EXISTS ${PROJECT_SOURCE_DIR}/${SAKURA_DIR})
   if(NOT EXISTS ${PROJECT_SOURCE_DIR}/${SAKURA_TAR})
     message(STATUS "Sakura is not downloaded yet")
