@@ -562,7 +562,10 @@ class CVPlotter(object):
     def mark_bestimage(self, row, column):
         best_axes = self.axes_list[row][column]
         bbox = best_axes.get_position()
-        best_frame = pl.axes(bbox, axisbg='none')
+        if int(matplotlib.__version__.split('.')[0]) > 1:
+            best_frame = pl.axes(bbox, facecolor='none')
+        else:
+            best_frame = pl.axes(bbox, axisbg='none')
         best_frame.xaxis.set_major_locator(matplotlib.ticker.NullLocator())
         best_frame.yaxis.set_major_locator(matplotlib.ticker.NullLocator())
         for loc, spine in best_frame.spines.items():
