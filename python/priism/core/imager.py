@@ -37,6 +37,22 @@ from . import mfista
 from . import cv
 
 
+def format_lambda(v):
+    s = None
+    if v < 0:
+        s = 'Minus'
+    elif v == 0:
+        s = 'Zero'
+    else:
+        s = '{}'.format(int(math.log10(v)))
+    return s
+
+
+def format_tick(x, value_list):
+    v = value_list[int(x)]
+    return format_lambda(v)
+
+
 class SparseModelingImager(object):
     """
     Core implementation of sparse modeling specialized for ALMA.
@@ -377,7 +393,8 @@ class SparseModelingImager(object):
 
                 # get full visibility image first
                 imagename = '{}_L1_{}_Ltsv_{}.{}'.format(imageprefix,
-                                                         int(math.log10(L1)), int(math.log10(Ltsv)),
+                                                         format_lambda(L1), 
+                                                         format_lambda(Ltsv),
                                                          self.imagesuffix)
                 self.mfista(L1, Ltsv, maxiter=maxiter, eps=eps, clean_box=clean_box,
                             storeinitialimage=resultasinitialimage,
@@ -389,8 +406,8 @@ class SparseModelingImager(object):
                 mse = self.computemse(L1, Ltsv, maxiter, eps, clean_box)
                 result_mse.append(mse)
 
-                print('L1 10^{0} Ltsv 10^{1}: MSE {2} FITS {3}'.format(int(math.log10(L1)),
-                                                                       int(math.log10(Ltsv)),
+                print('L1 10^{0} Ltsv 10^{1}: MSE {2} FITS {3}'.format(format_lambda(L1),
+                                                                       format_lambda(Ltsv),
                                                                        mse,
                                                                        imagename))
                 print('{0}, {1}, {2}'.format(L1, Ltsv, mse), file=f)
@@ -429,7 +446,9 @@ class SparseModelingImager(object):
 
         if best_mse >= 0.0:
             print('Process completed. Optimal result is as follows')
-            print('    L1, Ltsv = 10^{0}, 10^{1}'.format(int(math.log10(best_L1)), int(math.log10(best_Ltsv))))
+            L1str = '{}'.format('10^{}'.format(int(math.log10(best_L1))) if best_L1 > 0 else format_lambda(best_L1))
+            Ltsvstr = '{}'.format('10^{}'.format(int(math.log10(best_Ltsv))) if best_Ltsv > 0 else format_lambda(best_Ltsv))
+            print('    L1, Ltsv = {0}, {1}'.format(L1str, Ltsvstr))
             print('    MSE = {0}'.format(best_mse))
             print('    imagename = {0}'.format(best_image))
         else:
@@ -536,8 +555,9 @@ class CVPlotter(object):
         outer_frame.set_ylabel('log10(L1)')
         outer_frame.xaxis.set_major_locator(matplotlib.ticker.FixedLocator(list(range(self.nh))))
         outer_frame.yaxis.set_major_locator(matplotlib.ticker.FixedLocator(list(range(self.nv))))
-        outer_frame.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda x, pos: int(math.log10(Ltsv_list[int(x)]))))
-        outer_frame.yaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda x, pos: int(math.log10(L1_list[int(x)]))))
+
+        outer_frame.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda x, pos: format_tick(x, Ltsv_list)))
+        outer_frame.yaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda x, pos: format_tick(x, L1_list)))
 
         self.L1_list = L1_list
         self.Ltsv_list = Ltsv_list
