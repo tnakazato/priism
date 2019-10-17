@@ -193,18 +193,18 @@ Usually, cmake will download source code for Sakura (+googletest) and sparseimag
 If network connection is not available, you need to obtain these files by yourself.
 
 In case if you need to download files by hand, links below might be useful:
-* Sakura library: [https://alma-intweb.mtk.nao.ac.jp/~nakazato/libsakura/libsakura-5.0.0.tgz](https://alma-intweb.mtk.nao.ac.jp/~nakazato/libsakura/libsakura-5.0.0.tgz)
+* Sakura library: [https://alma-intweb.mtk.nao.ac.jp/~nakazato/libsakura/libsakura-5.0.7.tgz](https://alma-intweb.mtk.nao.ac.jp/~nakazato/libsakura/libsakura-5.0.7.tgz)
 * googletest: [https://github.com/google/googletest/archive/master.zip](https://github.com/google/googletest/archive/master.zip)
 * sparseimaging library: [https://github.com/ikeda46/sparseimaging/archive/development.zip](https://github.com/ikeda46/sparseimaging/archive/development.zip)
 
 Downloaded files should be put under the "build" directory. For example,
 
     cd somewhere/network/is/available
-    curl -L -O https://alma-intweb.mtk.nao.ac.jp/~nakazato/libsakura/libsakura-5.0.0.tgz
+    curl -L -O https://alma-intweb.mtk.nao.ac.jp/~nakazato/libsakura/libsakura-5.0.7.tgz
     curl -L -O https://github.com/google/googletest/archive/master.zip
     curl -L -O https://github.com/ikeda46/sparseimaging/archive/development.zip
     cd priism_root_dir/priism/build
-    mv somewhere/network/is/available/libsakura-5.0.0.tgz .
+    mv somewhere/network/is/available/libsakura-5.0.7.tgz .
     mv somewhere/network/is/available/master.zip
     mv somewhere/network/is/available/development.zip
 
@@ -264,11 +264,11 @@ template scripts for each solver. Name of the scripts are as follows:
 
 ### Running `priism.alma` outside CASA
 
-When you run `priism.alma` on python environment (i.e. outside CASA, such as python, ipython, Jupyter Notebook, etc.), you must be able to import `casac`, which 
+When you run `priism.alma` on python environment (i.e. outside CASA, such as python, ipython, Jupyter Notebook, etc.), you must be able to import `casac`, which
 is a Python binding of CASA toolkit implemented as a set of C++ classes. To do that, you have to do either,
 
-* add a path to `casac.py` to `PYTHONPATH` environment variable before starting python, or 
-* add the path to `sys.path` after you launch python. 
+* add a path to `casac.py` to `PYTHONPATH` environment variable before starting python, or
+* add the path to `sys.path` after you launch python.
 
 In addition, you have to tell `casac` module where the measures data is located at. There are several ways for this. Here, some examples are shown. The first option is to put the following entry into `~/.casa/rc` file.
 
@@ -282,7 +282,7 @@ Note that this is using global configuration file so that it affects to your CAS
     measures.directory: /path/to/casa/measures/data
     # set CASARCFILES environment variable
     $ export CASARCFILES=.casarc
-    
+
 This should be effective only under this directory and will not affect global CASA settings. For more information on the configuration of `casac` module, please see the following link:
 
 http://casacore.github.io/casacore/classcasacore_1_1Aipsrc.html
