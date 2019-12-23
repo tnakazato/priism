@@ -98,12 +98,14 @@ if(OPENBLAS_LIBRARY_DIR)
                   COMMAND sed -e "s@^CFLAGS=-O2@CFLAGS=-O2 -I${FFTW3_INCLUDE_DIR}@g"
                   COMMAND sed -e "s@-lrt @@g"
                   COMMAND sed -e "s@^CLIBS_FFTW = @CLIBS_FFTW = -L${FFTW3_LIBRARY_DIR} @g"
+                  COMMAND sed -e "s@-O2@-O3@g"
                   OUTPUT_FILE makefile.priism
                   WORKING_DIRECTORY ${SPARSEIMAGING_BUILD_DIR})
 else()
   execute_process(COMMAND sed -e "s@CFLAGS=-O2@CFLAGS=-O2 -I${FFTW3_INCLUDE_DIR}@g" makefile
                   COMMAND sed -e "s@-lrt @@g"
                   COMMAND sed -e "s@^CLIBS_FFTW = @CLIBS_FFTW = -L${FFTW3_LIBRARY_DIR} @g"
+                  COMMAND sed -e "s@-O2@-O3@g"
                   OUTPUT_FILE makefile.priism
                   WORKING_DIRECTORY ${SPARSEIMAGING_BUILD_DIR})
 endif()
