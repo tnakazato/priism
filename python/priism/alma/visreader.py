@@ -28,6 +28,8 @@ class VisibilityReader(object):
                 return basename
             elif casa.casa_version.minor >= 0:
                 return '{}2'.format(basename)
+        elif casa.casa_version.major >= 6:
+            return basename
         raise RuntimeError('Unsupported CASA version {}.{}.{}-{}'.format(casa.casa_version.major,
                                                                          casa.casa_version.minor,
                                                                          casa.casa_version.major,
