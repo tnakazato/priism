@@ -48,6 +48,10 @@ class SparseImagingInputsNUFFT(sparseimagingbase.SparseImagingInputs):
     def convert_vis(cls, u, v, rdata, idata):
         return rdata, idata
 
+    @property
+    def header(self):
+        return 'u_rad, v_rad, vis_r, vis_i, noise_std_dev'
+
 
 class MFISTAResultNUFFT(ctypes.Structure):
     _fields_ = [('M', ctypes.c_int),

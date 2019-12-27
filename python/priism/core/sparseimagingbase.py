@@ -228,13 +228,17 @@ class SparseImagingInputs(CTypesUtilMixIn):
         self.yimag = yimag
         self.noise = noise
 
+    @property
+    def header(self):
+        return 'u, v, y_r, y_i, noise_std_dev'
+
     def export(self, filename):
         with open(filename, 'w') as f:
             print('M = {0}'.format(self.m), file=f)
             print('NX = {0}'.format(self.nx), file=f)
             print('NY = {0}'.format(self.ny), file=f)
             print('', file=f)
-            print('u, v, y_r, y_i, noise_std_dev', file=f)
+            print(self.header, file=f)
             print('', file=f)
             for i in range(self.m):
                 print('{0}, {1}, {2:e}, {3:e}, {4:e}'.format(self.u[i],
