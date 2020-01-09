@@ -87,9 +87,15 @@ set(SPARSEIMAGING_BUILD_DIR ${PROJECT_SOURCE_DIR}/${SPARSEIMAGING_DIR}/c)
 message(STATUS "OPENBLAS_LIBRARY_DIR=${OPENBLAS_LIBRARY_DIR}")
 message(STATUS "FFTW3_INCLUDE_DIR is ${FFTW3_INCLUDE_DIR}")
 execute_process(COMMAND echo ${FFTW3_INCLUDE_DIR}
+                COMMAND sed -e "s@include@lib64@g"
+                COMMAND tr -d "\n"
+                OUTPUT_VARIABLE FFTW3_LIBRARY_DIR)
+if(NOT EXISTS ${FFTW3_LIBRARY_DIR}/libfftw3.so)
+  execute_process(COMMAND echo ${FFTW3_INCLUDE_DIR}
                 COMMAND sed -e "s@include@lib@g"
                 COMMAND tr -d "\n"
                 OUTPUT_VARIABLE FFTW3_LIBRARY_DIR)
+endif()
 message(STATUS "FFTW3_LIBRARY_DIR is ${FFTW3_LIBRARY_DIR}")
 if(OPENBLAS_LIBRARY_DIR)
   message(STATUS "Edit makefile for sparseimaging")
