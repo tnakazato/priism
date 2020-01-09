@@ -20,23 +20,39 @@ project(priism)
 
 # download sparseimaging
 set(SPARSEIMAGING_DIR sparseimaging)
-set(SPARSEIMAGING_EXTRACT sparseimaging-smili)
-set(SPARSEIMAGING_ZIP smili.zip)
-if(NOT EXISTS ${PROJECT_SOURCE_DIR}/${SPARSEIMAGING_DIR})
-  if(NOT EXISTS ${PROJECT_SOURCE_DIR}/${SPARSEIMAGING_EXTRACT})
-    if(NOT EXISTS ${CMAKE_BINARY_DIR}/${SPARSEIMAGING_ZIP})
-      message(STATUS "Sparseimaging is not downloaded yet")
-      set(SPARSEIMAGING_URL https://github.com/ikeda46/sparseimaging/archive/${SPARSEIMAGING_ZIP})
-      execute_process(COMMAND curl -L -O ${SPARSEIMAGING_URL}
-                      WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+execute_process(COMMAND which git
+                RESULT_VARIABLE GIT_ERROR_CODE
+                OUTPUT_VARIABLE GIT_CMD)
+message(STATUS "Found git: ${GIT_CMD}")
+if(NOT GIT_ERROR_CODE)
+  if(NOT EXISTS ${PROJECT_SOURCE_DIR}/${SPARSEIMAGING_DIR})
+    message(STATUS "Sparseimaging is not downloaded yet")
+    set(SPARSEIMAGING_URL https://github.com/ikeda46/sparseimaging.git)
+    execute_process(COMMAND git clone ${SPARSEIMAGING_URL}
+                    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+    # make sure we are correct branch
+    execute_process(COMMAND git checkout smili
+                    WORKING_DIRECTORY ${SPARSEIMAGING_DIR})
+  endif()
+else()
+  set(SPARSEIMAGING_EXTRACT sparseimaging-smili)
+  set(SPARSEIMAGING_ZIP smili.zip)
+  if(NOT EXISTS ${PROJECT_SOURCE_DIR}/${SPARSEIMAGING_DIR})
+    if(NOT EXISTS ${PROJECT_SOURCE_DIR}/${SPARSEIMAGING_EXTRACT})
+      if(NOT EXISTS ${CMAKE_BINARY_DIR}/${SPARSEIMAGING_ZIP})
+        message(STATUS "Sparseimaging is not downloaded yet")
+        set(SPARSEIMAGING_URL https://github.com/ikeda46/sparseimaging/archive/${SPARSEIMAGING_ZIP})
+        execute_process(COMMAND curl -L -O ${SPARSEIMAGING_URL}
+                        WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+      endif()
+      message(STATUS "Extracting sparseimaging code")
+      execute_process(COMMAND unzip ${CMAKE_BINARY_DIR}/${SPARSEIMAGING_ZIP}
+                      WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
     endif()
-    message(STATUS "Extracting sparseimaging code")
-    execute_process(COMMAND unzip ${CMAKE_BINARY_DIR}/${SPARSEIMAGING_ZIP}
+    message(STATUS "Creating ${SPARSEIMAGING_DIR}")
+    execute_process(COMMAND ln -s "${SPARSEIMAGING_EXTRACT}" "${SPARSEIMAGING_DIR}"
                     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
   endif()
-  message(STATUS "Creating ${SPARSEIMAGING_DIR}")
-  execute_process(COMMAND ln -s "${SPARSEIMAGING_EXTRACT}" "${SPARSEIMAGING_DIR}"
-                  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 endif()
 
 # download sakura
