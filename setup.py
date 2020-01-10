@@ -4,6 +4,7 @@ import subprocess
 
 from distutils.command.build_ext import build_ext
 from distutils.command.build_clib import build_clib
+from distutils.command.config import config
 from setuptools import setup, find_packages, Command
 
 def _get_version():
@@ -21,6 +22,21 @@ def _get_version():
 
 version = _get_version()
 print('PRIISM Version = {}'.format(version))
+
+def check_command_availability(cmd):
+    if isinstance(cmd, list):
+        return [check_command_availability(_cmd) for _cmd in cmd]
+    else:
+        assert isinstance(cmd, str)
+        return subprocess.call(['which', cmd], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL) == 0
+
+
+def execute_command(cmdstring, cwd=None):
+    retcode = subprocess.call(shlex.split(cmdstring), cwd=cwd)
+    if retcode != 0:
+        print('WARNING: command "{}" failed to execute'.format(cmdstring))
+    return retcode
+
 
 class build_smili(build_clib):
     user_options = []
@@ -56,21 +72,12 @@ class build_priism_ext(build_ext):
     sub_commands = build_ext.sub_commands + [('build_sakura', None), ('build_smili', None)]
 
 
-def check_command_availability(cmdlist):
-    return [subprocess.call(['which', cmd], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL) == 0 for cmd in cmdlist]
-
-
-def execute_command(cmdstring, cwd=None):
-    retcode = subprocess.call(shlex.split(cmdstring), cwd=cwd)
-    if retcode != 0:
-        print('WARNING: command "{}" failed to execute'.format(cmdstring))
-    return retcode
-
-
-class configure_smili(Command):
+class download_smili(config):
     user_options = []
 
     def initialize_options(self):
+        super(download_smili, self).initialize_options()
+
         is_git_ok, is_curl_ok, is_wget_ok = check_command_availability(['git', 'curl', 'wget'])
         package = 'sparseimaging'
         branch = 'smili'
@@ -90,27 +97,31 @@ class configure_smili(Command):
 
         if is_git_ok:
             self.epilogue_cmds = ['git checkout {}'.format(branch)]
-            self.epilogut_cwd = package
+            self.epilogue_cwd = package
         else:
             self.epilogue_cmds = ['unzip {}'.format(zipname),
                                   'ln -s {0}-{1} {0}'.format(package, branch)]
-            self.epilogut_cwd = '.'
-        self.directory = package
+            self.epilogue_cwd = '.'
+        self.package_directory = package
 
     def finalize_options(self):
-        pass
+        super(download_smili, self).finalize_options()
 
     def run(self):
-        if not os.path.exists(self.directory):
+        super(download_smili, self).run()
+
+        if not os.path.exists(self.package_directory):
             execute_command(self.download_cmd)
             for cmd in self.epilogue_cmds:
-                execute_command(cmd, cwd=self.epilogut_cwd)
+                execute_command(cmd, cwd=self.epilogue_cwd)
 
 
-class configure_sakura(Command):
+class download_sakura(config):
     user_options = []
 
     def initialize_options(self):
+        super(download_sakura, self).initialize_options()
+
         is_curl_ok, is_wget_ok = check_command_availability(['curl', 'wget'])
         package = 'libsakura'
         version = '5.0.7'
@@ -125,31 +136,47 @@ class configure_sakura(Command):
 
         self.epilogue_cmds = ['tar zxvf {}'.format(tgzname)]
         self.epilogut_cwd = '.'
-        self.directory = package
+        self.package_directory = package
+        self.working_directory = self.package_directory
 
     def finalize_options(self):
-        pass
+        super(download_sakura, self).finalize_options()
 
     def run(self):
-        if not os.path.exists(self.directory):
+        super(download_sakura, self).run()
+
+        if not os.path.exists(self.package_directory):
             execute_command(self.download_cmd)
             for cmd in self.epilogue_cmds:
                 execute_command(cmd, cwd=self.epilogut_cwd)
 
 
 class configure_ext(Command):
-    user_options = []
+    user_options = [('eigen3-include-dir=', 'E', 'specify directory for Eigen3'),
+                    ('fftw3-root-dir=', 'F', 'specigy root directory for FFTW3'),
+                    ('openblas-library-dir=', 'B', 'specify directory for OpenBLAS')]
 
     def initialize_options(self):
-        pass
+        is_cmake_ok = check_command_availability('cmake')
+        if not is_cmake_ok:
+            raise FileNotFoundError('Command "cmake" is not found. Please install.')
+        self.eigen3_include_dir = None
+        self.fftw3_root_dir = None
+        self.openblas_libraray_dir = None
 
     def finalize_options(self):
-        pass
+        print('eigen3-include-dir={}'.format(self.eigen3_include_dir))
+        print('fftw3-root-dir={}'.format(self.eigen3_include_dir))
+        print('openblas-library-dir={}'.format(self.eigen3_include_dir))
 
     def run(self):
+        # download external packages
         for cmd in self.get_sub_commands():
             self.run_command(cmd)
-    sub_commands = build_ext.sub_commands + [('configure_sakura', None), ('configure_smili', None)]
+
+        # configure with cmake
+
+    sub_commands = build_ext.sub_commands + [('download_sakura', None), ('download_smili', None)]
 
 
 
@@ -162,7 +189,7 @@ setup(
    cmdclass={'build_sakura': build_sakura, 
              'build_smili': build_smili,
              'build_ext': build_priism_ext,
-             'configure_sakura': configure_sakura,
-             'configure_smili': configure_smili,
+             'download_sakura': download_sakura,
+             'download_smili': download_smili,
              'configure_ext': configure_ext}
 )
