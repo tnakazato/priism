@@ -140,7 +140,7 @@ add_custom_target(sparseimaging make -f makefile.priism libmfista_fft
 # add priism module
 add_subdirectory(python)
 add_custom_target(priism ALL echo ""
-                  DEPENDS sakura sparseimaging)
+                  DEPENDS sakura sakurapy sparseimaging)
 
 # install libmfista
 install(PROGRAMS ${SPARSEIMAGING_BUILD_DIR}/libmfista_fft.so
