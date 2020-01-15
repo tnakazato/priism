@@ -16,7 +16,7 @@
 # along with PRIISM.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import absolute_import
 
-import libsakurapy
+from . import libsakurapy
 
 
 def grid(working_set, gridfunction, convsupport, convsampling, weight_only,
