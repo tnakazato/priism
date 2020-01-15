@@ -153,7 +153,6 @@ class download_sakura(config):
 
 class configure_ext(Command):
     user_options = [('eigen3-include-dir=', 'E', 'specify directory for Eigen3'),
-                    ('fftw3-root-dir=', 'F', 'specigy root directory for FFTW3'),
                     ('openblas-library-dir=', 'B', 'specify directory for OpenBLAS')]
 
     def initialize_options(self):
@@ -162,12 +161,24 @@ class configure_ext(Command):
             raise FileNotFoundError('Command "cmake" is not found. Please install.')
         self.eigen3_include_dir = None
         self.fftw3_root_dir = None
-        self.openblas_libraray_dir = None
+        self.openblas_library_dir = None
+        self.build_dir = 'build_ext'
 
     def finalize_options(self):
         print('eigen3-include-dir={}'.format(self.eigen3_include_dir))
-        print('fftw3-root-dir={}'.format(self.eigen3_include_dir))
-        print('openblas-library-dir={}'.format(self.eigen3_include_dir))
+        print('fftw3-root-dir={}'.format(self.fftw3_root_dir))
+        print('openblas-library-dir={}'.format(self.openblas_library_dir))
+    
+    def __configure_cmake_command(self):
+        cmd = 'cmake .. -DCMAKE_INSTALL_PREFIX=./installed'
+        
+        if self.eigen3_include_dir is not None:
+            cmd += ' -DEIGEN3_INCLUDE_DIR={}'.format(self.eigen3_include_dir)
+
+        if self.openblas_library_dir is not None:
+            cmd += ' -DOPENBLAS_LIBRARY_DIR={}'.format(self.openblas_library_dir)
+            
+        return cmd
 
     def run(self):
         # download external packages
@@ -175,9 +186,17 @@ class configure_ext(Command):
             self.run_command(cmd)
 
         # configure with cmake
+        if not os.path.exists(self.build_dir):
+            os.mkdir(self.build_dir)
+
+        cache_file = os.path.join(self.build_dir, 'CMakeCache.txt')
+        if os.path.exists(cache_file):
+            os.remove(cache_file)
+
+        cmd = self.__configure_cmake_command()
+        execute_command(cmd, cwd=self.build_dir)
 
     sub_commands = build_ext.sub_commands + [('download_sakura', None), ('download_smili', None)]
-
 
 
 setup(
