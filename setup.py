@@ -2,6 +2,7 @@ import glob
 import os
 import shlex
 import subprocess
+import sys
 
 from distutils.command.build_ext import build_ext
 from distutils.command.build_clib import build_clib
@@ -42,7 +43,8 @@ def execute_command(cmdstring, cwd=None):
 
 class priism_build_ext(build_ext):
     user_options = [('eigen3-include-dir=', 'E', 'specify directory for Eigen3'),
-                    ('openblas-library-dir=', 'B', 'specify directory for OpenBLAS')]
+                    ('openblas-library-dir=', 'B', 'specify directory for OpenBLAS'),
+                    ('python-root-dir=', 'P', 'specify root directory for Python')]
 
     def initialize_options(self):
         super(priism_build_ext, self).initialize_options()
@@ -50,6 +52,7 @@ class priism_build_ext(build_ext):
         self.fftw3_root_dir = None
         self.openblas_library_dir = None
         self.priism_build_dir = 'build_ext'
+        self.python_root_dir = None
 
     def finalize_options(self):
         super(priism_build_ext, self).finalize_options()
@@ -64,6 +67,8 @@ class priism_build_ext(build_ext):
 
         if not os.path.exists(self.build_lib):
             self.run_command('build')
+
+        execute_command('make', cwd=self.priism_build_dir)
 
         self.build_sakura()
         self.build_smili()
@@ -175,7 +180,8 @@ class download_sakura(config):
 
 class configure_ext(Command):
     user_options = [('eigen3-include-dir=', 'E', 'specify directory for Eigen3'),
-                    ('openblas-library-dir=', 'B', 'specify directory for OpenBLAS')]
+                    ('openblas-library-dir=', 'B', 'specify directory for OpenBLAS'),
+                    ('python-root-dir=', 'P', 'specify root directory for Python')]
 
     def initialize_options(self):
         is_cmake_ok = check_command_availability('cmake')
@@ -185,21 +191,35 @@ class configure_ext(Command):
         self.fftw3_root_dir = None
         self.openblas_library_dir = None
         self.priism_build_dir = None
+        self.python_root_dir = None
+        self.priism_build_dir = None
 
     def finalize_options(self):
         self.set_undefined_options(
             'build_ext',
             ('eigen3_include_dir', 'eigen3_include_dir'),
             ('openblas_library_dir', 'openblas_library_dir'),
-            ('priism_build_dir', 'priism_build_dir')
+            ('priism_build_dir', 'priism_build_dir'),
+            ('python_root_dir', 'python_root_dir')
         )
+        if self.python_root_dir is None:
+            # assuming python executable path to PYTHON_ROOT_DIR/bin/python
+            executable_path = sys.executable
+            binary_dir, _ = os.path.split(executable_path)
+            root_dir, _ = os.path.split(binary_dir)
+            self.python_root_dir = root_dir
+
         print('eigen3-include-dir={}'.format(self.eigen3_include_dir))
         print('fftw3-root-dir={}'.format(self.fftw3_root_dir))
         print('openblas-library-dir={}'.format(self.openblas_library_dir))
-    
+        print('python-root-dir={}'.format(self.python_root_dir))
+  
     def __configure_cmake_command(self):
         cmd = 'cmake .. -DCMAKE_INSTALL_PREFIX=./installed'
         
+        if self.python_root_dir is not None:
+            cmd += ' -DPYTHON_ROOTDIR={}'.format(self.python_root_dir)
+
         if self.eigen3_include_dir is not None:
             cmd += ' -DEIGEN3_INCLUDE_DIR={}'.format(self.eigen3_include_dir)
 
@@ -227,52 +247,6 @@ class configure_ext(Command):
     sub_commands = build_ext.sub_commands + [('download_sakura', None), ('download_smili', None)]
 
 
-class priism_install_lib(install_lib):
-    def initialize_options(self):
-        super(priism_install_lib, self).initialize_options()
-        self.priism_build_dir = None
-
-    def finalize_options(self):
-        super(priism_install_lib, self).finalize_options()
-        self.set_undefined_options(
-            'build_ext',
-            ('priism_build_dir', 'priism_build_dir')
-        )
-        print('priism_build_dir = {}'.format(self.priism_build_dir))
-        print('install_lib = {}'.format(self.install_dir))
-        print('build_dir = {}'.format(self.build_dir))
-
-    def run(self):
-        super(priism_install_lib, self).run()
-        #self.install_sakura()
-        #self.install_smili()
-
-    def build_sakura(self):
-        subdirs = ['bin', 'python-binding']
-        libs = ['libsakura.so', 'libsakurapy.so']
-        libsakura_dir = '{}/libsakura'.format(self.priism_build_dir)
-        subtree = 'priism/external/sakura'
-        src_dir = os.path.join(self.build_dir, subtree)
-        dst_dir = os.path.join(self.install_dir, subtree)
-        assert os.path.exists(dst_dir)
-        for d, f in zip(subdirs, libs):
-            src = os.path.join(libsakura_dir, d, f)
-            assert os.path.exists(src)
-            dst = os.path.join(dst_dir, f)
-            self.copy_file(src, dst)
-
-    def build_smili(self):
-        smili_dir = 'sparseimaging/c'
-        smili_libs = ['libmfista_{}.so'.format(suffix) for suffix in ('fft', 'nufft')]
-        for s in smili_libs:
-            src = os.path.join(smili_dir, s)
-            assert os.path.exists(src)
-            dst_dir = os.path.join(self.build_lib, 'priism/core')
-            assert os.path.exists(dst_dir)
-            dst = os.path.join(dst_dir, s)
-            self.copy_file(src, dst)
-        
-
 setup(
     name='priism',
     version=version,
@@ -284,6 +258,5 @@ setup(
         'download_sakura': download_sakura,
         'download_smili': download_smili,
         'configure_ext': configure_ext,
-        #'install_lib': priism_install_lib
     }
 )
