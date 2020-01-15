@@ -19,7 +19,7 @@ from __future__ import absolute_import
 import atexit
 
 from .reductionhelper import paraMap
-import libsakurapy
+from . import libsakurapy
 
 # libsakurapy is initialized when the module is imported
 # and is cleaned up at exit

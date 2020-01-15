@@ -17,7 +17,7 @@
 from __future__ import absolute_import
 
 import numpy
-import libsakurapy
+from . import libsakurapy
 
 
 def sakura_typemap(dtype):

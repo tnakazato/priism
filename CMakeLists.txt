@@ -77,7 +77,7 @@ endif()
 # configure sakura
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/${SAKURA_DIR}/cmake-modules CACHE STRING "List of directories to search for CMake modules")
 set(BUILD_DOC OFF CACHE BOOL "Build Sakura API document")
-add_subdirectory(libsakura)
+add_subdirectory(libsakura EXCLUDE_FROM_ALL)
 if(NOT APPLE)
   set_target_properties(sakurapy PROPERTIES INSTALL_RPATH "$ORIGIN/../lib:$ORIGIN/")
 endif()
@@ -120,11 +120,25 @@ add_subdirectory(python)
 add_custom_target(priism ALL echo ""
                   DEPENDS sakura sparseimaging)
 
-# install libmfista_fft.so
+# install libmfista
 install(PROGRAMS ${SPARSEIMAGING_BUILD_DIR}/libmfista_fft.so
         DESTINATION priism/core)
 install(PROGRAMS ${SPARSEIMAGING_BUILD_DIR}/libmfista_nufft.so
         DESTINATION priism/core)
+
+# install libsakura
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/bin/libsakura.so
+        DESTINATION priism/external/sakura)
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/bin/libsakura.so.5
+        DESTINATION priism/external/sakura)
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/bin/libsakura.so.5.0
+        DESTINATION priism/external/sakura)
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/python-binding/libsakurapy.so
+        DESTINATION priism/external/sakura)
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/python-binding/libsakurapy.so.0
+        DESTINATION priism/external/sakura)
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/python-binding/libsakurapy.so.0.1
+        DESTINATION priism/external/sakura)
 
 # clean_all 
 # clean_all will execute "make clean" as well as removing all downloaded files
