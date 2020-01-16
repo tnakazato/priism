@@ -151,7 +151,7 @@ class download_sakura(config):
 
         is_curl_ok, is_wget_ok = check_command_availability(['curl', 'wget'])
         package = 'libsakura'
-        version = '5.0.7'
+        version = '5.0.8'
         tgzname = '{}-{}.tgz'.format(package, version)
         url = 'https://alma-intweb.mtk.nao.ac.jp/~nakazato/libsakura/{}'.format(tgzname)
         if is_curl_ok:
