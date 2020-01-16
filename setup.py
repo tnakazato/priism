@@ -1,4 +1,3 @@
-import glob
 import os
 import shlex
 import subprocess
@@ -7,8 +6,8 @@ import sys
 from distutils.command.build import build
 from distutils.command.build_ext import build_ext
 from distutils.command.config import config
-from distutils.command.install_lib import install_lib
 from setuptools import setup, find_packages, Command
+
 
 def _get_version():
     cwd = os.path.dirname(__file__)
@@ -23,8 +22,10 @@ def _get_version():
         version = '0.0.0'
     return version
 
-version = _get_version()
-print('PRIISM Version = {}'.format(version))
+
+PRIISM_VERSION = _get_version()
+print('PRIISM Version = {}'.format(PRIISM_VERSION))
+
 
 def check_command_availability(cmd):
     if isinstance(cmd, list):
@@ -39,6 +40,16 @@ def execute_command(cmdstring, cwd=None):
     if retcode != 0:
         print('WARNING: command "{}" failed to execute'.format(cmdstring))
     return retcode
+
+
+def debug_print_user_options(cmd):
+    print('Command: {}'.format(cmd.__class__.__name__))
+    print('User Options:')
+    for option in cmd.user_options:
+        longname = option[0].strip('=')
+        attrname = longname.replace('-', '_')
+        attrvalue = getattr(cmd, attrname)
+        print('  {}={}'.format(longname, attrvalue))
 
 
 class priism_build(build):
@@ -61,10 +72,8 @@ class priism_build(build):
             binary_dir, _ = os.path.split(executable_path)
             root_dir, _ = os.path.split(binary_dir)
             self.python_root_dir = root_dir
-        print('eigen3-include-dir={}'.format(self.eigen3_include_dir))
+        debug_print_user_options(self)
         print('fftw3-root-dir={}'.format(self.fftw3_root_dir))
-        print('openblas-library-dir={}'.format(self.openblas_library_dir))
-        print('python-root-dir={}'.format(self.python_root_dir))
 
     def run(self):
         super(priism_build, self).run()
@@ -75,9 +84,7 @@ class priism_build(build):
     
 
 class priism_build_ext(build_ext):
-    user_options = [('eigen3-include-dir=', 'E', 'specify directory for Eigen3'),
-                    ('openblas-library-dir=', 'B', 'specify directory for OpenBLAS'),
-                    ('python-root-dir=', 'P', 'specify root directory for Python')]
+    user_options = priism_build.user_options
 
     def initialize_options(self):
         super(priism_build_ext, self).initialize_options()
@@ -95,9 +102,7 @@ class priism_build_ext(build_ext):
             ('openblas_library_dir', 'openblas_library_dir'),
             ('python_root_dir', 'python_root_dir')
         )
-        print('eigen3-include-dir={}'.format(self.eigen3_include_dir))
-        print('fftw3-root-dir={}'.format(self.fftw3_root_dir))
-        print('openblas-library-dir={}'.format(self.openblas_library_dir))
+        debug_print_user_options(self)
 
     def run(self):
         super(priism_build_ext, self).run()
@@ -215,9 +220,7 @@ class download_sakura(config):
 
 
 class configure_ext(Command):
-    user_options = [('eigen3-include-dir=', 'E', 'specify directory for Eigen3'),
-                    ('openblas-library-dir=', 'B', 'specify directory for OpenBLAS'),
-                    ('python-root-dir=', 'P', 'specify root directory for Python')]
+    user_options = priism_build.user_options
 
     def initialize_options(self):
         is_cmake_ok = check_command_availability('cmake')
@@ -244,11 +247,8 @@ class configure_ext(Command):
             binary_dir, _ = os.path.split(executable_path)
             root_dir, _ = os.path.split(binary_dir)
             self.python_root_dir = root_dir
-
-        print('eigen3-include-dir={}'.format(self.eigen3_include_dir))
+        debug_print_user_options(self)
         print('fftw3-root-dir={}'.format(self.fftw3_root_dir))
-        print('openblas-library-dir={}'.format(self.openblas_library_dir))
-        print('python-root-dir={}'.format(self.python_root_dir))
   
     def __configure_cmake_command(self):
         cmd = 'cmake .. -DCMAKE_INSTALL_PREFIX=./installed'
@@ -285,9 +285,9 @@ class configure_ext(Command):
 
 setup(
     name='priism',
-    version=version,
+    version=PRIISM_VERSION,
     packages=find_packages('python', exclude=['priism.test']),
-    package_dir={'':'python'},
+    package_dir={'': 'python'},
     install_requires=['numpy'],
     cmdclass={
         'build': priism_build,
