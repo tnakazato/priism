@@ -69,8 +69,9 @@ class priism_build(build):
     user_options = [('eigen3-include-dir=', 'E', 'specify directory for Eigen3'),
                     ('openblas-library-dir=', 'B', 'specify directory for OpenBLAS'),
                     ('python-root-dir=', 'P', 'specify root directory for Python'),
-                    ('python-include-dir=', 'I', 'specify include directory for Python.h'),
-                    ('numpy-include-dir=', 'N', 'specify include directory for NumPy')]
+                    ('python-include-dir=', 'I', 'specify include directory for Python.h (take priority over python-root-dir)'),
+                    ('python-library=', 'L', 'specify Python library (take priority over python-root-dir)'),
+                    ('numpy-include-dir=', 'N', 'specify include directory for NumPy (take priority over python-root-dir)')]
 
     def initialize_options(self):
         super(priism_build, self).initialize_options()
@@ -266,12 +267,20 @@ class configure_ext(Command):
         if self.numpy_include_dir is not None:
             cmd += ' -DNUMPY_INCLUDE_DIR={}'.format(self.numpy_include_dir)
 
+        if self.python_include_dir is not None:
+            cmd += ' -DPYTHON_INCLUDE_PATH={}'.format(self.python_include_dir)
+
+        if self.python_library is not None:
+            cmd += ' -DPYTHON_LIBRARY={}'.format(self.python_library)
+
         if self.eigen3_include_dir is not None:
             cmd += ' -DEIGEN3_INCLUDE_DIR={}'.format(self.eigen3_include_dir)
 
         if self.openblas_library_dir is not None:
             cmd += ' -DOPENBLAS_LIBRARY_DIR={}'.format(self.openblas_library_dir)
             
+        #print('generated cmake command:')
+        #print('  {}'.format(cmd))
         return cmd
 
     def run(self):
