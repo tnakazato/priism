@@ -27,6 +27,14 @@ PRIISM_VERSION = _get_version()
 print('PRIISM Version = {}'.format(PRIISM_VERSION))
 
 
+class PriismDependencyError(FileNotFoundError):
+    def __init__(self, msg, *args, **kwargs):
+        self.msg = msg
+
+    def __str__(self):
+        return '{}({})'.format(self.__class__.__name__, self.msg)
+
+
 def check_command_availability(cmd):
     if isinstance(cmd, list):
         return [check_command_availability(_cmd) for _cmd in cmd]
@@ -171,7 +179,7 @@ class download_smili(config):
             url = base_url + '/archive/{}'.format(zipname)
             self.download_cmd = 'wget {}'.format(url)
         else:
-            raise FileNotFoundError('No download command found: you have to install git or curl or wget')
+            raise PriismDependencyError('No download command found: you have to install git or curl or wget')
 
         if is_git_ok:
             self.epilogue_cmds = ['git checkout {}'.format(branch)]
@@ -210,7 +218,7 @@ class download_sakura(config):
         elif is_wget_ok:
             self.download_cmd = 'wget {}'.format(url)
         else:
-            raise FileNotFoundError('No download command found: you have to install curl or wget')
+            raise PriismDependencyError('No download command found: you have to install curl or wget')
 
         self.epilogue_cmds = ['tar zxvf {}'.format(tgzname)]
         self.epilogut_cwd = '.'
@@ -233,9 +241,9 @@ class configure_ext(Command):
     user_options = priism_build.user_options
 
     def initialize_options(self):
-        is_cmake_ok = check_command_availability('cmake')
+        is_cmake_ok = check_command_availability('cfake')
         if not is_cmake_ok:
-            raise FileNotFoundError('Command "cmake" is not found. Please install.')
+            raise PriismDependencyError('Command "cmake" is not found. Please install.')
         self.fftw3_root_dir = None
         self.priism_build_dir = None
         initialize_attr_for_user_options(self)
