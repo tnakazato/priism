@@ -4,8 +4,8 @@ import shlex
 import subprocess
 import sys
 
+from distutils.command.build import build
 from distutils.command.build_ext import build_ext
-from distutils.command.build_clib import build_clib
 from distutils.command.config import config
 from distutils.command.install_lib import install_lib
 from setuptools import setup, find_packages, Command
@@ -41,6 +41,39 @@ def execute_command(cmdstring, cwd=None):
     return retcode
 
 
+class priism_build(build):
+    user_options = [('eigen3-include-dir=', 'E', 'specify directory for Eigen3'),
+                    ('openblas-library-dir=', 'B', 'specify directory for OpenBLAS'),
+                    ('python-root-dir=', 'P', 'specify root directory for Python')]
+
+    def initialize_options(self):
+        super(priism_build, self).initialize_options()
+        self.eigen3_include_dir = None
+        self.fftw3_root_dir = None
+        self.openblas_library_dir = None
+        self.python_root_dir = None
+
+    def finalize_options(self):
+        super(priism_build, self).finalize_options()
+        if self.python_root_dir is None:
+            # assuming python executable path to PYTHON_ROOT_DIR/bin/python
+            executable_path = sys.executable
+            binary_dir, _ = os.path.split(executable_path)
+            root_dir, _ = os.path.split(binary_dir)
+            self.python_root_dir = root_dir
+        print('eigen3-include-dir={}'.format(self.eigen3_include_dir))
+        print('fftw3-root-dir={}'.format(self.fftw3_root_dir))
+        print('openblas-library-dir={}'.format(self.openblas_library_dir))
+        print('python-root-dir={}'.format(self.python_root_dir))
+
+    def run(self):
+        super(priism_build, self).run()
+        for cmd in self.get_sub_commands():
+            self.run_command(cmd)
+
+    sub_commands = build.sub_commands + [('build_ext', None)]   
+    
+
 class priism_build_ext(build_ext):
     user_options = [('eigen3-include-dir=', 'E', 'specify directory for Eigen3'),
                     ('openblas-library-dir=', 'B', 'specify directory for OpenBLAS'),
@@ -56,6 +89,12 @@ class priism_build_ext(build_ext):
 
     def finalize_options(self):
         super(priism_build_ext, self).finalize_options()
+        self.set_undefined_options(
+            'build',
+            ('eigen3_include_dir', 'eigen3_include_dir'),
+            ('openblas_library_dir', 'openblas_library_dir'),
+            ('python_root_dir', 'python_root_dir')
+        )
         print('eigen3-include-dir={}'.format(self.eigen3_include_dir))
         print('fftw3-root-dir={}'.format(self.fftw3_root_dir))
         print('openblas-library-dir={}'.format(self.openblas_library_dir))
@@ -64,9 +103,6 @@ class priism_build_ext(build_ext):
         super(priism_build_ext, self).run()
         for cmd in self.get_sub_commands():
             self.run_command(cmd)
-
-        if not os.path.exists(self.build_lib):
-            self.run_command('build')
 
         execute_command('make', cwd=self.priism_build_dir)
 
@@ -254,6 +290,7 @@ setup(
     package_dir={'':'python'},
     install_requires=['numpy'],
     cmdclass={
+        'build': priism_build,
         'build_ext': priism_build_ext,
         'download_sakura': download_sakura,
         'download_smili': download_smili,
