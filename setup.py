@@ -42,27 +42,40 @@ def execute_command(cmdstring, cwd=None):
     return retcode
 
 
+def opt2attr(s):
+    return s[0].strip('=').replace('-', '_')
+
+
 def debug_print_user_options(cmd):
     print('Command: {}'.format(cmd.__class__.__name__))
     print('User Options:')
     for option in cmd.user_options:
-        longname = option[0].strip('=')
-        attrname = longname.replace('-', '_')
+        attrname = opt2attr(option)
         attrvalue = getattr(cmd, attrname)
-        print('  {}={}'.format(longname, attrvalue))
+        print('  {}{}'.format(option[0], attrvalue))
+
+
+def arg_for_set_undefined_options(cmd):
+    return tuple((opt, opt) for opt in map(opt2attr, cmd.user_options))
+
+
+def initialize_attr_for_user_options(cmd):
+    for option in cmd.user_options:
+        attrname = opt2attr(option)
+        setattr(cmd, attrname, None)
 
 
 class priism_build(build):
     user_options = [('eigen3-include-dir=', 'E', 'specify directory for Eigen3'),
                     ('openblas-library-dir=', 'B', 'specify directory for OpenBLAS'),
-                    ('python-root-dir=', 'P', 'specify root directory for Python')]
+                    ('python-root-dir=', 'P', 'specify root directory for Python'),
+                    ('python-include-dir=', 'I', 'specify include directory for Python.h'),
+                    ('numpy-include-dir=', 'N', 'specify include directory for NumPy')]
 
     def initialize_options(self):
         super(priism_build, self).initialize_options()
-        self.eigen3_include_dir = None
         self.fftw3_root_dir = None
-        self.openblas_library_dir = None
-        self.python_root_dir = None
+        initialize_attr_for_user_options(self)
 
     def finalize_options(self):
         super(priism_build, self).finalize_options()
@@ -88,19 +101,15 @@ class priism_build_ext(build_ext):
 
     def initialize_options(self):
         super(priism_build_ext, self).initialize_options()
-        self.eigen3_include_dir = None
         self.fftw3_root_dir = None
-        self.openblas_library_dir = None
         self.priism_build_dir = 'build_ext'
-        self.python_root_dir = None
+        initialize_attr_for_user_options(self)
 
     def finalize_options(self):
         super(priism_build_ext, self).finalize_options()
         self.set_undefined_options(
             'build',
-            ('eigen3_include_dir', 'eigen3_include_dir'),
-            ('openblas_library_dir', 'openblas_library_dir'),
-            ('python_root_dir', 'python_root_dir')
+            *arg_for_set_undefined_options(self)
         )
         debug_print_user_options(self)
 
@@ -226,20 +235,18 @@ class configure_ext(Command):
         is_cmake_ok = check_command_availability('cmake')
         if not is_cmake_ok:
             raise FileNotFoundError('Command "cmake" is not found. Please install.')
-        self.eigen3_include_dir = None
         self.fftw3_root_dir = None
-        self.openblas_library_dir = None
         self.priism_build_dir = None
-        self.python_root_dir = None
-        self.priism_build_dir = None
+        initialize_attr_for_user_options(self)
 
     def finalize_options(self):
         self.set_undefined_options(
+            'build',
+            *arg_for_set_undefined_options(self)
+        )
+        self.set_undefined_options(
             'build_ext',
-            ('eigen3_include_dir', 'eigen3_include_dir'),
-            ('openblas_library_dir', 'openblas_library_dir'),
             ('priism_build_dir', 'priism_build_dir'),
-            ('python_root_dir', 'python_root_dir')
         )
         if self.python_root_dir is None:
             # assuming python executable path to PYTHON_ROOT_DIR/bin/python
@@ -255,6 +262,9 @@ class configure_ext(Command):
         
         if self.python_root_dir is not None:
             cmd += ' -DPYTHON_ROOTDIR={}'.format(self.python_root_dir)
+
+        if self.numpy_include_dir is not None:
+            cmd += ' -DNUMPY_INCLUDE_DIR={}'.format(self.numpy_include_dir)
 
         if self.eigen3_include_dir is not None:
             cmd += ' -DEIGEN3_INCLUDE_DIR={}'.format(self.eigen3_include_dir)
