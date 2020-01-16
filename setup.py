@@ -74,12 +74,14 @@ def initialize_attr_for_user_options(cmd):
 
 
 class priism_build(build):
-    user_options = [('eigen3-include-dir=', 'E', 'specify directory for Eigen3'),
-                    ('openblas-library-dir=', 'B', 'specify directory for OpenBLAS'),
-                    ('python-root-dir=', 'P', 'specify root directory for Python'),
-                    ('python-include-dir=', 'I', 'specify include directory for Python.h (take priority over python-root-dir)'),
-                    ('python-library=', 'L', 'specify Python library (take priority over python-root-dir)'),
-                    ('numpy-include-dir=', 'N', 'specify include directory for NumPy (take priority over python-root-dir)')]
+    user_options = [
+        ('eigen3-include-dir=', 'E', 'specify directory for Eigen3'),
+        ('openblas-library-dir=', 'B', 'specify directory for OpenBLAS'),
+        ('python-root-dir=', 'P', 'specify root directory for Python'),
+        ('python-include-dir=', 'I', 'specify include directory for Python.h (take priority over python-root-dir)'),
+        ('python-library=', 'L', 'specify Python library (take priority over python-root-dir)'),
+        ('numpy-include-dir=', 'N', 'specify include directory for NumPy (take priority over python-root-dir)')
+    ]
 
     def initialize_options(self):
         super(priism_build, self).initialize_options()
@@ -103,7 +105,7 @@ class priism_build(build):
             self.run_command(cmd)
 
     sub_commands = build.sub_commands + [('build_ext', None)]   
-    
+
 
 class priism_build_ext(build_ext):
     user_options = priism_build.user_options
@@ -131,7 +133,7 @@ class priism_build_ext(build_ext):
 
         self.build_sakura()
         self.build_smili()
-    
+
     def build_sakura(self):
         subdirs = ['bin', 'python-binding']
         libs = ['libsakura.so', 'libsakurapy.so']
@@ -265,10 +267,10 @@ class configure_ext(Command):
             self.python_root_dir = root_dir
         debug_print_user_options(self)
         print('fftw3-root-dir={}'.format(self.fftw3_root_dir))
-  
+
     def __configure_cmake_command(self):
         cmd = 'cmake .. -DCMAKE_INSTALL_PREFIX=./installed'
-        
+
         if self.python_root_dir is not None:
             cmd += ' -DPYTHON_ROOTDIR={}'.format(self.python_root_dir)
 
@@ -286,7 +288,7 @@ class configure_ext(Command):
 
         if self.openblas_library_dir is not None:
             cmd += ' -DOPENBLAS_LIBRARY_DIR={}'.format(self.openblas_library_dir)
-            
+
         #print('generated cmake command:')
         #print('  {}'.format(cmd))
         return cmd
