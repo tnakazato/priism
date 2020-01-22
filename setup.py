@@ -76,7 +76,7 @@ def initialize_attr_for_user_options(cmd):
 class priism_build(build):
     user_options = [
         ('eigen3-include-dir=', 'E', 'specify directory for Eigen3'),
-        ('openblas-library-dir=', 'B', 'specify directory for OpenBLAS'),
+        # ('openblas-library-dir=', 'B', 'specify directory for OpenBLAS'),
         ('python-root-dir=', 'P', 'specify root directory for Python'),
         ('python-include-dir=', 'I', 'specify include directory for Python.h (take priority over python-root-dir)'),
         ('python-library=', 'L', 'specify Python library (take priority over python-root-dir)'),
@@ -147,7 +147,7 @@ class priism_build_ext(build_ext):
             self.copy_file(src, dst)
 
     def build_smili(self):
-        smili_dir = 'sparseimaging/c'
+        smili_dir = 'sparseimaging/c++'
         smili_libs = ['libmfista_{}.so'.format(suffix) for suffix in ('fft', 'nufft')]
         for s in smili_libs:
             src = os.path.join(smili_dir, s)
@@ -286,8 +286,8 @@ class configure_ext(Command):
         if self.eigen3_include_dir is not None:
             cmd += ' -DEIGEN3_INCLUDE_DIR={}'.format(self.eigen3_include_dir)
 
-        if self.openblas_library_dir is not None:
-            cmd += ' -DOPENBLAS_LIBRARY_DIR={}'.format(self.openblas_library_dir)
+        # if self.openblas_library_dir is not None:
+        #     cmd += ' -DOPENBLAS_LIBRARY_DIR={}'.format(self.openblas_library_dir)
 
         #print('generated cmake command:')
         #print('  {}'.format(cmd))
