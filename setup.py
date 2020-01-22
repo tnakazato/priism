@@ -243,7 +243,7 @@ class configure_ext(Command):
     user_options = priism_build.user_options
 
     def initialize_options(self):
-        is_cmake_ok = check_command_availability('cfake')
+        is_cmake_ok = check_command_availability('cmake')
         if not is_cmake_ok:
             raise PriismDependencyError('Command "cmake" is not found. Please install.')
         self.fftw3_root_dir = None
