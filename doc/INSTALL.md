@@ -106,9 +106,10 @@ In summary, prerequisites for PRIISM is as follows:
 * FFTW3
 * Eigen 3.2 or higher
 * OpenBLAS
+* git (optional but preferable)
 
 
-## Installation
+## Installation with `cmake`
 
 ### Downloading the Source
 
@@ -193,16 +194,16 @@ Usually, cmake will download source code for Sakura (+googletest) and sparseimag
 If network connection is not available, you need to obtain these files by yourself.
 
 In case if you need to download files by hand, links below might be useful:
-* Sakura library: [https://alma-intweb.mtk.nao.ac.jp/~nakazato/libsakura/libsakura-5.0.7.tgz](https://alma-intweb.mtk.nao.ac.jp/~nakazato/libsakura/libsakura-5.0.7.tgz)
+* Sakura library: [https://alma-intweb.mtk.nao.ac.jp/~nakazato/libsakura/libsakura-5.0.8.tgz](https://alma-intweb.mtk.nao.ac.jp/~nakazato/libsakura/libsakura-5.0.8.tgz)
 * googletest: [https://github.com/google/googletest/archive/master.zip](https://github.com/google/googletest/archive/master.zip)
-* sparseimaging library: [https://github.com/ikeda46/sparseimaging/archive/development.zip](https://github.com/ikeda46/sparseimaging/archive/development.zip)
+* sparseimaging library: [https://github.com/ikeda46/sparseimaging/archive/smili.zip](https://github.com/ikeda46/sparseimaging/archive/smili.zip)
 
 Downloaded files should be put under the "build" directory. For example,
 
     cd somewhere/network/is/available
-    curl -L -O https://alma-intweb.mtk.nao.ac.jp/~nakazato/libsakura/libsakura-5.0.7.tgz
+    curl -L -O https://alma-intweb.mtk.nao.ac.jp/~nakazato/libsakura/libsakura-5.0.8.tgz
     curl -L -O https://github.com/google/googletest/archive/master.zip
-    curl -L -O https://github.com/ikeda46/sparseimaging/archive/development.zip
+    curl -L -O https://github.com/ikeda46/sparseimaging/archive/smili.zip
     cd priism_root_dir/priism/build
     mv somewhere/network/is/available/libsakura-5.0.7.tgz .
     mv somewhere/network/is/available/master.zip
@@ -220,21 +221,41 @@ After you suceed to run cmake, subsequent steps to install PRIISM is just simple
 
 PRIISM will now be available to the location specified by `CMAKE_INSTALL_PREFIX`.
 
-###
+## Installation with `setuptools` (Experimental)
+
+As of 0.3.0, PRIISM offers another way of build and install which is based on Python `setuptools`. So far, it simply wraps `cmake` build so the build based on `cmake` is performed underneath. However, it should be easier than `cmake` build. After moving into the PRIISM's root directory, build and install procedure is as follows:
+
+```
+python setup.py build
+python setup.py install
+```
+
+There are options for those commands similar to `cmake` build. Please see the help for those commands.
+
+```
+python setup.py build --help
+python setup.py install --help
+```
+
+Installation directory will automatically be detected by `setuptools` using which python command is used to run the build and install procedure. That would be particulary useful to install PRIISM into your Python virtual environment. 
 
 ## Using PRIISM
 
 ### Setting PYTHONPATH
-First of all, you need to add following paths to `PYTHONPATH`.
 
-    <CMAKE_INSTALL_PREFIX>
-    <CMAKE_INSTALL_PREFIX>/lib
+You have to ensure that the installation directory of the PRIISM is included in the `PYTHONPATH` environment variable. In the case of `cmake` build, installation directory is the location specified by `CMAKE_INSTALL_PREFIX` when cmake is executed. Assuming that `/usr/local/priism` is set for `CMAKE_INSTALL_PREFIX`, and we use bash, the command to be executed is as follows.
 
-where `<CMAKE_INSTALL_PREFIX>` is the location specified by `CMAKE_INSTALL_PREFIX` when
-cmake is executed. Assuming that `/usr/local/priism` is set for `CMAKE_INSTALL_PREFIX`,
-and we use bash, the command to be executed is as follows.
+    export PYTHONPATH=/usr/local/priism:$PYTHONPATH
 
-    export PYTHONPATH=/usr/local/priism:/usr/local/priism/lib:$PYTHONPATH
+----
+
+**NOTE**
+
+As of 0.3.0, you no longer need to add `CMAME_INSTALL_PREFIX/lib` to `PYTHONPATH`. 
+
+---
+
+In the case of installation with `setuptools`, you usually do not care about `PYTHONPATH` because PRIISM should be installed to the directory that is recognized by python. Otherwise, `setuptools` will notify you to update `PYTHONPATH`. 
 
 ### Importing module
 Then, launch python or CASA and import appropriate module. For `priism.core`,
