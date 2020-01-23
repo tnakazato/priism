@@ -133,7 +133,7 @@ endif()
 
 # configure compile of sparseimaging to generate libmfista_fft.so
 add_custom_target(sparseimaging make -f makefile.priism libraries
-                  WORKING_DIRECTORY ${SPARSEIMAGING_BUILD_DIR})             
+                  WORKING_DIRECTORY ${SPARSEIMAGING_BUILD_DIR})
 
 # add priism module
 add_subdirectory(python)
