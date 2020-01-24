@@ -100,6 +100,7 @@ endif()
 
 # edit makefile for sparseimaging if necessary
 set(SPARSEIMAGING_BUILD_DIR ${PROJECT_SOURCE_DIR}/${SPARSEIMAGING_DIR}/c++)
+set(SPARSEIMAGING_MAKEFILE makefile.priism)
 message(STATUS "OPENBLAS_LIBRARY_DIR=${OPENBLAS_LIBRARY_DIR}")
 message(STATUS "FFTW3_INCLUDE_DIR is ${FFTW3_INCLUDE_DIR}")
 execute_process(COMMAND echo ${FFTW3_INCLUDE_DIR}
@@ -113,26 +114,21 @@ if(NOT EXISTS ${FFTW3_LIBRARY_DIR}/libfftw3.so)
                 OUTPUT_VARIABLE FFTW3_LIBRARY_DIR)
 endif()
 message(STATUS "FFTW3_LIBRARY_DIR is ${FFTW3_LIBRARY_DIR}")
+execute_process(COMMAND sed -e "s@CFLAGS=-O2@CFLAGS=-O2 -I${FFTW3_INCLUDE_DIR}@g" makefile
+                COMMAND sed -e "s@-lrt @@g"
+                COMMAND sed -e "s@^CLIBS_FFTW = @CLIBS_FFTW = -L${FFTW3_LIBRARY_DIR} @g"
+                COMMAND sed -e "s@-O2@-O3@g"
+                COMMAND sed -e "s@CXX=.*$@CXX=${CMAKE_CXX_COMPILER}@g"
+                OUTPUT_FILE ${SPARSEIMAGING_MAKEFILE}
+                WORKING_DIRECTORY ${SPARSEIMAGING_BUILD_DIR})
 if(EIGEN3_INCLUDE_DIR)
   message(STATUS "Edit makefile for sparseimaging")
-  execute_process(COMMAND sed -e "s@/usr/include/eigen3@${EIGEN3_INCLUDE_DIR}@g" makefile
-                  COMMAND sed -e "s@^CFLAGS=-O2@CFLAGS=-O2 -I${FFTW3_INCLUDE_DIR}@g"
-                  COMMAND sed -e "s@-lrt @@g"
-                  COMMAND sed -e "s@^CLIBS_FFTW = @CLIBS_FFTW = -L${FFTW3_LIBRARY_DIR} @g"
-                  COMMAND sed -e "s@-O2@-O3@g"
-                  OUTPUT_FILE makefile.priism
-                  WORKING_DIRECTORY ${SPARSEIMAGING_BUILD_DIR})
-else()
-  execute_process(COMMAND sed -e "s@CFLAGS=-O2@CFLAGS=-O2 -I${FFTW3_INCLUDE_DIR}@g" makefile
-                  COMMAND sed -e "s@-lrt @@g"
-                  COMMAND sed -e "s@^CLIBS_FFTW = @CLIBS_FFTW = -L${FFTW3_LIBRARY_DIR} @g"
-                  COMMAND sed -e "s@-O2@-O3@g"
-                  OUTPUT_FILE makefile.priism
+  execute_process(COMMAND sed -i -e "s@/usr/include/eigen3@${EIGEN3_INCLUDE_DIR}@g" ${SPARSEIMAGING_MAKEFILE}
                   WORKING_DIRECTORY ${SPARSEIMAGING_BUILD_DIR})
 endif()
 
 # configure compile of sparseimaging to generate libmfista_fft.so
-add_custom_target(sparseimaging make -f makefile.priism libraries
+add_custom_target(sparseimaging make -f ${SPARSEIMAGING_MAKEFILE} libraries
                   WORKING_DIRECTORY ${SPARSEIMAGING_BUILD_DIR})
 
 # add priism module
