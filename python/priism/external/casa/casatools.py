@@ -27,6 +27,14 @@ except Exception:
     import casatools
     _casac = casatools
 
+# logger
+try:
+    # CASA 5
+    from taskinit import casalog
+except Exception:
+    # CASA 6
+    from casatasks import casalog
+
 
 class CasaToolGenerator(object):
     @staticmethod
