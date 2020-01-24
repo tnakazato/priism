@@ -595,7 +595,7 @@ class VisibilityConverter(object):
                                            rdata=real, idata=imag, flag=flag,
                                            weight=weight, row_flag=row_flag,
                                            channel_map=channel_map)
-            print('yielding channelized working set from channels {}'.format(vischans))
+            #print('yielding channelized working set from channels {}'.format(vischans))
             yield ws
 
     def generate_working_set(self, chunk):
@@ -628,7 +628,7 @@ class VisibilityConverter(object):
         # working set to be filled in
         chunk_id = chunk['chunk_id']
         working_set = gridder.GridderWorkingSet(data_id=chunk_id)
-        print('LOG: generate working set for visibility chunk #{0}'.format(chunk_id))
+        #print('LOG: generate working set for visibility chunk #{0}'.format(chunk_id))
 
         # 1. visibility frequency conversion
         # get LSRK frequency at channel boundary

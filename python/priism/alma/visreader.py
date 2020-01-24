@@ -103,7 +103,7 @@ class VisibilityReader(object):
             while (more_chunks):
                 rec = ms_getdata(items)
                 rec['chunk_id'] = chunk_id
-                print('LOG: read visibility chunk #{0}'.format(chunk_id))
+                #print('LOG: read visibility chunk #{0}'.format(chunk_id))
                 yield rec
                 more_chunks = ms_iternext()
                 chunk_id += 1
