@@ -75,6 +75,7 @@ def initialize_attr_for_user_options(cmd):
 
 class priism_build(build):
     user_options = [
+        ('cxx-compiler=', 'C', 'specify path to C++ compiler'),
         ('eigen3-include-dir=', 'E', 'specify directory for Eigen3'),
         # ('openblas-library-dir=', 'B', 'specify directory for OpenBLAS'),
         ('python-root-dir=', 'P', 'specify root directory for Python'),
@@ -285,6 +286,9 @@ class configure_ext(Command):
 
         if self.eigen3_include_dir is not None:
             cmd += ' -DEIGEN3_INCLUDE_DIR={}'.format(self.eigen3_include_dir)
+
+        if self.cxx_compiler is not None:
+            cmd += ' -DCMAKE_CXX_COMPILER={}'.format(self.cxx_compiler)
 
         # if self.openblas_library_dir is not None:
         #     cmd += ' -DOPENBLAS_LIBRARY_DIR={}'.format(self.openblas_library_dir)
