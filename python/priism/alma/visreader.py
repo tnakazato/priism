@@ -110,5 +110,5 @@ class VisibilityReader(object):
                 chunk_id += 1
                 if chunk_id % 100 == 0:
                     print('\rread {0} visibility chunks'.format(chunk_id), end='', flush=True, file=sys.stderr)
-            print('', flush=True, file=sys.stderr)
+            print('\rread {0} visibility chunks'.format(chunk_id), flush=True, file=sys.stderr)
             print('DONE reading visibility chunks')
