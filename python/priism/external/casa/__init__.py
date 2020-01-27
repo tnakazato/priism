@@ -105,7 +105,6 @@ from .casatools import casalog
 
 def adjust_casalog_level(level='INFO'):
     def f(func):
-        print('func={} level={}'.format(func, level))
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
