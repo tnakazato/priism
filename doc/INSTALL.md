@@ -223,7 +223,9 @@ PRIISM will now be available to the location specified by `CMAKE_INSTALL_PREFIX`
 
 ## Installation with `setuptools` (Python 3 / CASA 6 only)
 
-As of 0.3.0, PRIISM offers another way of build and install which is based on Python `setuptools`. So far, it simply wraps `cmake` build so the build based on `cmake` is performed underneath. However, it should be easier than `cmake` build. After moving into the PRIISM's root directory, build and install procedure is as follows:
+As of 0.3.0, PRIISM offers another way of build and install which is based on Python `setuptools`. So far, it simply wraps `cmake` build so the build based on `cmake` is performed underneath. However, it should be easier than `cmake` build especially when you want to install PRIISM to your virtual environment (e.g. the one created by `venv`) because installation directory will automatically be detected by `setuptools` based on which python command is used to run the build and install procedure. 
+
+After moving into the PRIISM's root directory, build and install procedure is as follows:
 
 ```
 python setup.py build
@@ -237,7 +239,6 @@ python setup.py build --help
 python setup.py install --help
 ```
 
-Installation directory will automatically be detected by `setuptools` based on which python command is used to run the build and install procedure. That would be particulary useful to install PRIISM into your Python virtual environment, e.g. the environment created by `venv`. 
 
 ## Using PRIISM
 
