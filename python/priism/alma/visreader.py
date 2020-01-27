@@ -16,6 +16,8 @@
 # along with PRIISM.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import absolute_import
 
+import sys
+
 from . import paramcontainer
 from . import visconverter
 import priism.external.casa as casa
@@ -103,7 +105,10 @@ class VisibilityReader(object):
             while (more_chunks):
                 rec = ms_getdata(items)
                 rec['chunk_id'] = chunk_id
-                #print('LOG: read visibility chunk #{0}'.format(chunk_id))
                 yield rec
                 more_chunks = ms_iternext()
                 chunk_id += 1
+                if chunk_id % 100 == 0:
+                    print('\rread {0} visibility chunks'.format(chunk_id), end='', flush=True, file=sys.stderr)
+            print('', flush=True, file=sys.stderr)
+            print('DONE reading visibility chunks')
