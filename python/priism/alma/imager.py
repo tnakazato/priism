@@ -139,6 +139,7 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
             gridfunction = gridder.GridFunctionUtil.sf(convsupport, convsampling)
         self.gridparam = paramcontainer.GridParamContainer.CreateContainer(**locals())
 
+    @casa.adjust_casalog_level('WARN')
     def gridvis(self, parallel=False):
         """
         Grid visibility data on uv-plane.
@@ -168,6 +169,7 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
         self.griddedvis = visgridder.get_result()
         self.working_set = visgridder.get_result2()
 
+    @casa.adjust_casalog_level('WARN')
     def readvis(self, parallel=False):
         """
         Read visibility data

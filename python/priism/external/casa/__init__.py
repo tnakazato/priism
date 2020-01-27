@@ -17,6 +17,7 @@
 from __future__ import absolute_import
 
 import collections
+import functools
 
 
 # casa version
@@ -99,3 +100,21 @@ from .casatools import SelectTableForRead
 from .casatools import OpenMS
 from .casatools import OpenMSMetaData
 from .casatools import OpenImage
+from .casatools import casalog
+
+
+def adjust_casalog_level(level='INFO'):
+    def f(func):
+
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            casalog.filter(level=level)
+            try:
+                ret = func(*args, **kwargs)
+                return ret
+            finally:
+                casalog.filter(level='INFO')
+
+        return wrapper
+
+    return f
