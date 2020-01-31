@@ -329,4 +329,4 @@ If you have any questions about PRIISM, please contact Takeshi Nakazato at Natio
 
 ## Reference
 
-ADASS proceedings?
+[Nakazato, T., Ikeda, S., Akiyama, K., Kosugi, G., Yamaguchi, M., and Honma, M., 2019, Astronomical Data Analysis Software and Systems XXVIII. ASP Conference Series, Vol. 523, p. 143](http://aspbooks.org/custom/publications/paper/523-0143.html)
