@@ -92,7 +92,7 @@ use `priism.alma`, CASA 5.0 or higher must be available.
 
 In addition to the dependency on PRIISM, there are several prerequisites from
 Sakura and sparseimaging libraries. Sakura depends on FFTW3 and Eigen3 while
-sparseimaging depends on FFTW3 and OpenBLAS. These libraries should be available.
+sparseimaging depends on FFTW3. These libraries should be available.
 More importantly, PRIISM requires C++ compiler that supports C++11 features
 since Sakura utilizes various C++11 features in its implementation.
 
@@ -105,7 +105,6 @@ In summary, prerequisites for PRIISM is as follows:
 * gcc/g++ 4.8 or higher or clang/clang++ 3.5 or higher
 * FFTW3
 * Eigen 3.2 or higher
-* OpenBLAS
 * git (optional but preferable)
 
 
@@ -223,7 +222,20 @@ PRIISM will now be available to the location specified by `CMAKE_INSTALL_PREFIX`
 
 ## Installation with `setuptools` (Python 3 / CASA 6 only)
 
-As of 0.3.0, PRIISM offers another way of build and install which is based on Python `setuptools`. So far, it simply wraps `cmake` build so the build based on `cmake` is performed underneath. However, it should be easier than `cmake` build especially when you want to install PRIISM to your virtual environment (e.g. the one created by `venv`) because installation directory will automatically be detected by `setuptools` based on which python command is used to run the build and install procedure. 
+As of 0.3.0, PRIISM offers another way of build and install which is based on Python `setuptools`. So far, it simply wraps `cmake` build so the build based on `cmake` is performed underneath. However, it should be easier than `cmake` build especially when you want to install PRIISM to your virtual environment (e.g. the one created by `venv`) because installation directory will automatically be detected by `setuptools` based on which python command is used to run the build and install procedure. Brief instruction on installing PRIISM with modular CASA 6 is shown below.
+
+### 1. Create and Activate Virtual Environment
+
+```
+$ python3 -m venv priism
+$ source priism/bin/activate
+```
+
+### 2. Install CASA 6
+
+Please follow [the instruction](https://casa.nrao.edu/casadocs/casa-5.6.0/introduction/casa6-installation-and-usage) provided by CASA team. You already have a virtual environment for PRIISM so you can use it for installation. 
+
+### 3. Install PRIISM
 
 After moving into the PRIISM's root directory, build and install procedure is as follows:
 
@@ -239,24 +251,19 @@ python setup.py build --help
 python setup.py install --help
 ```
 
+During installation of CASA 6, `numpy` will be installed by dependency. It is recommended to use that `numpy` when you install PRIISM. 
 
 ## Using PRIISM
 
 ### Setting PYTHONPATH
 
-You have to ensure that the installation directory of the PRIISM is included in the `PYTHONPATH` environment variable. In the case of `cmake` build, installation directory is the location specified by `CMAKE_INSTALL_PREFIX` when cmake is executed. Assuming that `/usr/local/priism` is set for `CMAKE_INSTALL_PREFIX`, and we use bash, the command to be executed is as follows.
+You have to ensure that the installation directory of the PRIISM is included in the `PYTHONPATH` environment variable. In the case of `cmake` build, installation directory is the location specified by `CMAKE_INSTALL_PREFIX` when cmake is executed. Assuming that `/usr/local/priism` is set for `CMAKE_INSTALL_PREFIX`, and we use bash, the command to be executed is as follows.  
 
     export PYTHONPATH=/usr/local/priism:$PYTHONPATH
 
-----
+Note that, as of 0.3.0, you no longer need to add `CMAME_INSTALL_PREFIX/lib` to `PYTHONPATH`.
 
-**NOTE**
-
-As of 0.3.0, you no longer need to add `CMAME_INSTALL_PREFIX/lib` to `PYTHONPATH`. 
-
----
-
-In the case of installation with `setuptools`, you usually do not care about `PYTHONPATH` because PRIISM should be installed to the directory that is recognized by python. Otherwise, `setuptools` will notify you to update `PYTHONPATH`. 
+Note also that, in the case of installation with `setuptools`, you usually do not care about `PYTHONPATH` because PRIISM should be installed to the directory that is recognized by default. Otherwise, `setuptools` will notify you to update `PYTHONPATH` when you install PRIISM. 
 
 ### Importing module
 Then, launch python or CASA and import appropriate module. For `priism.core`,
