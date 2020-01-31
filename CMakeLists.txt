@@ -119,6 +119,7 @@ execute_process(COMMAND sed -e "s@CFLAGS=-O2@CFLAGS=-O2 -I${FFTW3_INCLUDE_DIR}@g
                 COMMAND sed -e "s@^CLIBS_FFTW = @CLIBS_FFTW = -L${FFTW3_LIBRARY_DIR} @g"
                 COMMAND sed -e "s@-O2@-O3@g"
                 COMMAND sed -e "s@CXX=.*$@CXX=${CMAKE_CXX_COMPILER}@g"
+                COMMAND sed -e "s@c++[0-9][0-9]@c++11@g"
                 OUTPUT_FILE ${SPARSEIMAGING_MAKEFILE}
                 WORKING_DIRECTORY ${SPARSEIMAGING_BUILD_DIR})
 if(EIGEN3_INCLUDE_DIR)
