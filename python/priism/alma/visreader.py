@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with PRIISM.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import absolute_import
+from __future__ import print_function
 
 import sys
 
@@ -109,6 +110,6 @@ class VisibilityReader(object):
                 more_chunks = ms_iternext()
                 chunk_id += 1
                 if chunk_id % 100 == 0:
-                    print('\rread {0} visibility chunks'.format(chunk_id), end='', flush=True, file=sys.stderr)
-            print('\rread {0} visibility chunks'.format(chunk_id), flush=True, file=sys.stderr)
+                    print('\rread {0} visibility chunks'.format(chunk_id), end='', file=sys.stderr)
+            print('\rread {0} visibility chunks'.format(chunk_id), file=sys.stderr)
             print('DONE reading visibility chunks')
