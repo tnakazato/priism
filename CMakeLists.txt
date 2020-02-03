@@ -65,7 +65,7 @@ if(NOT EXISTS ${PROJECT_SOURCE_DIR}/${SAKURA_DIR})
     execute_process(COMMAND curl -L -O ${SAKURA_URL}
                     WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
   endif()
-  execute_process(COMMAND tar zxvf ${CMAKE_BINARY_DIR}/${SAKURA_TAR}
+  execute_process(COMMAND tar zxvf ${PROJECT_SOURCE_DIR}/${SAKURA_TAR}
                   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 endif()
 
@@ -91,14 +91,47 @@ if(NOT EXISTS ${PROJECT_SOURCE_DIR}/${SAKURA_DIR}/${GTEST_DIR})
 endif()
 
 # configure sakura
-set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/${SAKURA_DIR}/cmake-modules CACHE STRING "List of directories to search for CMake modules")
-set(BUILD_DOC OFF CACHE BOOL "Build Sakura API document")
-add_subdirectory(libsakura EXCLUDE_FROM_ALL)
-if(NOT APPLE)
-  set_target_properties(sakurapy PROPERTIES INSTALL_RPATH "$ORIGIN/../lib:$ORIGIN/")
-else()
-  set_target_properties(sakurapy PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/priism/external/sakura")
+set(SAKURA_BUILD_DIR "${PROJECT_SOURCE_DIR}/${SAKURA_DIR}/build")
+if (NOT EXISTS ${SAKURA_BUILD_DIR})
+  execute_process(COMMAND mkdir -p ${SAKURA_BUILD_DIR})
 endif()
+set(SAKURA_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}/priism/external/sakura")
+set(SAKURA_CMAKE_OPTIONS "-DCMAKE_INSTALL_PREFIX=${SAKURA_INSTALL_PREFIX} -DCMAKE_MODULE_PATH=${PROJECT_SOURCE_DIR}/${SAKURA_DIR}/cmake-modules -DBUILD_DOC=OFF -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER} -DCMAKE_INSTALL_RPATH='$ORIGIN/'")
+if (EIGEN3_INCLUDE_DIR)
+  set(SAKURA_CMAKE_OPTIONS "${SAKURA_CMAKE_OPTIONS} -DEIGEN3_INCLUDE_DIR=${EIGEN3_INCLUDE_DIR}")
+endif()
+if (PYTHON_ROOTDIR) 
+  set(SAKURA_CMAKE_OPTIONS "${SAKURA_CMAKE_OPTIONS} -DPYTHON_ROOTDIR=${PYTHON_ROOTDIR}")
+endif()
+if (PYTHON_INCLUDE_DIR)
+  set(SAKURA_CMAKE_OPTIONS "${SAKURA_CMAKE_OPTIONS} -DPYTHON_INCLUDE_PATH=${PYTHON_INCLUDE_DIR}")
+endif()
+if (PYTHON_LIBRARY)
+  set(SAKURA_CMAKE_OPTIONS "${SAKURA_CMAKE_OPTIONS} -DPYTHON_LIBRARY=${PYTHON_LIBRARY}")
+endif()
+if (NUMPY_INCLUDE_DIR)
+  set(SAKURA_CMAKE_OPTIONS "${SAKURA_CMAKE_OPTIONS} -DNUMPY_INCLUDE_DIR=${NUMPY_INCLUDE_DIR}")
+endif()
+if (BUNDLE_CASA_APP)
+  set(SAKURA_CMAKE_OPTIONS "${SAKURA_CMAKE_OPTIONS} -DBUNDLE_CASA_APP=${BUNDLE_CASA_APP}")
+endif()
+message(STATUS "SAKURA_CMAKE_OPTIONS=${SAKURA_CMAKE_OPTIONS}")
+set(SAKURA_CMAKE_COMMAND "${CMAKE_COMMAND} .. ${SAKURA_CMAKE_OPTIONS}")
+execute_process(COMMAND echo "execute_process(COMMAND ${SAKURA_CMAKE_COMMAND}\n                WORKING_DIRECTORY ${SAKURA_BUILD_DIR})"
+                OUTPUT_FILE build_sakura.cmake
+                WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+#execute_process(COMMAND cmake .. -DCMAKE_INSTALL_PREFIX=/remote/home/nakazato/priism_root/priism/external/sakura -DCMAKE_MODULE_PATH=/work/a/nakazato/git_workspace/priism/libsakura/cmake-modules -DBUILD_DOC=OFF -DCMAKE_CXX_COMPILER=/opt/rh/devtoolset-4/root/usr/bin/g++ -DCMAKE_INSTALL_RPATH='$ORIGIN/' -DEIGEN3_INCLUDE_DIR=/remote/home/nakazato/eigen/eigen -DPYTHON_ROOTDIR=/opt/rh/rh-python36/root/usr
+#execute_process(COMMAND ${CMAKE_COMMAND} --debug-output .. ${SAKURA_CMAKE_OPTIONS}
+#                WORKING_DIRECTORY ${SAKURA_BUILD_DIR})
+execute_process(COMMAND ${CMAKE_COMMAND} -P build_sakura.cmake)
+#set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/${SAKURA_DIR}/cmake-modules CACHE STRING "List of directories to search for CMake modules")
+#set(BUILD_DOC OFF CACHE BOOL "Build Sakura API document")
+#add_subdirectory(libsakura EXCLUDE_FROM_ALL)
+#if(NOT APPLE)
+#  set_target_properties(sakurapy PROPERTIES INSTALL_RPATH "$ORIGIN/../lib:$ORIGIN/")
+#else()
+#  set_target_properties(sakurapy PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/priism/external/sakura")
+#endif()
 
 # edit makefile for sparseimaging if necessary
 set(SPARSEIMAGING_BUILD_DIR ${PROJECT_SOURCE_DIR}/${SPARSEIMAGING_DIR}/c++)
@@ -134,10 +167,13 @@ endif()
 add_custom_target(sparseimaging make -f ${SPARSEIMAGING_MAKEFILE} libraries
                   WORKING_DIRECTORY ${SPARSEIMAGING_BUILD_DIR})
 
+add_custom_target(sakurapy make sakurapy
+                  WORKING_DIRECTORY ${SAKURA_BUILD_DIR})
+
 # add priism module
 add_subdirectory(python)
 add_custom_target(priism ALL echo ""
-                  DEPENDS sakura sakurapy sparseimaging)
+                  DEPENDS sakurapy sparseimaging)
 
 # install libmfista
 install(PROGRAMS ${SPARSEIMAGING_BUILD_DIR}/libmfista_fft.so
@@ -146,33 +182,38 @@ install(PROGRAMS ${SPARSEIMAGING_BUILD_DIR}/libmfista_nufft.so
         DESTINATION priism/core)
 
 # install libsakura
-if (APPLE)
-  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/bin/libsakura.dylib
-          DESTINATION priism/external/sakura)
-  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/bin/libsakura.5.dylib
-          DESTINATION priism/external/sakura)
-  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/bin/libsakura.5.0.dylib
-          DESTINATION priism/external/sakura)
-  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/python-binding/libsakurapy.so
-          DESTINATION priism/external/sakura)
-  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/python-binding/libsakurapy.0.so
-          DESTINATION priism/external/sakura)
-  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/python-binding/libsakurapy.0.1.so
-          DESTINATION priism/external/sakura)
-else()
-  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/bin/libsakura.so
-          DESTINATION priism/external/sakura)
-  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/bin/libsakura.so.5
-          DESTINATION priism/external/sakura)
-  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/bin/libsakura.so.5.0
-          DESTINATION priism/external/sakura)
-  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/python-binding/libsakurapy.so
-          DESTINATION priism/external/sakura)
-  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/python-binding/libsakurapy.so.0
-          DESTINATION priism/external/sakura)
-  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/python-binding/libsakurapy.so.0.1
-          DESTINATION priism/external/sakura)
-endif()
+execute_process(COMMAND echo "execute_process(COMMAND ${CMAKE_COMMAND} --build ${SAKURA_BUILD_DIR} --target install/fast)"
+                OUTPUT_FILE sakura_install.cmake
+                WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+install(SCRIPT ${CMAKE_BINARY_DIR}/sakura_install.cmake)
+
+#if (APPLE)
+#  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/bin/libsakura.dylib
+#          DESTINATION priism/external/sakura)
+#  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/bin/libsakura.5.dylib
+#          DESTINATION priism/external/sakura)
+#  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/bin/libsakura.5.0.dylib
+#          DESTINATION priism/external/sakura)
+#  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/python-binding/libsakurapy.so
+#          DESTINATION priism/external/sakura)
+#  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/python-binding/libsakurapy.0.so
+#          DESTINATION priism/external/sakura)
+#  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/python-binding/libsakurapy.0.1.so
+#          DESTINATION priism/external/sakura)
+#else()
+#  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/bin/libsakura.so
+#          DESTINATION priism/external/sakura)
+#  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/bin/libsakura.so.5
+#          DESTINATION priism/external/sakura)
+#  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/bin/libsakura.so.5.0
+#          DESTINATION priism/external/sakura)
+#  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/python-binding/libsakurapy.so
+#          DESTINATION priism/external/sakura)
+#  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/python-binding/libsakurapy.so.0
+#          DESTINATION priism/external/sakura)
+#  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/python-binding/libsakurapy.so.0.1
+#          DESTINATION priism/external/sakura)
+#endif()
 
 # clean_all
 # clean_all will execute "make clean" as well as removing all downloaded files
