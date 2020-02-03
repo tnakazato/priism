@@ -88,7 +88,7 @@ if(NOT EXISTS ${PROJECT_SOURCE_DIR}/${SAKURA_DIR}/${GTEST_DIR})
   endif()
   execute_process(COMMAND ln -s "${GTEST_EXTRACT}/googletest" "${GTEST_DIR}"
                   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/${SAKURA_DIR})
-endif()  
+endif()
 
 # configure sakura
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/${SAKURA_DIR}/cmake-modules CACHE STRING "List of directories to search for CMake modules")
@@ -96,6 +96,8 @@ set(BUILD_DOC OFF CACHE BOOL "Build Sakura API document")
 add_subdirectory(libsakura EXCLUDE_FROM_ALL)
 if(NOT APPLE)
   set_target_properties(sakurapy PROPERTIES INSTALL_RPATH "$ORIGIN/../lib:$ORIGIN/")
+else()
+  set_target_properties(sakurapy PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/priism/external/sakura")
 endif()
 
 # edit makefile for sparseimaging if necessary
@@ -144,20 +146,35 @@ install(PROGRAMS ${SPARSEIMAGING_BUILD_DIR}/libmfista_nufft.so
         DESTINATION priism/core)
 
 # install libsakura
-install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/bin/libsakura.so
-        DESTINATION priism/external/sakura)
-install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/bin/libsakura.so.5
-        DESTINATION priism/external/sakura)
-install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/bin/libsakura.so.5.0
-        DESTINATION priism/external/sakura)
-install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/python-binding/libsakurapy.so
-        DESTINATION priism/external/sakura)
-install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/python-binding/libsakurapy.so.0
-        DESTINATION priism/external/sakura)
-install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/python-binding/libsakurapy.so.0.1
-        DESTINATION priism/external/sakura)
+if (APPLE)
+  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/bin/libsakura.dylib
+          DESTINATION priism/external/sakura)
+  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/bin/libsakura.5.dylib
+          DESTINATION priism/external/sakura)
+  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/bin/libsakura.5.0.dylib
+          DESTINATION priism/external/sakura)
+  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/python-binding/libsakurapy.so
+          DESTINATION priism/external/sakura)
+  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/python-binding/libsakurapy.0.so
+          DESTINATION priism/external/sakura)
+  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/python-binding/libsakurapy.0.1.so
+          DESTINATION priism/external/sakura)
+else()
+  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/bin/libsakura.so
+          DESTINATION priism/external/sakura)
+  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/bin/libsakura.so.5
+          DESTINATION priism/external/sakura)
+  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/bin/libsakura.so.5.0
+          DESTINATION priism/external/sakura)
+  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/python-binding/libsakurapy.so
+          DESTINATION priism/external/sakura)
+  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/python-binding/libsakurapy.so.0
+          DESTINATION priism/external/sakura)
+  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${SAKURA_DIR}/python-binding/libsakurapy.so.0.1
+          DESTINATION priism/external/sakura)
+endif()
 
-# clean_all 
+# clean_all
 # clean_all will execute "make clean" as well as removing all downloaded files
 add_custom_target(clean_all make clean
                   COMMAND rm -rf ${PROJECT_SOURCE_DIR}/${SAKURA_DIR}
