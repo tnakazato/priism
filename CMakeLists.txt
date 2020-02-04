@@ -135,7 +135,6 @@ execute_process(COMMAND ${CMAKE_COMMAND} -P build_sakura.cmake)
 # edit makefile for sparseimaging if necessary
 set(SPARSEIMAGING_BUILD_DIR ${PROJECT_SOURCE_DIR}/${SPARSEIMAGING_DIR}/c++)
 set(SPARSEIMAGING_MAKEFILE makefile.priism)
-message(STATUS "OPENBLAS_LIBRARY_DIR=${OPENBLAS_LIBRARY_DIR}")
 message(STATUS "FFTW3_INCLUDE_DIR is ${FFTW3_INCLUDE_DIR}")
 execute_process(COMMAND echo ${FFTW3_INCLUDE_DIR}
                 COMMAND sed -e "s@include@lib64@g"
