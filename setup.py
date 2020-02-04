@@ -77,7 +77,6 @@ class priism_build(build):
     user_options = [
         ('cxx-compiler=', 'C', 'specify path to C++ compiler'),
         ('eigen3-include-dir=', 'E', 'specify directory for Eigen3'),
-        # ('openblas-library-dir=', 'B', 'specify directory for OpenBLAS'),
         ('python-root-dir=', 'P', 'specify root directory for Python'),
         ('python-include-dir=', 'I', 'specify include directory for Python.h (take priority over python-root-dir)'),
         ('python-library=', 'L', 'specify Python library (take priority over python-root-dir)'),
@@ -130,33 +129,16 @@ class priism_build_ext(build_ext):
         for cmd in self.get_sub_commands():
             self.run_command(cmd)
 
-        execute_command('make', cwd=self.priism_build_dir)
-
         self.build_sakura()
         self.build_smili()
 
     def build_sakura(self):
-        subdirs = ['bin', 'python-binding']
-        libs = ['libsakura.so', 'libsakurapy.so']
-        libsakura_dir = '{}/libsakura'.format(self.priism_build_dir)
-        dst_dir = os.path.join(self.build_lib, 'priism/external/sakura')
-        assert os.path.exists(dst_dir)
-        for d, f in zip(subdirs, libs):
-            src = os.path.join(libsakura_dir, d, f)
-            assert os.path.exists(src)
-            dst = os.path.join(dst_dir, f)
-            self.copy_file(src, dst)
+        execute_command('make sakurapy', cwd=self.priism_build_dir)
+        execute_command('cmake -DCOMPONENT=Sakura -P cmake_install.cmake', cwd=self.priism_build_dir)
 
     def build_smili(self):
-        smili_dir = 'sparseimaging/c++'
-        smili_libs = ['libmfista_{}.so'.format(suffix) for suffix in ('fft', 'nufft')]
-        for s in smili_libs:
-            src = os.path.join(smili_dir, s)
-            assert os.path.exists(src)
-            dst_dir = os.path.join(self.build_lib, 'priism/core')
-            assert os.path.exists(dst_dir)
-            dst = os.path.join(dst_dir, s)
-            self.copy_file(src, dst)
+        execute_command('make sparseimaging', cwd=self.priism_build_dir)
+        execute_command('cmake -DCOMPONENT=Smili -P cmake_install.cmake', cwd=self.priism_build_dir)
 
     sub_commands = build_ext.sub_commands + [('configure_ext', None)]   
 
@@ -249,6 +231,7 @@ class configure_ext(Command):
             raise PriismDependencyError('Command "cmake" is not found. Please install.')
         self.fftw3_root_dir = None
         self.priism_build_dir = None
+        self.build_lib = None
         initialize_attr_for_user_options(self)
 
     def finalize_options(self):
@@ -259,6 +242,7 @@ class configure_ext(Command):
         self.set_undefined_options(
             'build_ext',
             ('priism_build_dir', 'priism_build_dir'),
+            ('build_lib', 'build_lib')
         )
         if self.python_root_dir is None:
             # assuming python executable path to PYTHON_ROOT_DIR/bin/python
@@ -270,7 +254,7 @@ class configure_ext(Command):
         print('fftw3-root-dir={}'.format(self.fftw3_root_dir))
 
     def __configure_cmake_command(self):
-        cmd = 'cmake .. -DCMAKE_INSTALL_PREFIX=./installed'
+        cmd = 'cmake .. -DCMAKE_INSTALL_PREFIX={}'.format(os.path.relpath(self.build_lib, self.priism_build_dir))
 
         if self.python_root_dir is not None:
             cmd += ' -DPYTHON_ROOTDIR={}'.format(self.python_root_dir)
@@ -289,9 +273,6 @@ class configure_ext(Command):
 
         if self.cxx_compiler is not None:
             cmd += ' -DCMAKE_CXX_COMPILER={}'.format(self.cxx_compiler)
-
-        # if self.openblas_library_dir is not None:
-        #     cmd += ' -DOPENBLAS_LIBRARY_DIR={}'.format(self.openblas_library_dir)
 
         #print('generated cmake command:')
         #print('  {}'.format(cmd))
