@@ -91,12 +91,22 @@ if(NOT EXISTS ${PROJECT_SOURCE_DIR}/${SAKURA_DIR}/${GTEST_DIR})
 endif()
 
 # configure sakura
+# edit library destination 
+set(SAKURA_SUBDIRECTORIES src python-binding)
+foreach(SAKURA_SUBDIR IN ITEMS src python-binding)
+  set(_DIR "${PROJECT_SOURCE_DIR}/${SAKURA_DIR}/${SAKURA_SUBDIR}")
+  message(STATUS "editing CMakeLists.txt in ${_DIR}")
+  execute_process(COMMAND sed -i -e "s@LIBRARY DESTINATION lib@LIBRARY DESTINATION priism/external/sakura@g" CMakeLists.txt
+                  WORKING_DIRECTORY ${_DIR})
+  execute_process(COMMAND sed -i -e "s@PUBLIC_HEADER DESTINATION include@PUBLIC_HEADER DESTINATION priism/external/sakura/include@g" CMakeLists.txt
+                  WORKING_DIRECTORY ${_DIR})
+  unset(_DIR)
+endforeach()
 set(SAKURA_BUILD_DIR "${PROJECT_SOURCE_DIR}/${SAKURA_DIR}/build")
 if (NOT EXISTS ${SAKURA_BUILD_DIR})
   execute_process(COMMAND mkdir -p ${SAKURA_BUILD_DIR})
 endif()
-set(SAKURA_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}/priism/external/sakura")
-set(SAKURA_CMAKE_OPTIONS "-DCMAKE_INSTALL_PREFIX=${SAKURA_INSTALL_PREFIX} -DCMAKE_MODULE_PATH=${PROJECT_SOURCE_DIR}/${SAKURA_DIR}/cmake-modules -DBUILD_DOC=OFF -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER} -DCMAKE_INSTALL_RPATH='$ORIGIN/'")
+set(SAKURA_CMAKE_OPTIONS "-DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} -DCMAKE_MODULE_PATH=${PROJECT_SOURCE_DIR}/${SAKURA_DIR}/cmake-modules -DBUILD_DOC=OFF -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER} -DCMAKE_INSTALL_RPATH='$ORIGIN/'")
 if (EIGEN3_INCLUDE_DIR)
   set(SAKURA_CMAKE_OPTIONS "${SAKURA_CMAKE_OPTIONS} -DEIGEN3_INCLUDE_DIR=${EIGEN3_INCLUDE_DIR}")
 endif()
@@ -166,15 +176,18 @@ add_custom_target(priism ALL echo ""
 
 # install libmfista
 install(PROGRAMS ${SPARSEIMAGING_BUILD_DIR}/libmfista_fft.so
+        COMPONENT Smili
         DESTINATION priism/core)
 install(PROGRAMS ${SPARSEIMAGING_BUILD_DIR}/libmfista_nufft.so
+        COMPONENT Smili
         DESTINATION priism/core)
 
 # install libsakura
 execute_process(COMMAND echo "execute_process(COMMAND ${CMAKE_COMMAND} --build ${SAKURA_BUILD_DIR} --target install/fast)"
                 OUTPUT_FILE sakura_install.cmake
                 WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
-install(SCRIPT ${CMAKE_BINARY_DIR}/sakura_install.cmake)
+install(SCRIPT ${CMAKE_BINARY_DIR}/sakura_install.cmake
+        COMPONENT Sakura)
 
 # clean_all
 # clean_all will execute "make clean" as well as removing all downloaded files
