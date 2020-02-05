@@ -120,35 +120,6 @@ else()
   set(CMAKE_INSTALL_RPATH "$ORIGIN")
 endif()
 add_subdirectory(libsakura)
-#set(SAKURA_BUILD_DIR "${PROJECT_SOURCE_DIR}/${SAKURA_DIR}/build")
-#if (NOT EXISTS ${SAKURA_BUILD_DIR})
-#  execute_process(COMMAND mkdir -p ${SAKURA_BUILD_DIR})
-#endif()
-#set(SAKURA_CMAKE_OPTIONS "-DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} -DCMAKE_MODULE_PATH=${PROJECT_SOURCE_DIR}/${SAKURA_DIR}/cmake-modules -DBUILD_DOC=OFF -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER} -DCMAKE_INSTALL_RPATH='$ORIGIN/'")
-#if (EIGEN3_INCLUDE_DIR)
-#  set(SAKURA_CMAKE_OPTIONS "${SAKURA_CMAKE_OPTIONS} -DEIGEN3_INCLUDE_DIR=${EIGEN3_INCLUDE_DIR}")
-#endif()
-#if (PYTHON_ROOTDIR)
-#  set(SAKURA_CMAKE_OPTIONS "${SAKURA_CMAKE_OPTIONS} -DPYTHON_ROOTDIR=${PYTHON_ROOTDIR}")
-#endif()
-#if (PYTHON_INCLUDE_DIR)
-#  set(SAKURA_CMAKE_OPTIONS "${SAKURA_CMAKE_OPTIONS} -DPYTHON_INCLUDE_PATH=${PYTHON_INCLUDE_DIR}")
-#endif()
-#if (PYTHON_LIBRARY)
-#  set(SAKURA_CMAKE_OPTIONS "${SAKURA_CMAKE_OPTIONS} -DPYTHON_LIBRARY=${PYTHON_LIBRARY}")
-#endif()
-#if (NUMPY_INCLUDE_DIR)
-#  set(SAKURA_CMAKE_OPTIONS "${SAKURA_CMAKE_OPTIONS} -DNUMPY_INCLUDE_DIR=${NUMPY_INCLUDE_DIR}")
-#endif()
-#if (BUNDLE_CASA_APP)
-#  set(SAKURA_CMAKE_OPTIONS "${SAKURA_CMAKE_OPTIONS} -DBUNDLE_CASA_APP=${BUNDLE_CASA_APP}")
-#endif()
-#message(STATUS "SAKURA_CMAKE_OPTIONS=${SAKURA_CMAKE_OPTIONS}")
-#set(SAKURA_CMAKE_COMMAND "${CMAKE_COMMAND} .. ${SAKURA_CMAKE_OPTIONS}")
-#execute_process(COMMAND echo "execute_process(COMMAND ${SAKURA_CMAKE_COMMAND}\n                WORKING_DIRECTORY ${SAKURA_BUILD_DIR})"
-#                OUTPUT_FILE build_sakura.cmake
-#                WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
-#execute_process(COMMAND ${CMAKE_COMMAND} -P build_sakura.cmake)
 
 # edit makefile for sparseimaging if necessary
 set(SPARSEIMAGING_BUILD_DIR ${PROJECT_SOURCE_DIR}/${SPARSEIMAGING_DIR}/c++)
@@ -183,9 +154,6 @@ endif()
 add_custom_target(sparseimaging make -f ${SPARSEIMAGING_MAKEFILE} libraries
                   WORKING_DIRECTORY ${SPARSEIMAGING_BUILD_DIR})
 
-#add_custom_target(sakurapy make sakurapy
-#                  WORKING_DIRECTORY ${SAKURA_BUILD_DIR})
-
 # add priism module
 add_subdirectory(python)
 add_custom_target(priism ALL echo ""
@@ -198,13 +166,6 @@ install(PROGRAMS ${SPARSEIMAGING_BUILD_DIR}/libmfista_fft.so
 install(PROGRAMS ${SPARSEIMAGING_BUILD_DIR}/libmfista_nufft.so
         COMPONENT Smili
         DESTINATION priism/core)
-
-# install libsakura
-#execute_process(COMMAND echo "execute_process(COMMAND ${CMAKE_COMMAND} --build ${SAKURA_BUILD_DIR} --target install/fast)"
-#                OUTPUT_FILE sakura_install.cmake
-#                WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
-#install(SCRIPT ${CMAKE_BINARY_DIR}/sakura_install.cmake
-#        COMPONENT Sakura)
 
 # clean_all
 # clean_all will execute "make clean" as well as removing all downloaded files
