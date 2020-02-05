@@ -287,9 +287,9 @@ class configure_ext(Command):
         if not os.path.exists(self.priism_build_dir):
             os.mkdir(self.priism_build_dir)
 
-        cache_file = os.path.join(self.priism_build_dir, 'CMakeCache.txt')
-        if os.path.exists(cache_file):
-            os.remove(cache_file)
+        #cache_file = os.path.join(self.priism_build_dir, 'CMakeCache.txt')
+        #if os.path.exists(cache_file):
+        #    os.remove(cache_file)
 
         cmd = self.__configure_cmake_command()
         execute_command(cmd, cwd=self.priism_build_dir)
