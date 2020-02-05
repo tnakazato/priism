@@ -159,13 +159,6 @@ This option will be useful when Eigen3 is installed to non-standard location.
 
 Example: `-DEIGEN3_INCLUDE_DIR=$HOME/eigen`
 
-**OPENBLAS_LIBRARY_DIR**
-
-This option tells cmake where OpenBLAS library is installed.
-This option will be useful when OpenBLAS is installed to non-standard location.
-
-Example: `-DOPENBLAS_LIBRARY_DIR=$HOME/OpenBLAS/lib`
-
 **PYTHON_ROOTDIR**
 
 This option tells cmake where python package is installed.
