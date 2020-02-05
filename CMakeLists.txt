@@ -24,6 +24,8 @@ execute_process(COMMAND which git
                 RESULT_VARIABLE GIT_ERROR_CODE
                 OUTPUT_VARIABLE GIT_CMD)
 message(STATUS "Found git: ${GIT_CMD}")
+set(SPARSEIMAGING_EXTRACT sparseimaging-smili)
+set(SPARSEIMAGING_ZIP smili.zip)
 if(NOT GIT_ERROR_CODE)
   if(NOT EXISTS ${PROJECT_SOURCE_DIR}/${SPARSEIMAGING_DIR})
     message(STATUS "Sparseimaging is not downloaded yet")
@@ -35,8 +37,6 @@ if(NOT GIT_ERROR_CODE)
                     WORKING_DIRECTORY ${SPARSEIMAGING_DIR})
   endif()
 else()
-  set(SPARSEIMAGING_EXTRACT sparseimaging-smili)
-  set(SPARSEIMAGING_ZIP smili.zip)
   if(NOT EXISTS ${PROJECT_SOURCE_DIR}/${SPARSEIMAGING_DIR})
     if(NOT EXISTS ${PROJECT_SOURCE_DIR}/${SPARSEIMAGING_EXTRACT})
       if(NOT EXISTS ${CMAKE_BINARY_DIR}/${SPARSEIMAGING_ZIP})
@@ -212,6 +212,7 @@ add_custom_target(clean_all make clean
                   COMMAND rm -rf ${PROJECT_SOURCE_DIR}/${SAKURA_DIR}
                   COMMAND rm -rf ${PROJECT_SOURCE_DIR}/${SPARSEIMAGING_DIR}
                   COMMAND rm -rf ${PROJECT_SOURCE_DIR}/${SPARSEIMAGING_EXTRACT}
+                  COMMAND rm -f  ${PROJECT_SOURCE_DIR}/${SAKURA_TAR}
                   COMMAND rm -f  ${CMAKE_BINARY_DIR}/${SAKURA_TAR}
                   COMMAND rm -f  ${CMAKE_BINARY_DIR}/${SPARSEIMAGING_ZIP}
                   COMMAND rm -f  ${CMAKE_BINARY_DIR}/${GTEST_ZIP}
