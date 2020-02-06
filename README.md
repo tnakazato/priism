@@ -287,7 +287,7 @@ template scripts for each solver. Name of the scripts are as follows:
 
 ### Running `priism.alma` outside CASA
 
-If you want to run `priism.alma` on python environment (i.e. such as python, ipython, Jupyter Notebook, etc.), you have two choices to do that.
+If you want to run `priism.alma` on python environment (i.e. such as python, ipython, Jupyter Notebook, etc.) rather than CASA CLI, you have two choices to do that.
 
 1. use modular CASA release (6.0 or later)
 1. use `casac` module provided by monolithic CASA release
