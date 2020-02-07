@@ -33,7 +33,7 @@ module for processing ALMA data which is supposed to be working on CASA.
 For `priism.core`, any visibility data must be converted to NumPy array before being fed to the module.
 Output image is also in the form of NumPy array.
 On the other hand, `priism.alma` accepts the visibility data as the MeasurementSet (MS) format, which is a native 
-data format for CASA. The `priism.alma` module works on CASA or any python environment (python, ipython, Jupyter Notebook etc.) that has an access to core module of casa (`casac` module). `priism.alma` equips some specific interface to handle data in MS format.
+data format for CASA. The `priism.alma` module works on CASA or any python environment (python, ipython, Jupyter Notebook etc.) that has an access to core module of casa tools. `priism.alma` equips some specific interface to handle data in MS format.
 Basic workflow is as follows:
 1. `priism.alma` first performs visibility gridding to put visibility data onto regularly spaced grid in
 uv plane ("FFT" solver). `priism.alma` also has an option to solve raw visibility data ("NUFFT" solver).
@@ -90,7 +90,7 @@ prerequisites for both `priism` and CASA.
 * Red Hat Enterprise Linux 7 (RHEL7) with CASA 5.3.0
 * Red Hat Enterprise Linux 7 (RHEL7) with CASA 5.4.0
 * macOS 10.14 with CASA 5.1.1
-* Red Hat Enterprise Linux 7 (RHEL7) with python 2.7 plus `casac` module included in CASA 5.4.0
+* Red Hat Enterprise Linux 7 (RHEL7) with python 2.7 plus casa tools included in CASA 5.4.0
 
 ## Prerequisites
 
@@ -107,7 +107,7 @@ library, during cmake configuration.
 These online materials are downloaded by curl command so curl must also be
 available.
 
-PRIISM for ALMA (`priism.alma`) is supposed to run on CASA or python environment with `casac` module. If you want to
+PRIISM for ALMA (`priism.alma`) is supposed to run on CASA or python environment with casa tools. If you want to
 use `priism.alma`, CASA 5.0 or higher must be available.
 
 In addition to the dependency on PRIISM, there are several prerequisites from
@@ -286,7 +286,7 @@ or simply,
 
     import priism
 
-will work. For `priism.alma`, you need to launch CASA or python that can import `casac` module.
+will work. For `priism.alma`, you need to launch CASA or python with casa tools.
 
     import priism.alma
 
@@ -302,39 +302,6 @@ template scripts for each solver. Name of the scripts are as follows:
 * `priism.core` (mfista_fft): `cvrun_core.py`
 * `priism.alma` (mfista_fft): `cvrun_fft.py`
 * `priism.alma` (mfista_nufft): `cvrun_nufft.py`
-
-### Running `priism.alma` outside CASA
-
-If you want to run `priism.alma` on python environment (i.e. such as python, ipython, Jupyter Notebook, etc.) rather than CASA CLI, you have two choices to do that.
-
-1. use modular CASA release (6.0 or later)
-1. use `casac` module provided by monolithic CASA release
-
-**The first option is preferable.** But, in case if you have to choose the second option, the following instruction would be useful. 
-
-First, you must be able to import `casac`, which
-is a Python binding of CASA toolkit implemented as a set of C++ classes. To do that, you have to do either,
-
-* add a path to `casac.py` to `PYTHONPATH` environment variable before starting python, or
-* add the path to `sys.path` after you launch python.
-
-In addition, you have to tell `casac` module where the measures data is located at. There are several ways for this. Here, some examples are shown. The first option is to put the following entry into `~/.casa/rc` file.
-
-    measures.directory: /path/to/casa/measures/data
-
-Note that this is using global configuration file so that it affects to your CASA environment as well as the environment for PRIISM. If this is not desirable, you can localize the scope of the above configuration by using `CASARCFILES` environment variable. First step for localizing the configuration is to create the configuration file that contains the above line. The file should be named or located so that CASA cannot recognize (because it will be globally effective if you name it or put it in the location so that CASA can recognize). One simple way would be to create the configuration file at the current working directory. Then, you can use `CASARCFILES` to tell `casac` module what files it should look for. Here is an example.
-
-    # create configuration file at the working directory
-    $ vi .casarc
-    $ cat .casarc
-    measures.directory: /path/to/casa/measures/data
-    # set CASARCFILES environment variable
-    $ export CASARCFILES=.casarc
-
-This should be effective only under this directory and will not affect global CASA settings. For more information on the configuration of `casac` module, please see the following link:
-
-http://casacore.github.io/casacore/classcasacore_1_1Aipsrc.html
-
 
 ## License
 
