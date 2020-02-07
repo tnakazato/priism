@@ -1,6 +1,6 @@
 # PRIISM: Python Module for Radio Interferometry Imaging with Sparse Modeling
 
-PRIISM is an imaging tool for radio interferometry based on the sparse modeling technique. It is implemented as a Python module so that it is able to work on various types of platforms. For quick start, please check [Prerequisites](#prerequisites) and then follow installation instruction. You can use [`cmake`](#installation-with-cmake) or [Python `setuptools`](#installation-with-setuptools-python-3--casa-6-only) depending on your preference.
+PRIISM is an imaging tool for radio interferometry based on the sparse modeling technique. It is implemented as a Python module so that it is able to work on various types of platforms. For quick start, please check [Prerequisites](#prerequisites) and then follow installation instruction. You can install PRIISM with either [`cmake`](#installation-with-cmake) or [Python `setuptools`](#installation-with-setuptools-python-3--casa-6-only) depending on your preference.
 
 <!-- TOC -->
 
