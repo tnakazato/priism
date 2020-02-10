@@ -137,7 +137,7 @@ if(NOT EXISTS ${FFTW3_LIBRARY_DIR}/libfftw3.so)
 endif()
 message(STATUS "FFTW3_LIBRARY_DIR is ${FFTW3_LIBRARY_DIR}")
 execute_process(COMMAND sed -e "s@CFLAGS=-O2@CFLAGS=-O2 -I${FFTW3_INCLUDE_DIR}@g" makefile
-                COMMAND sed -e "s@-lrt @@g"
+                COMMAND sed -e "s@-lrt @-lstdc++ @g"
                 COMMAND sed -e "s@^CLIBS_FFTW = @CLIBS_FFTW = -L${FFTW3_LIBRARY_DIR} @g"
                 COMMAND sed -e "s@-O2@-O3@g"
                 COMMAND sed -e "s@CXX=.*$@CXX=${CMAKE_CXX_COMPILER}@g"
