@@ -1,5 +1,23 @@
 # PRIISM: Python Module for Radio Interferometry Imaging with Sparse Modeling
 
+PRIISM is an imaging tool for radio interferometry based on the sparse modeling technique. It is implemented as a Python module so that it is able to work on various types of platforms. For quick start, please check [Prerequisites](#prerequisites) and then follow installation instruction. You can install PRIISM with either [`cmake`](#installation-with-cmake) or [Python `setuptools`](#installation-with-setuptools-python-3--casa-6-only) depending on your preference.
+
+<!-- TOC -->
+
+- [Overview](#overview)
+- [Supported Platform](#supported-platform)
+- [Tested Platform](#tested-platform)
+- [Prerequisites](#prerequisites)
+- [Installation with `cmake`](#installation-with-cmake)
+- [Installation with `setuptools` (Python 3 / CASA 6 only)](#installation-with-setuptools-python-3--casa-6-only)
+- [Using PRIISM](#using-priism)
+- [License](#license)
+- [Contact](#contact)
+- [Acknowledgement](#acknowledgement)
+- [Reference](#reference)
+
+<!-- /TOC -->
+
 ## Overview
 
 PRIISM is an imaging tool for radio interferometry based on the sparse modeling technique.
@@ -218,18 +236,18 @@ PRIISM will now be available to the location specified by `CMAKE_INSTALL_PREFIX`
 
 As of 0.3.0, PRIISM offers another way of build and install which is based on Python `setuptools`. So far, it simply wraps `cmake` build so the build based on `cmake` is performed underneath. However, it should be easier than `cmake` build especially when you want to install PRIISM to your virtual environment (e.g. the one created by `venv`) because installation directory will automatically be detected by `setuptools` based on which python command is used to run the build and install procedure. Brief instruction on installing PRIISM with modular CASA 6 is shown below.
 
-### 1. Create and Activate Virtual Environment
+### Create and Activate Virtual Environment
 
 ```
 $ python3 -m venv priism
 $ source priism/bin/activate
 ```
 
-### 2. Install CASA 6
+### Install CASA 6
 
 Please follow [the instruction](https://casa.nrao.edu/casadocs/casa-5.6.0/introduction/casa6-installation-and-usage) provided by CASA team. You already have a virtual environment for PRIISM so you can use it for installation. 
 
-### 3. Install PRIISM
+### Install PRIISM
 
 After moving to the PRIISM's root directory, build and install procedure is as follows:
 
