@@ -220,7 +220,7 @@ class download_sakura(config):
         else:
             raise PriismDependencyError('No download command found: you have to install curl or wget')
 
-        self.epilogue_cmds = ['tar zxvf {}'.format(tgzname)]
+        self.epilogue_cmds = ['tar zxf {}'.format(tgzname)]
         self.epilogue_cwd = '.'
         self.package_directory = package
         self.working_directory = self.package_directory
