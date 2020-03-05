@@ -110,8 +110,9 @@ available.
 PRIISM for ALMA (`priism.alma`) is supposed to run on CASA or python environment with casa tools. If you want to
 use `priism.alma`, CASA 5.0 or higher must be available.
 
-In addition to the dependency on PRIISM, there are several prerequisites from
-Sakura and sparseimaging libraries: FFTW3 and Eigen3.
+In addition to the dependency on PRIISM, there are prerequisites from
+Sakura and sparseimaging libraries: FFTW3 and Eigen3. 
+Since Eigen3 is automatically downloaded during PRIISM setup, only FFTW3 is the prerequisite for PRIISM.
 More importantly, PRIISM requires C++ compiler that supports C++11 features
 since Sakura and sparseimaging utilizes various C++11 features in its implementation.
 
@@ -123,7 +124,6 @@ In summary, prerequisites for PRIISM is as follows:
 * CASA 5.0 or higher (for `priism.alma`)
 * gcc/g++ 4.8 or higher or clang/clang++ 3.5 or higher
 * FFTW3
-* Eigen 3.2 or higher
 * git (optional but preferable)
 
 
@@ -169,13 +169,6 @@ Available options for cmake is as follows. Syntax for the option is `-D<name>=<v
 This option specifies the directory where to install PRIISM.
 
 Example: `-DCMAKE_INSTALL_PREFIX=/usr/local/priism`
-
-**EIGEN3_INCLUDE_DIR**
-
-This option tells cmake where Eigen3 header files are installed.
-This option will be useful when Eigen3 is installed to non-standard location.
-
-Example: `-DEIGEN3_INCLUDE_DIR=$HOME/eigen`
 
 **PYTHON_ROOTDIR**
 
