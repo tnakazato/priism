@@ -92,7 +92,6 @@ def initialize_attr_for_user_options(cmd):
 class priism_build(build):
     user_options = [
         ('cxx-compiler=', 'C', 'specify path to C++ compiler'),
-        ('eigen3-include-dir=', 'E', 'specify directory for Eigen3'),
         ('python-root-dir=', 'P', 'specify root directory for Python'),
         ('python-include-dir=', 'I', 'specify include directory for Python.h (take priority over python-root-dir)'),
         ('python-library=', 'L', 'specify Python library (take priority over python-root-dir)'),
@@ -221,8 +220,8 @@ class download_sakura(config):
         else:
             raise PriismDependencyError('No download command found: you have to install curl or wget')
 
-        self.epilogue_cmds = ['tar zxvf {}'.format(tgzname)]
-        self.epilogut_cwd = '.'
+        self.epilogue_cmds = ['tar zxf {}'.format(tgzname)]
+        self.epilogue_cwd = '.'
         self.package_directory = package
         self.working_directory = self.package_directory
 
@@ -235,7 +234,42 @@ class download_sakura(config):
         if not os.path.exists(self.package_directory):
             execute_command(self.download_cmd)
             for cmd in self.epilogue_cmds:
-                execute_command(cmd, cwd=self.epilogut_cwd)
+                execute_command(cmd, cwd=self.epilogue_cwd)
+
+
+class download_eigen(config):
+    user_options = []
+
+    def initialize_options(self):
+        super(download_eigen, self).initialize_options()
+
+        is_curl_ok, is_wget_ok = check_command_availability(['curl', 'wget'])
+        package = 'eigen'
+        version = '3.3.7'
+        tgzname = '{}-{}.tar.bz2'.format(package, version)
+        url = 'https://gitlab.com/libeigen/eigen/-/archive/{}/{}'.format(version, tgzname)
+        if is_curl_ok:
+            self.download_cmd = 'curl -L -O {}'.format(url)
+        elif is_wget_ok:
+            self.download_cmd = 'wget {}'.format(url)
+        else:
+            raise PriismDependencyError('No download command found: you have to install curl or wget')
+
+        self.epilogue_cmds = ['tar jxf {}'.format(tgzname)]
+        self.epilogue_cwd = '.'
+        self.package_directory = package
+        self.working_directory = self.package_directory
+
+    def finalize_options(self):
+        super(download_eigen, self).finalize_options()
+
+    def run(self):
+        super(download_eigen, self).run()
+
+        if not os.path.exists(self.package_directory):
+            execute_command(self.download_cmd)
+            for cmd in self.epilogue_cmds:
+                execute_command(cmd, cwd=self.epilogue_cwd)
 
 
 class configure_ext(Command):
@@ -284,9 +318,6 @@ class configure_ext(Command):
         if self.python_library is not None:
             cmd += ' -DPYTHON_LIBRARY={}'.format(self.python_library)
 
-        if self.eigen3_include_dir is not None:
-            cmd += ' -DEIGEN3_INCLUDE_DIR={}'.format(self.eigen3_include_dir)
-
         if self.cxx_compiler is not None:
             cmd += ' -DCMAKE_CXX_COMPILER={}'.format(self.cxx_compiler)
 
@@ -310,7 +341,7 @@ class configure_ext(Command):
         cmd = self.__configure_cmake_command()
         execute_command(cmd, cwd=self.priism_build_dir)
 
-    sub_commands = build_ext.sub_commands + [('download_sakura', None), ('download_smili', None)]
+    sub_commands = build_ext.sub_commands + [('download_sakura', None), ('download_smili', None), ('download_eigen', None)]
 
 
 setup(
@@ -324,6 +355,7 @@ setup(
         'build_ext': priism_build_ext,
         'download_sakura': download_sakura,
         'download_smili': download_smili,
+        'download_eigen': download_eigen,
         'configure_ext': configure_ext,
     }
 )

@@ -59,13 +59,13 @@ endif()
 set(SAKURA_DIR libsakura)
 set(SAKURA_TAR libsakura-5.0.8.tgz)
 if(NOT EXISTS ${PROJECT_SOURCE_DIR}/${SAKURA_DIR})
-  if(NOT EXISTS ${PROJECT_SOURCE_DIR}/${SAKURA_TAR})
+  if(NOT EXISTS ${CMAKE_BINARY_DIR}/${SAKURA_TAR})
     message(STATUS "Sakura is not downloaded yet")
     set(SAKURA_URL https://alma-intweb.mtk.nao.ac.jp/~nakazato/libsakura/${SAKURA_TAR})
     execute_process(COMMAND curl -L -O ${SAKURA_URL}
                     WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
   endif()
-  execute_process(COMMAND tar zxvf ${CMAKE_BINARY_DIR}/${SAKURA_TAR}
+  execute_process(COMMAND tar zxf ${CMAKE_BINARY_DIR}/${SAKURA_TAR}
                   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 endif()
 
@@ -88,6 +88,20 @@ if(NOT EXISTS ${PROJECT_SOURCE_DIR}/${SAKURA_DIR}/${GTEST_DIR})
   endif()
   execute_process(COMMAND ln -s "${GTEST_EXTRACT}/googletest" "${GTEST_DIR}"
                   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/${SAKURA_DIR})
+endif()
+
+# download Eigen
+set(EIGEN_DIR eigen-3.3.7)
+set(EIGEN_TAR eigen-3.3.7.tar.bz2)
+if(NOT EXISTS ${PROJECT_SOURCE_DIR}/${EIGEN_DIR})
+  if(NOT EXISTS ${CMAKE_BINARY_DIR}/${EIGEN_TAR})
+    message(STATUS "Eigen is not downloaded yet")
+    set(EIGEN_URL https://gitlab.com/libeigen/eigen/-/archive/3.3.7/eigen-3.3.7.tar.bz2)
+    execute_process(COMMAND curl -L -O ${EIGEN_URL}
+                    WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+  endif()
+  execute_process(COMMAND tar jxf ${CMAKE_BINARY_DIR}/${EIGEN_TAR}
+                  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 endif()
 
 # configure sakura
@@ -114,6 +128,7 @@ foreach(SAKURA_SUBDIR IN ITEMS src python-binding)
 endforeach()
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/${SAKURA_DIR}/cmake-modules CACHE STRING "List of directories to search for CMake modules")
 set(BUILD_DOC OFF CACHE BOOL "Build Sakura API document")
+set(EIGEN3_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/${EIGEN_DIR})
 if (APPLE)
   set(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/priism/external/sakura")
 else()
