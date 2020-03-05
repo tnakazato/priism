@@ -65,7 +65,7 @@ if(NOT EXISTS ${PROJECT_SOURCE_DIR}/${SAKURA_DIR})
     execute_process(COMMAND curl -L -O ${SAKURA_URL}
                     WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
   endif()
-  execute_process(COMMAND tar zxvf ${CMAKE_BINARY_DIR}/${SAKURA_TAR}
+  execute_process(COMMAND tar zxf ${CMAKE_BINARY_DIR}/${SAKURA_TAR}
                   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 endif()
 
