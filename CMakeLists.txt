@@ -59,7 +59,7 @@ endif()
 set(SAKURA_DIR libsakura)
 set(SAKURA_TAR libsakura-5.0.8.tgz)
 if(NOT EXISTS ${PROJECT_SOURCE_DIR}/${SAKURA_DIR})
-  if(NOT EXISTS ${PROJECT_SOURCE_DIR}/${SAKURA_TAR})
+  if(NOT EXISTS ${CMAKE_BINARY_DIR}/${SAKURA_TAR})
     message(STATUS "Sakura is not downloaded yet")
     set(SAKURA_URL https://alma-intweb.mtk.nao.ac.jp/~nakazato/libsakura/${SAKURA_TAR})
     execute_process(COMMAND curl -L -O ${SAKURA_URL}
