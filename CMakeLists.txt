@@ -90,6 +90,20 @@ if(NOT EXISTS ${PROJECT_SOURCE_DIR}/${SAKURA_DIR}/${GTEST_DIR})
                   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/${SAKURA_DIR})
 endif()
 
+# download Eigen
+set(EIGEN_DIR eigen-3.3.7)
+set(EIGEN_TAR eigen-3.3.7.tar.bz2)
+if(NOT EXISTS ${PROJECT_SOURCE_DIR}/${EIGEN_DIR})
+  if(NOT EXISTS ${CMAKE_BINARY_DIR}/${EIGEN_TAR})
+    message(STATUS "Eigen is not downloaded yet")
+    set(EIGEN_URL https://gitlab.com/libeigen/eigen/-/archive/3.3.7/eigen-3.3.7.tar.bz2)
+    execute_process(COMMAND curl -L -O ${EIGEN_URL}
+                    WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+  endif()
+  execute_process(COMMAND tar jxf ${CMAKE_BINARY_DIR}/${EIGEN_TAR}
+                  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+endif()
+
 # configure sakura
 # edit configuration files for sakura
 execute_process(COMMAND sed -i -e "/^add_subdirectory.g*test/d" CMakeLists.txt
@@ -114,6 +128,7 @@ foreach(SAKURA_SUBDIR IN ITEMS src python-binding)
 endforeach()
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/${SAKURA_DIR}/cmake-modules CACHE STRING "List of directories to search for CMake modules")
 set(BUILD_DOC OFF CACHE BOOL "Build Sakura API document")
+set(EIGEN3_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/${EIGEN_DIR})
 if (APPLE)
   set(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/priism/external/sakura")
 else()
