@@ -3,4 +3,5 @@
 /dist
 /libsakura
 /sparseimaging*
+/eigen*
 /.vscode
