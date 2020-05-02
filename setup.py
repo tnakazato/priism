@@ -15,13 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with PRIISM.  If not, see <https://www.gnu.org/licenses/>.
 import os
+import numpy
 import shlex
 import subprocess
 import sys
+import sysconfig
 
 from distutils.command.build import build
 from distutils.command.build_ext import build_ext
 from distutils.command.config import config
+from distutils.sysconfig import get_python_inc
 from setuptools import setup, find_packages, Command
 
 
@@ -119,7 +122,7 @@ class priism_build(build):
         for cmd in self.get_sub_commands():
             self.run_command(cmd)
 
-    sub_commands = build.sub_commands + [('build_ext', None)]   
+    sub_commands = build.sub_commands + [('build_ext', None)]
 
 
 class priism_build_ext(build_ext):
@@ -155,7 +158,7 @@ class priism_build_ext(build_ext):
         execute_command('make sparseimaging', cwd=self.priism_build_dir)
         execute_command('cmake -DCOMPONENT=Smili -P cmake_install.cmake', cwd=self.priism_build_dir)
 
-    sub_commands = build_ext.sub_commands + [('configure_ext', None)]   
+    sub_commands = build_ext.sub_commands + [('configure_ext', None)]
 
 
 class download_smili(config):
@@ -300,23 +303,45 @@ class configure_ext(Command):
             binary_dir, _ = os.path.split(executable_path)
             root_dir, _ = os.path.split(binary_dir)
             self.python_root_dir = root_dir
+
+        if self.numpy_include_dir is None:
+            self.numpy_include_dir = numpy.get_include()
+
+        if self.python_include_dir is None:
+            self.python_include_dir = get_python_inc()
+
+        if self.python_library is None:
+            libname = sysconfig.get_config_var('PY3LIBRARY')
+            if libname is None:
+                libprefix = '.'.join(sysconfig.get_config_var('LIBRARY').split('.')[:-1])
+                libname = '.'.join([libprefix, sysconfig.get_config_var('SO')])
+
+            libpath = sysconfig.get_config_var('LIBDIR')
+            pylib = os.path.join(libpath, libname)
+            if not os.path.exists(pylib):
+                tail = ''
+                libpath = self.python_include_dir
+                while tail != 'include' and libpath != '/':
+                    libpath, tail = os.path.split(libpath)
+                assert libpath != '/'
+                pylib = os.path.join(libpath, libname)
+            assert os.path.join(pylib)
+            self.python_library = pylib
+
         debug_print_user_options(self)
         print('fftw3-root-dir={}'.format(self.fftw3_root_dir))
 
     def __configure_cmake_command(self):
         cmd = 'cmake .. -DCMAKE_INSTALL_PREFIX={}'.format(os.path.relpath(self.build_lib, self.priism_build_dir))
 
-        if self.python_root_dir is not None:
-            cmd += ' -DPYTHON_ROOTDIR={}'.format(self.python_root_dir)
+        #if self.python_root_dir is not None:
+        #    cmd += ' -DPYTHON_ROOTDIR={}'.format(self.python_root_dir)
 
-        if self.numpy_include_dir is not None:
-            cmd += ' -DNUMPY_INCLUDE_DIR={}'.format(self.numpy_include_dir)
+        cmd += ' -DNUMPY_INCLUDE_DIR={}'.format(self.numpy_include_dir)
 
-        if self.python_include_dir is not None:
-            cmd += ' -DPYTHON_INCLUDE_PATH={}'.format(self.python_include_dir)
+        cmd += ' -DPYTHON_INCLUDE_PATH={}'.format(self.python_include_dir)
 
-        if self.python_library is not None:
-            cmd += ' -DPYTHON_LIBRARY={}'.format(self.python_library)
+        cmd += ' -DPYTHON_LIBRARY={}'.format(self.python_library)
 
         if self.cxx_compiler is not None:
             cmd += ' -DCMAKE_CXX_COMPILER={}'.format(self.cxx_compiler)
