@@ -92,6 +92,42 @@ def initialize_attr_for_user_options(cmd):
         setattr(cmd, attrname, None)
 
 
+def get_python_library():
+    libname = sysconfig.get_config_var('PY3LIBRARY')
+    if libname is None:
+        libprefix = '.'.join(sysconfig.get_config_var('LIBRARY').split('.')[:-1])
+        libname = '.'.join([libprefix, sysconfig.get_config_var('SO')])
+    
+    libpath = sysconfig.get_config_var('LIBDIR')
+    pylib = os.path.join(libpath, libname)
+    if os.path.exists(pylib):
+        return pylib
+    
+    libpath2 = os.path.join(libpath, sysconfig.get_config_var('MULTIARCH'))
+    pylib = os.path.join(libpath2, libname)
+    if os.path.exists(pylib):
+        return pylib
+
+    tail = ''
+    prefix = self.python_include_dir
+    while tail != 'include' and prefix != '/':
+        prefix, tail = os.path.split(prefix)
+    assert prefix != '/'
+    
+    for l in ['lib', 'lib64']:
+        libpath = os.path.join(prefix, l)
+        pylib = os.path.join(libpath, libname)
+        if os.path.exists(pylib):
+            return pylib
+        
+        libpath2 = os.path.join(libpath, sysconfig.get_config_var('MULTIARCH'))
+        pylib = os.path.join(libpath2, libname)
+        if os.path.exists(pylib):
+            return pylib
+        
+    assert False
+
+
 class priism_build(build):
     user_options = [
         ('cxx-compiler=', 'C', 'specify path to C++ compiler'),
@@ -311,22 +347,7 @@ class configure_ext(Command):
             self.python_include_dir = get_python_inc()
 
         if self.python_library is None:
-            libname = sysconfig.get_config_var('PY3LIBRARY')
-            if libname is None:
-                libprefix = '.'.join(sysconfig.get_config_var('LIBRARY').split('.')[:-1])
-                libname = '.'.join([libprefix, sysconfig.get_config_var('SO')])
-
-            libpath = sysconfig.get_config_var('LIBDIR')
-            pylib = os.path.join(libpath, libname)
-            if not os.path.exists(pylib):
-                tail = ''
-                libpath = self.python_include_dir
-                while tail != 'include' and libpath != '/':
-                    libpath, tail = os.path.split(libpath)
-                assert libpath != '/'
-                pylib = os.path.join(libpath, libname)
-            assert os.path.join(pylib)
-            self.python_library = pylib
+            self.python_library = get_python_library()
 
         debug_print_user_options(self)
         print('fftw3-root-dir={}'.format(self.fftw3_root_dir))
