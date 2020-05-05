@@ -1,4 +1,7 @@
 # casa6
-casatools
-scipy
-matplotlib
+casatasks
+
+# generic dependencies (implicit ones are commented out)
+#numpy       # required by casatools
+#scipy       # required by casatasks
+#matplotlib  # required by casatasks
