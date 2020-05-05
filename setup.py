@@ -92,7 +92,7 @@ def initialize_attr_for_user_options(cmd):
         setattr(cmd, attrname, None)
 
 
-def get_python_library():
+def get_python_library(include_dir):
     libname = sysconfig.get_config_var('PY3LIBRARY')
     if libname is None:
         libprefix = '.'.join(sysconfig.get_config_var('LIBRARY').split('.')[:-1])
@@ -109,7 +109,7 @@ def get_python_library():
         return pylib
 
     tail = ''
-    prefix = self.python_include_dir
+    prefix = ieenclude_dir
     while tail != 'include' and prefix != '/':
         prefix, tail = os.path.split(prefix)
     assert prefix != '/'
@@ -347,7 +347,7 @@ class configure_ext(Command):
             self.python_include_dir = get_python_inc()
 
         if self.python_library is None:
-            self.python_library = get_python_library()
+            self.python_library = get_python_library(self.python_include_dir)
 
         debug_print_user_options(self)
         print('fftw3-root-dir={}'.format(self.fftw3_root_dir))
