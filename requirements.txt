@@ -1,3 +1,4 @@
 # casa6
 casatools
-casatasks
+scipy
+matplotlib
