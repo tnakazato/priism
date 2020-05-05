@@ -93,20 +93,24 @@ def initialize_attr_for_user_options(cmd):
 
 
 def get_python_library(include_dir):
-    libname = sysconfig.get_config_var('PY3LIBRARY')
-    if libname is None:
+    libname1 = sysconfig.get_config_var('PY3LIBRARY')
+    if libname1 is None:
         libprefix = '.'.join(sysconfig.get_config_var('LIBRARY').split('.')[:-1])
         libname = '.'.join([libprefix, sysconfig.get_config_var('SO')])
+    libname2 = sysconfig.get_config_var('LDLYBRARY')
+    libnames = [libname1, libname2]
     
     libpath = sysconfig.get_config_var('LIBDIR')
-    pylib = os.path.join(libpath, libname)
-    if os.path.exists(pylib):
-        return pylib
+    for libname in libnames:
+        pylib = os.path.join(libpath, libname)
+        if os.path.exists(pylib):
+            return pylib
     
     libpath2 = os.path.join(libpath, sysconfig.get_config_var('MULTIARCH'))
-    pylib = os.path.join(libpath2, libname)
-    if os.path.exists(pylib):
-        return pylib
+    for libname in libnames:
+        pylib = os.path.join(libpath2, libname)
+        if os.path.exists(pylib):
+            return pylib
 
     tail = ''
     prefix = include_dir
@@ -116,14 +120,16 @@ def get_python_library(include_dir):
     
     for l in ['lib', 'lib64']:
         libpath = os.path.join(prefix, l)
-        pylib = os.path.join(libpath, libname)
-        if os.path.exists(pylib):
-            return pylib
+        for libname in libnames:
+            pylib = os.path.join(libpath, libname)
+            if os.path.exists(pylib):
+                return pylib
         
         libpath2 = os.path.join(libpath, sysconfig.get_config_var('MULTIARCH'))
-        pylib = os.path.join(libpath2, libname)
-        if os.path.exists(pylib):
-            return pylib
+        for libname in libnames:
+            pylib = os.path.join(libpath2, libname)
+            if os.path.exists(pylib):
+                return pylib
         
     assert False
 
