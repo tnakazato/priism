@@ -97,8 +97,8 @@ def get_python_library(include_dir):
     if libname1 is None:
         libprefix = '.'.join(sysconfig.get_config_var('LIBRARY').split('.')[:-1])
         libname = '.'.join([libprefix, sysconfig.get_config_var('SO')])
-    libname2 = sysconfig.get_config_var('LDLYBRARY')
-    libnames = [libname1, libname2]
+    libname2 = sysconfig.get_config_var('LDLIBRARY')
+    libnames = [l for l in [libname1, libname2] if l is not None]
     
     libpath = sysconfig.get_config_var('LIBDIR')
     for libname in libnames:
