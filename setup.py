@@ -109,7 +109,7 @@ def get_python_library(include_dir):
         return pylib
 
     tail = ''
-    prefix = ieenclude_dir
+    prefix = include_dir
     while tail != 'include' and prefix != '/':
         prefix, tail = os.path.split(prefix)
     assert prefix != '/'
