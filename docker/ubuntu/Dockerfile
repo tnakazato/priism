@@ -14,7 +14,9 @@ RUN apt-get update && \
     make \
     python3 \
     python3-dev \
-    python3-pip 
+    python3-pip && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 # create user for running PRIISM
 ENV USERNAME anonymous
