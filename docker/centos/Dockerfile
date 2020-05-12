@@ -12,7 +12,8 @@ RUN yum install -y \
     make \
     python36 \
     python36-devel \
-    which
+    which && \
+    yum clean all
 
 # create user for running PRIISM
 ENV USERNAME anonymous
