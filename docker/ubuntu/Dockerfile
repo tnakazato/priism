@@ -30,7 +30,7 @@ ENV HOME /home/${USERNAME}
 WORKDIR ${HOME}
 
 # upgrade pip
-RUN python3 -m pip install --user --upgrade pip
+RUN python3 -m pip install --user --upgrade --no-cache-dir pip
 
 # clone PRIISM
 RUN git clone https://github.com/tnakazato/priism.git
@@ -39,7 +39,7 @@ RUN git clone https://github.com/tnakazato/priism.git
 WORKDIR ${HOME}/priism
 
 # install python dependencies for PRIISM
-RUN python3 -m pip install --user --no-warn-script-location -r requirements.txt
+RUN python3 -m pip install --user --no-cache-dir --no-warn-script-location -r requirements.txt
 
 # build & install PRIISM
 RUN python3 setup.py build && python3 setup.py install --user
