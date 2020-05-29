@@ -149,6 +149,12 @@ class SparseModelingImager(object):
 
     def mfista(self, l1, ltsv, maxiter=50000, eps=1.0e-5, clean_box=None,
                storeinitialimage=True, overwriteinitialimage=False):
+        print('***WARNING*** mfista will be deprecate in the future. Please use solve instead.')
+        self.solve(l1, ltsv, maxiter, eps, clean_box,
+                   storeinitialimage, overwriteinitialimage)
+
+    def solve(self, l1, ltsv, maxiter=50000, eps=1.0e-5, clean_box=None,
+              storeinitialimage=True, overwriteinitialimage=False):
         """
         Run MFISTA algorithm on gridded visibility data.
         gridvis must be executed beforehand.
@@ -165,11 +171,11 @@ class SparseModelingImager(object):
         self.mfistaparam = paramcontainer.MfistaParamContainer(l1=l1, ltsv=ltsv,
                                                                maxiter=maxiter, eps=eps,
                                                                clean_box=clean_box)
-        arr = self._mfista(self.mfistaparam, self.working_set,
-                           storeinitialimage=storeinitialimage, overwriteinitialimage=overwriteinitialimage)
+        arr = self._solve(self.mfistaparam, self.working_set,
+                          storeinitialimage=storeinitialimage, overwriteinitialimage=overwriteinitialimage)
         self.imagearray = datacontainer.ResultingImageStorage(arr)
 
-    def _mfista(self, mfistaparam, working_set, storeinitialimage=True, overwriteinitialimage=False):
+    def _solve(self, mfistaparam, working_set, storeinitialimage=True, overwriteinitialimage=False):
         assert working_set is not None
         self.solver.mfistaparam = mfistaparam
         return self.solver.solve(working_set, self.imparam, storeinitialimage, overwriteinitialimage)
@@ -305,6 +311,14 @@ class SparseModelingImager(object):
     def cvforgridvis(self, l1_list, ltsv_list, num_fold=10, imageprefix='image', imagepolicy='full',
                      summarize=True, figfile=None, datafile=None, maxiter=50000, eps=1.0e-5, clean_box=None,
                      resultasinitialimage=True):
+        print('***WARNING*** cvforgridvis will be deprecate in the future. Please use crossvalidation instead.')
+        return self.crossvalidation(l1_list, ltsv_list, num_fold, imageprefix, imagepolicy,
+                                    summarize, figfile, datafile, maxiter, eps, clean_box,
+                                    resultasinitialimage)
+
+    def crossvalidation(self, l1_list, ltsv_list, num_fold=10, imageprefix='image', imagepolicy='full',
+                        summarize=True, figfile=None, datafile=None, maxiter=50000, eps=1.0e-5, clean_box=None,
+                        resultasinitialimage=True):
         """
         Perform cross validation and search the best parameter for L1 and Ltsv from
         the given list of these.
@@ -393,12 +407,12 @@ class SparseModelingImager(object):
 
                 # get full visibility image first
                 imagename = '{}_L1_{}_Ltsv_{}.{}'.format(imageprefix,
-                                                         format_lambda(L1), 
+                                                         format_lambda(L1),
                                                          format_lambda(Ltsv),
                                                          self.imagesuffix)
-                self.mfista(L1, Ltsv, maxiter=maxiter, eps=eps, clean_box=clean_box,
-                            storeinitialimage=resultasinitialimage,
-                            overwriteinitialimage=overwrite_initial)
+                self.solve(L1, Ltsv, maxiter=maxiter, eps=eps, clean_box=clean_box,
+                           storeinitialimage=resultasinitialimage,
+                           overwriteinitialimage=overwrite_initial)
                 self.exportimage(imagename, overwrite=True)
                 result_image.append(imagename)
 
@@ -504,9 +518,9 @@ class SparseModelingImager(object):
         for subset in subset_handler.generate_subset(subset_id=0):
 
             # run MFISTA
-            imagearray = self._mfista(mfistaparam,
-                                      subset.visibility_active,
-                                      False, False)
+            imagearray = self._solve(mfistaparam,
+                                     subset.visibility_active,
+                                     False, False)
             # evaluate MSE (Mean Square Error)
             mse = evaluator.evaluate_and_accumulate(subset.visibility_cache,
                                                     imagearray)
