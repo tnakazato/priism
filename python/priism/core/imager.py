@@ -156,8 +156,8 @@ class SparseModelingImager(object):
     def solve(self, l1, ltsv, maxiter=50000, eps=1.0e-5, clean_box=None,
               storeinitialimage=True, overwriteinitialimage=False):
         """
-        Run MFISTA algorithm on gridded visibility data.
-        gridvis must be executed beforehand.
+        Run MFISTA algorithm on visibility data loaded on memory.
+        gridvis or readvis must be executed beforehand.
 
         Parameters:
             l1 -- L1 regularization term
