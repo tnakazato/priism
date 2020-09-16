@@ -93,12 +93,21 @@ def initialize_attr_for_user_options(cmd):
 
 
 def get_python_library(include_dir):
+    libnames = []
     libname1 = sysconfig.get_config_var('PY3LIBRARY')
-    if libname1 is None:
+    if libname1 is None or (isinstance(libname1, str) and len(libname1) == 0):
         libprefix = '.'.join(sysconfig.get_config_var('LIBRARY').split('.')[:-1])
         libname = '.'.join([libprefix, sysconfig.get_config_var('SO')])
+        libname = libname.replace('..', '.')
+        libnames.append(libname)
+        if sysconfig.get_config_var('SO').find('darwin') != -1:
+            libname = '.'.join([libprefix, 'dylib'])
+            libnames.append(libname)
+    else:
+        libnames.append(libname1)
     libname2 = sysconfig.get_config_var('LDLIBRARY')
-    libnames = [l for l in [libname1, libname2] if l is not None]
+    if isinstance(libname2, str) and len(libname2) > 0:
+        libnames.append(libname2)
     
     libpath = sysconfig.get_config_var('LIBDIR')
     for libname in libnames:
