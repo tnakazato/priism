@@ -179,6 +179,9 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
         real = []
         imag = []
         weight = []
+        t = []
+        a1 = []
+        a2 = []
         interval = 1.0e-16
         for visparam in self.visparams:
             reader = visreader.VisibilityReader(visparam)
@@ -191,18 +194,26 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
                     for ws in ws_list:
                         flag = ws.flag
                         valid = numpy.where(flag == True)
+                        t.extend(ws.t[valid[0]])
                         u.extend(ws.u[valid[0]])
                         v.extend(ws.v[valid[0]])
+                        a1.extend(ws.a1[valid[0]])
+                        a2.extend(ws.a2[valid[0]])
                         real.extend(ws.rdata[valid])
                         imag.extend(ws.idata[valid])
                         weight.extend(ws.weight[(valid[0], valid[2])])
 
-        self.working_set = datacontainer.VisibilityWorkingSet(data_id=0,
-                                                              u=numpy.asarray(u),
-                                                              v=numpy.asarray(v),
-                                                              rdata=numpy.asarray(real, dtype=numpy.float64),
-                                                              idata=numpy.asarray(imag, dtype=numpy.float64),
-                                                              weight=numpy.asarray(weight, dtype=numpy.float64))
+        self.working_set = datacontainer.VisibilityWorkingSet(
+            data_id=0,
+            t=numpy.asarray(t),
+            u=numpy.asarray(u),
+            v=numpy.asarray(v),
+            a1=numpy.asarray(a1),
+            a2=numpy.asarray(a2),
+            rdata=numpy.asarray(real, dtype=numpy.float64),
+            idata=numpy.asarray(imag, dtype=numpy.float64),
+            weight=numpy.asarray(weight, dtype=numpy.float64)
+        )
 
     def exportimage(self, imagename, overwrite=False):
         """

@@ -158,13 +158,15 @@ class VisibilityWorkingSet(paramcontainer.ParamContainer):
           flag=False indicates *INVALID* data
 
     data_id --- arbitrary data ID
+    t --- timestamp (nrow)
     u, v --- position in uv-plane as pixel coordinate (nrow)
+    a1, a2 --- antenna IDs
     rdata --- real part of visibility data (nrow, npol, nchan)
     idata --- imaginary part of visibility data (nrow, npol, nchan)
     weight --- visibility weight (nrow, nchan)
     """
-    def __init__(self, data_id=None, u=0.0, v=0.0, rdata=None, idata=None,
-                 weight=None):
+    def __init__(self, data_id=None, t=0.0, u=0.0, v=0.0, a1=None, a2=None,
+                 rdata=None, idata=None, weight=None):
         self.InitContainer(locals())
 
     def __len__(self):

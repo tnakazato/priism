@@ -32,7 +32,9 @@ class VisibilityConverter(object):
     raw visibility data to working set for gridder.
     """
     required_columns = ['time', 'uvw', 'field_id', 'data_desc_id',
-                        'data', 'flag', 'weight']
+                        'data', 'flag', 'weight',
+                        # for closure imaging
+                        'antenna1', 'antenna2']
     frequency_reference = ['REST',
                            'LSRK',
                            'LSRD',
@@ -578,6 +580,9 @@ class VisibilityConverter(object):
             channel_map = sakura.empty_aligned((1,), dtype=working_set.channel_map.dtype)
             u = sakura.empty_aligned((nrow,), dtype=working_set.u.dtype)
             v = sakura.empty_like_aligned(u)
+            t = sakura.empty_aligned((nrow,), dtype=working_set.t.dtype)
+            a1 = sakura.empty_aligned((nrow,), dtype=working_set.a1.dtype)
+            a2 = sakura.empty_like_aligned(a1)
             row_start = 0
             for ichan in vischans:
                 row_end = row_start + nrow_ws
@@ -589,12 +594,16 @@ class VisibilityConverter(object):
                 channel_map[0] = imchan
                 u[row_start:row_end] = working_set.u[:, ichan]
                 v[row_start:row_end] = working_set.v[:, ichan]
+                t[row_start:row_end] = working_set.t[:]
+                a1[row_start:row_end] = working_set.a1[:]
+                a2[row_start:row_end] = working_set.a2[:]
                 row_start = row_end
 
-            ws = gridder.GridderWorkingSet(data_id=working_set.data_id, u=u, v=v,
-                                           rdata=real, idata=imag, flag=flag,
-                                           weight=weight, row_flag=row_flag,
-                                           channel_map=channel_map)
+            ws = gridder.GridderWorkingSet(
+                data_id=working_set.data_id, t=t, u=u, v=v,
+                a1=a1, a2=a2, rdata=real, idata=imag, flag=flag,
+                weight=weight, row_flag=row_flag, channel_map=channel_map
+            )
             #print('yielding channelized working set from channels {}'.format(vischans))
             yield ws
 
@@ -627,7 +636,15 @@ class VisibilityConverter(object):
 
         # working set to be filled in
         chunk_id = chunk['chunk_id']
-        working_set = gridder.GridderWorkingSet(data_id=chunk_id)
+        timestamp = chunk['time']
+        antenna1 = chunk['antenna1']
+        antenna2 = chunk['antenna2']
+        working_set = gridder.GridderWorkingSet(
+            data_id=chunk_id,
+            t=timestamp,
+            a1=antenna1,
+            a2=antenna2
+        )
         #print('LOG: generate working set for visibility chunk #{0}'.format(chunk_id))
 
         # 1. visibility frequency conversion

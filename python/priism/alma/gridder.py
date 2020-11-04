@@ -31,7 +31,9 @@ class GridderWorkingSet(datacontainer.VisibilityWorkingSet):
           flag=False indicates *INVALID* data
 
     data_id --- arbitrary data ID
+    t --- timestamp (nrow)
     u, v --- position in uv-plane as pixel coordinate (nrow)
+    a1, a2 --- antenna IDs (nrow)
     rdata --- real part of visibility data (nrow, npol, nchan)
     idata --- imaginary part of visibility data (nrow, npol, nchan)
     flag --- channelized flag (nrow, npol, nchan)
@@ -42,10 +44,10 @@ class GridderWorkingSet(datacontainer.VisibilityWorkingSet):
     pol_map --- polarization mapping between raw visibility
                 and gridded visibility (npol)
     """
-    def __init__(self, data_id=None, u=0.0, v=0.0, rdata=None, idata=None,
-                 flag=None, weight=None, row_flag=None, channel_map=None,
-                 pol_map=None):
-        super(GridderWorkingSet, self).__init__(data_id, u, v, rdata, idata, weight)
+    def __init__(self, data_id=None, t=0.0, u=0.0, v=0.0, a1=None, a2=None,
+                 rdata=None, idata=None, flag=None, weight=None, row_flag=None,
+                 channel_map=None, pol_map=None):
+        super(GridderWorkingSet, self).__init__(data_id, t, u, v, a1, a2, rdata, idata, weight)
         self.flag = flag
         self.row_flag = row_flag
         self.channel_map = channel_map
