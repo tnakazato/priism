@@ -160,13 +160,14 @@ class VisibilityWorkingSet(paramcontainer.ParamContainer):
     data_id --- arbitrary data ID
     t --- timestamp (nrow)
     u, v --- position in uv-plane as pixel coordinate (nrow)
-    a1, a2 --- antenna IDs
+    a1, a2 --- antenna IDs (nrow)
+    chan --- spectral channels (nrow)
     rdata --- real part of visibility data (nrow, npol, nchan)
     idata --- imaginary part of visibility data (nrow, npol, nchan)
     weight --- visibility weight (nrow, nchan)
     """
     def __init__(self, data_id=None, t=0.0, u=0.0, v=0.0, a1=None, a2=None,
-                 rdata=None, idata=None, weight=None):
+                 chan=None, rdata=None, idata=None, weight=None):
         self.InitContainer(locals())
 
     def __len__(self):

@@ -182,6 +182,7 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
         t = []
         a1 = []
         a2 = []
+        chan = []
         interval = 1.0e-16
         for visparam in self.visparams:
             reader = visreader.VisibilityReader(visparam)
@@ -199,6 +200,7 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
                         v.extend(ws.v[valid[0]])
                         a1.extend(ws.a1[valid[0]])
                         a2.extend(ws.a2[valid[0]])
+                        chan.extend(ws.chan[valid[0]])
                         real.extend(ws.rdata[valid])
                         imag.extend(ws.idata[valid])
                         weight.extend(ws.weight[(valid[0], valid[2])])
@@ -210,6 +212,7 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
             v=numpy.asarray(v),
             a1=numpy.asarray(a1),
             a2=numpy.asarray(a2),
+            chan=numpy.asarray(chan),
             rdata=numpy.asarray(real, dtype=numpy.float64),
             idata=numpy.asarray(imag, dtype=numpy.float64),
             weight=numpy.asarray(weight, dtype=numpy.float64)

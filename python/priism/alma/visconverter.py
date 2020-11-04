@@ -583,6 +583,7 @@ class VisibilityConverter(object):
             t = sakura.empty_aligned((nrow,), dtype=working_set.t.dtype)
             a1 = sakura.empty_aligned((nrow,), dtype=working_set.a1.dtype)
             a2 = sakura.empty_like_aligned(a1)
+            chan = sakura.empty_like_aligned(a1)
             row_start = 0
             for ichan in vischans:
                 row_end = row_start + nrow_ws
@@ -597,11 +598,12 @@ class VisibilityConverter(object):
                 t[row_start:row_end] = working_set.t[:]
                 a1[row_start:row_end] = working_set.a1[:]
                 a2[row_start:row_end] = working_set.a2[:]
+                chan[row_start:row_end] = ichan
                 row_start = row_end
 
             ws = gridder.GridderWorkingSet(
                 data_id=working_set.data_id, t=t, u=u, v=v,
-                a1=a1, a2=a2, rdata=real, idata=imag, flag=flag,
+                a1=a1, a2=a2, chan=chan, rdata=real, idata=imag, flag=flag,
                 weight=weight, row_flag=row_flag, channel_map=channel_map
             )
             #print('yielding channelized working set from channels {}'.format(vischans))
