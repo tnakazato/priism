@@ -18,6 +18,7 @@ from __future__ import absolute_import
 
 import numpy
 
+from . import sparseimagingclosure
 from . import sparseimagingfft
 from . import sparseimagingnufft
 
@@ -202,11 +203,23 @@ class MfistaSolverNUFFT(MfistaSolverTemplate):
         super(MfistaSolverNUFFT, self).__init__(mfistaparam)
 
 
+class MfistaSolverClosure(MfistaSolverTemplate):
+    Executor = sparseimagingclosure.SparseImagingExecutor
+
+    def __init__(self, mfistaparam):
+        """
+        Constructor
+        """
+        super(MfistaSolverClosure, self).__init__(mfistaparam)
+
+
 def SolverFactory(mode='mfista_fft'):
     if mode == 'mfista_fft':
         return MfistaSolverFFT
     elif mode == 'mfista_nufft':
         return MfistaSolverNUFFT
+    elif mode == 'mfista_closure':
+        return MfistaSolverClosure
     elif mode == 'sakura':
         return SakuraSolver
     else:
