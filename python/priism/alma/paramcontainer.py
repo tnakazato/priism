@@ -37,7 +37,7 @@ class VisParamContainer(base_container.ParamContainer):
 
     @datacolumn.setter
     def datacolumn(self, value):
-        if value not in ('data', 'corrected', 'residual,'):
+        if value not in ('data', 'corrected', 'residual',):
             raise ValueError('datacolumn should be either \'data\' or \'corrected\' or \'residual\'')
         else:
             self._datacolumn = value
