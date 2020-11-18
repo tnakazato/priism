@@ -88,6 +88,14 @@ class VisibilityReader(object):
         vis = self.visparam.vis
         msselect = self.visparam.as_msselection()
 
+        datacolumn = self.visparam.datacolumn.lower()
+        items = items.copy()
+        index = items.index('data')
+        if datacolumn == 'corrected':
+            items[index] = 'corrected_data'
+        elif datacolumn == 'residual':
+            items[index] = 'residual_data'
+
         with casa.OpenMS(vis) as ms:
             ms.msselect(msselect, onlyparse=False)
 
