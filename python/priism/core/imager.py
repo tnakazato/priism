@@ -148,13 +148,13 @@ class SparseModelingImager(object):
         self.solver = solver_cls(mfistaparam)
 
     def mfista(self, l1, ltsv, maxiter=50000, eps=1.0e-5, clean_box=None,
-               storeinitialimage=True, overwriteinitialimage=False):
+               storeinitialimage=True, overwriteinitialimage=False, nonnegative=True):
         print('***WARNING*** mfista will be deprecate in the future. Please use solve instead.')
         self.solve(l1, ltsv, maxiter, eps, clean_box,
-                   storeinitialimage, overwriteinitialimage)
+                   storeinitialimage, overwriteinitialimage, nonnegative)
 
     def solve(self, l1, ltsv, maxiter=50000, eps=1.0e-5, clean_box=None,
-              storeinitialimage=True, overwriteinitialimage=False):
+              storeinitialimage=True, overwriteinitialimage=False, nonnegative=True):
         """
         Run MFISTA algorithm on visibility data loaded on memory.
         gridvis or readvis must be executed beforehand.
@@ -167,10 +167,12 @@ class SparseModelingImager(object):
             clean_box -- clean box as a float array
             storeinitialimage -- keep the result as an initial image for next run
             overwriteinitialimage -- overwrite existing initial image
+            nonnegative -- allow negative value (False) or not (True)
         """
         self.mfistaparam = paramcontainer.MfistaParamContainer(l1=l1, ltsv=ltsv,
                                                                maxiter=maxiter, eps=eps,
-                                                               clean_box=clean_box)
+                                                               clean_box=clean_box,
+                                                               nonnegative=nonnegative)
         arr = self._solve(self.mfistaparam, self.working_set,
                           storeinitialimage=storeinitialimage, overwriteinitialimage=overwriteinitialimage)
         self.imagearray = datacontainer.ResultingImageStorage(arr)
@@ -310,15 +312,15 @@ class SparseModelingImager(object):
 
     def cvforgridvis(self, l1_list, ltsv_list, num_fold=10, imageprefix='image', imagepolicy='full',
                      summarize=True, figfile=None, datafile=None, maxiter=50000, eps=1.0e-5, clean_box=None,
-                     resultasinitialimage=True):
+                     resultasinitialimage=True, nonnegative=True):
         print('***WARNING*** cvforgridvis will be deprecate in the future. Please use crossvalidation instead.')
         return self.crossvalidation(l1_list, ltsv_list, num_fold, imageprefix, imagepolicy,
                                     summarize, figfile, datafile, maxiter, eps, clean_box,
-                                    resultasinitialimage)
+                                    resultasinitialimage, nonnegative=True, )
 
     def crossvalidation(self, l1_list, ltsv_list, num_fold=10, imageprefix='image', imagepolicy='full',
                         summarize=True, figfile=None, datafile=None, maxiter=50000, eps=1.0e-5, clean_box=None,
-                        resultasinitialimage=True):
+                        resultasinitialimage=True, nonnegative=True):
         """
         Perform cross validation and search the best parameter for L1 and Ltsv from
         the given list of these.
@@ -341,6 +343,7 @@ class SparseModelingImager(object):
             eps -- threshold factor for MFISTA algorithm
             clean_box -- clean box as a float array (default None)
             resultasinitialimage -- keep resulting image as an initial condition for next run
+            nonnegative -- allow negative value (False) or not (True)
 
         Output:
             dictionary containing best L1 (key: L1), best Ltsv (key;Ltsv), and
@@ -411,13 +414,14 @@ class SparseModelingImager(object):
                                                          format_lambda(Ltsv),
                                                          self.imagesuffix)
                 self.solve(L1, Ltsv, maxiter=maxiter, eps=eps, clean_box=clean_box,
+                           nonnegative=nonnegative,
                            storeinitialimage=resultasinitialimage,
                            overwriteinitialimage=overwrite_initial)
                 self.exportimage(imagename, overwrite=True)
                 result_image.append(imagename)
 
                 # then evaluate MSE
-                mse = self.computemse(L1, Ltsv, maxiter, eps, clean_box)
+                mse = self.computemse(L1, Ltsv, maxiter, eps, clean_box, nonnegative=nonnegative)
                 result_mse.append(mse)
 
                 print('L1 10^{0} Ltsv 10^{1}: MSE {2} FITS {3}'.format(format_lambda(L1),
@@ -495,7 +499,7 @@ class SparseModelingImager(object):
     def finalizecv(self):
         self.visset = None
 
-    def computemse(self, l1, ltsv, maxiter=50000, eps=1.0e-5, clean_box=None):
+    def computemse(self, l1, ltsv, maxiter=50000, eps=1.0e-5, clean_box=None, nonnegative=True):
         """
         Compute mean-square-error (MSE) on resulting image.
         MSE is evaluated from visibility data provided as VisibilityWorkingSet
@@ -503,7 +507,8 @@ class SparseModelingImager(object):
         """
         mfistaparam = paramcontainer.MfistaParamContainer(l1=l1, ltsv=ltsv,
                                                           maxiter=maxiter, eps=eps,
-                                                          clean_box=clean_box)
+                                                          clean_box=clean_box,
+                                                          nonnegative=nonnegative)
         assert self.working_set is not None
 
         evaluator = cv.MeanSquareErrorEvaluator()
