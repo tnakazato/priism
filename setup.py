@@ -108,13 +108,13 @@ def get_python_library(include_dir):
     libname2 = sysconfig.get_config_var('LDLIBRARY')
     if isinstance(libname2, str) and len(libname2) > 0:
         libnames.append(libname2)
-    
+
     libpath = sysconfig.get_config_var('LIBDIR')
     for libname in libnames:
         pylib = os.path.join(libpath, libname)
         if os.path.exists(pylib):
             return pylib
-    
+
     libpath2 = os.path.join(libpath, sysconfig.get_config_var('MULTIARCH'))
     for libname in libnames:
         pylib = os.path.join(libpath2, libname)
@@ -126,20 +126,20 @@ def get_python_library(include_dir):
     while tail != 'include' and prefix != '/':
         prefix, tail = os.path.split(prefix)
     assert prefix != '/'
-    
+
     for l in ['lib', 'lib64']:
         libpath = os.path.join(prefix, l)
         for libname in libnames:
             pylib = os.path.join(libpath, libname)
             if os.path.exists(pylib):
                 return pylib
-        
+
         libpath2 = os.path.join(libpath, sysconfig.get_config_var('MULTIARCH'))
         for libname in libnames:
             pylib = os.path.join(libpath2, libname)
             if os.path.exists(pylib):
                 return pylib
-        
+
     assert False
 
 
@@ -210,50 +210,6 @@ class priism_build_ext(build_ext):
         execute_command('cmake -DCOMPONENT=Smili -P cmake_install.cmake', cwd=self.priism_build_dir)
 
     sub_commands = build_ext.sub_commands + [('configure_ext', None)]
-
-
-class download_smili(config):
-    user_options = []
-
-    def initialize_options(self):
-        super(download_smili, self).initialize_options()
-
-        is_git_ok, is_curl_ok, is_wget_ok = check_command_availability(['git', 'curl', 'wget'])
-        package = 'sparseimaging'
-        branch = 'smili'
-        zipname = '{}.zip'.format(branch)
-        base_url = 'https://github.com/ikeda46/{}'.format(package)
-        if is_git_ok:
-            url = base_url + '.git'
-            self.download_cmd = 'git clone {}'.format(url)
-        elif is_curl_ok:
-            url = base_url + '/archive/{}'.format(zipname)
-            self.download_cmd = 'curl -L -O {}'.format(url)
-        elif is_wget_ok:
-            url = base_url + '/archive/{}'.format(zipname)
-            self.download_cmd = 'wget {}'.format(url)
-        else:
-            raise PriismDependencyError('No download command found: you have to install git or curl or wget')
-
-        if is_git_ok:
-            self.epilogue_cmds = ['git checkout {}'.format(branch)]
-            self.epilogue_cwd = package
-        else:
-            self.epilogue_cmds = ['unzip {}'.format(zipname),
-                                  'ln -s {0}-{1} {0}'.format(package, branch)]
-            self.epilogue_cwd = '.'
-        self.package_directory = package
-
-    def finalize_options(self):
-        super(download_smili, self).finalize_options()
-
-    def run(self):
-        super(download_smili, self).run()
-
-        if not os.path.exists(self.package_directory):
-            execute_command(self.download_cmd)
-            for cmd in self.epilogue_cmds:
-                execute_command(cmd, cwd=self.epilogue_cwd)
 
 
 class download_sakura(config):
@@ -402,7 +358,7 @@ class configure_ext(Command):
         cmd = self.__configure_cmake_command()
         execute_command(cmd, cwd=self.priism_build_dir)
 
-    sub_commands = build_ext.sub_commands + [('download_sakura', None), ('download_smili', None), ('download_eigen', None)]
+    sub_commands = build_ext.sub_commands + [('download_sakura', None), ('download_eigen', None)]
 
 
 setup(
@@ -415,7 +371,6 @@ setup(
         'build': priism_build,
         'build_ext': priism_build_ext,
         'download_sakura': download_sakura,
-        'download_smili': download_smili,
         'download_eigen': download_eigen,
         'configure_ext': configure_ext,
     }

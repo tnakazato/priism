@@ -1,0 +1,4 @@
+[submodule "sparseimaging"]
+	path = sparseimaging
+	url = https://github.com/ikeda46/sparseimaging.git
+	branch = smili
