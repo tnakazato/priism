@@ -108,13 +108,13 @@ def get_python_library(include_dir):
     libname2 = sysconfig.get_config_var('LDLIBRARY')
     if isinstance(libname2, str) and len(libname2) > 0:
         libnames.append(libname2)
-    
+
     libpath = sysconfig.get_config_var('LIBDIR')
     for libname in libnames:
         pylib = os.path.join(libpath, libname)
         if os.path.exists(pylib):
             return pylib
-    
+
     libpath2 = os.path.join(libpath, sysconfig.get_config_var('MULTIARCH'))
     for libname in libnames:
         pylib = os.path.join(libpath2, libname)
@@ -126,20 +126,20 @@ def get_python_library(include_dir):
     while tail != 'include' and prefix != '/':
         prefix, tail = os.path.split(prefix)
     assert prefix != '/'
-    
+
     for l in ['lib', 'lib64']:
         libpath = os.path.join(prefix, l)
         for libname in libnames:
             pylib = os.path.join(libpath, libname)
             if os.path.exists(pylib):
                 return pylib
-        
+
         libpath2 = os.path.join(libpath, sysconfig.get_config_var('MULTIARCH'))
         for libname in libnames:
             pylib = os.path.join(libpath2, libname)
             if os.path.exists(pylib):
                 return pylib
-        
+
     assert False
 
 
@@ -221,26 +221,27 @@ class download_smili(config):
         is_git_ok, is_curl_ok, is_wget_ok = check_command_availability(['git', 'curl', 'wget'])
         package = 'sparseimaging'
         branch = 'smili'
-        zipname = '{}.zip'.format(branch)
+        commit = '7afb0543acabc97dc31c9707b221feb27f34af66'
+        zipname = '{}.zip'.format(commit)
         base_url = 'https://github.com/ikeda46/{}'.format(package)
         if is_git_ok:
             url = base_url + '.git'
             self.download_cmd = 'git clone {}'.format(url)
         elif is_curl_ok:
-            url = base_url + '/archive/{}'.format(zipname)
+            url = base_url + '/archive/{}.zip'.format(commit)
             self.download_cmd = 'curl -L -O {}'.format(url)
         elif is_wget_ok:
-            url = base_url + '/archive/{}'.format(zipname)
+            url = base_url + '/archive/{}.zip'.format(commit)
             self.download_cmd = 'wget {}'.format(url)
         else:
             raise PriismDependencyError('No download command found: you have to install git or curl or wget')
 
         if is_git_ok:
-            self.epilogue_cmds = ['git checkout {}'.format(branch)]
+            self.epilogue_cmds = ['git checkout {}'.format(commit)]
             self.epilogue_cwd = package
         else:
             self.epilogue_cmds = ['unzip {}'.format(zipname),
-                                  'ln -s {0}-{1} {0}'.format(package, branch)]
+                                  'ln -s {0}-{1} {0}'.format(package, commit)]
             self.epilogue_cwd = '.'
         self.package_directory = package
 
