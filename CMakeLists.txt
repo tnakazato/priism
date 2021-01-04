@@ -20,7 +20,7 @@ project(priism)
 
 # download sparseimaging
 set(SPARSEIMAGING_DIR sparseimaging)
-execute_process(COMMAND which git5
+execute_process(COMMAND which git
                 RESULT_VARIABLE GIT_ERROR_CODE
                 OUTPUT_VARIABLE GIT_CMD)
 message(STATUS "Found git: ${GIT_CMD}")
