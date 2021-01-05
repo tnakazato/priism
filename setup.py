@@ -15,7 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with PRIISM.  If not, see <https://www.gnu.org/licenses/>.
 import os
-import numpy
 import shlex
 import subprocess
 import sys
@@ -339,6 +338,8 @@ class configure_ext(Command):
         initialize_attr_for_user_options(self)
 
     def finalize_options(self):
+        import numpy
+
         self.set_undefined_options(
             'build',
             *arg_for_set_undefined_options(self)
@@ -411,6 +412,7 @@ setup(
     packages=find_packages('python', exclude=['priism.test']),
     package_dir={'': 'python'},
     install_requires=['numpy'],
+    setup_requires=['numpy'],
     cmdclass={
         'build': priism_build,
         'build_ext': priism_build_ext,
