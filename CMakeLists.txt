@@ -24,8 +24,9 @@ execute_process(COMMAND which git
                 RESULT_VARIABLE GIT_ERROR_CODE
                 OUTPUT_VARIABLE GIT_CMD)
 message(STATUS "Found git: ${GIT_CMD}")
-set(SPARSEIMAGING_EXTRACT sparseimaging-smili)
-set(SPARSEIMAGING_ZIP smili.zip)
+set(SPARSEIMAGING_COMMIT_ID 7afb0543acabc97dc31c9707b221feb27f34af66)
+set(SPARSEIMAGING_EXTRACT ${SPARSEIMAGING_DIR}-${SPARSEIMAGING_COMMIT_ID})
+set(SPARSEIMAGING_ZIP ${SPARSEIMAGING_COMMIT_ID}.zip)
 if(NOT GIT_ERROR_CODE)
   if(NOT EXISTS ${PROJECT_SOURCE_DIR}/${SPARSEIMAGING_DIR})
     message(STATUS "Sparseimaging is not downloaded yet")
@@ -33,8 +34,8 @@ if(NOT GIT_ERROR_CODE)
     execute_process(COMMAND git clone ${SPARSEIMAGING_URL}
                     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
     # make sure we are correct branch
-    execute_process(COMMAND git checkout smili
-                    WORKING_DIRECTORY ${SPARSEIMAGING_DIR})
+    execute_process(COMMAND git checkout ${SPARSEIMAGING_COMMIT_ID}
+                    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/${SPARSEIMAGING_DIR})
   endif()
 else()
   if(NOT EXISTS ${PROJECT_SOURCE_DIR}/${SPARSEIMAGING_DIR})
