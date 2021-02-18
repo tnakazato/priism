@@ -56,7 +56,7 @@ worker.crossvalidation(L1_list, Ltsv_list, num_fold=num_fold,
 # If you want to obtain the image for a certain combination of L1 and Ltsv,
 # these two lines can be useful. You can control max number of iterations
 # or threshold value for mfista. See cvrun_core.py for detail.
-#worker.mfista(l1=1e0, ltsv=1e8)
+#worker.solve(l1=1e0, ltsv=1e8)
 #worker.exportimage(imagename='myimage.fits')
 
 end_time = time.time()
