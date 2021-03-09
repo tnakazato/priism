@@ -317,7 +317,8 @@ class download_eigen(config):
 
         self.epilogue_cmds = ['tar jxf {}'.format(tgzname)]
         self.epilogue_cwd = '.'
-        self.package_directory = package
+        self.distfile = tgzname
+        self.package_directory = f'{package}-{version}'
         self.working_directory = self.package_directory
 
     def finalize_options(self):
@@ -327,7 +328,9 @@ class download_eigen(config):
         super(download_eigen, self).run()
 
         if not os.path.exists(self.package_directory):
-            execute_command(self.download_cmd)
+            if not os.path.exists(self.distfile):
+                print('Extracting eigen...')
+                execute_command(self.download_cmd)
             for cmd in self.epilogue_cmds:
                 execute_command(cmd, cwd=self.epilogue_cwd)
 
