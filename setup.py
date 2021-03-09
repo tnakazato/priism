@@ -149,8 +149,7 @@ class priism_build(build):
         ('python-root-dir=', 'P', 'specify root directory for Python'),
         ('python-include-dir=', 'I', 'specify include directory for Python.h (take priority over python-root-dir)'),
         ('python-library=', 'L', 'specify Python library (take priority over python-root-dir)'),
-        ('numpy-include-dir=', 'N', 'specify include directory for NumPy (take priority over python-root-dir)'),
-        ('use-intel-compiler=', 'X', 'use intel C++ compiler to build sparseimaging (yes|no)')
+        ('numpy-include-dir=', 'N', 'specify include directory for NumPy (take priority over python-root-dir)')
     ]
 
     def initialize_options(self):
@@ -166,10 +165,6 @@ class priism_build(build):
             binary_dir, _ = os.path.split(executable_path)
             root_dir, _ = os.path.split(binary_dir)
             self.python_root_dir = root_dir
-        if isinstance(self.use_intel_compiler, str) and self.use_intel_compiler.lower() in ('true', 'yes', 'on'):
-            self.use_intel_compiler = True
-        else:
-            self.use_intel_compiler = False
         debug_print_user_options(self)
         print('fftw3-root-dir={}'.format(self.fftw3_root_dir))
 
@@ -387,9 +382,6 @@ class configure_ext(Command):
 
         if self.cxx_compiler is not None:
             cmd += ' -DCMAKE_CXX_COMPILER={}'.format(self.cxx_compiler)
-
-        if self.use_intel_compiler is True:
-            cmd += ' -DUSE_INTEL_COMPILER=ON'
 
         #print('generated cmake command:')
         #print('  {}'.format(cmd))
