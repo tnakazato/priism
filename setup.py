@@ -282,6 +282,7 @@ class download_sakura(config):
 
         self.epilogue_cmds = ['tar zxf {}'.format(tgzname)]
         self.epilogue_cwd = '.'
+        self.distfile = tgzname
         self.package_directory = package
         self.working_directory = self.package_directory
 
@@ -292,7 +293,8 @@ class download_sakura(config):
         super(download_sakura, self).run()
 
         if not os.path.exists(self.package_directory):
-            execute_command(self.download_cmd)
+            if not os.path.exists(self.distfile):
+                execute_command(self.download_cmd)
             for cmd in self.epilogue_cmds:
                 execute_command(cmd, cwd=self.epilogue_cwd)
 
