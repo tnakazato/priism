@@ -18,6 +18,10 @@ cmake_minimum_required(VERSION 2.8)
 
 project(priism)
 
+option(USE_INTEL_COMPILER
+       "set ON to use Intel C++ compiler to build sparseimaging"
+       OFF)
+
 # download sparseimaging
 set(SPARSEIMAGING_DIR sparseimaging)
 execute_process(COMMAND which git
@@ -142,24 +146,32 @@ set(SPARSEIMAGING_BUILD_DIR ${PROJECT_SOURCE_DIR}/${SPARSEIMAGING_DIR}/c++)
 set(SPARSEIMAGING_MAKEFILE makefile.priism)
 message(STATUS "FFTW3_INCLUDE_DIR is ${FFTW3_INCLUDE_DIR}")
 execute_process(COMMAND echo ${FFTW3_INCLUDE_DIR}
-                COMMAND sed -e "s@include@lib64@g"
+                COMMAND sed -e "s/include/lib64/g"
                 COMMAND tr -d "\n"
                 OUTPUT_VARIABLE FFTW3_LIBRARY_DIR)
 if(NOT EXISTS ${FFTW3_LIBRARY_DIR}/libfftw3.so)
   execute_process(COMMAND echo ${FFTW3_INCLUDE_DIR}
-                COMMAND sed -e "s@include@lib@g"
+                COMMAND sed -e "s/include/lib/g"
                 COMMAND tr -d "\n"
                 OUTPUT_VARIABLE FFTW3_LIBRARY_DIR)
 endif()
 message(STATUS "FFTW3_LIBRARY_DIR is ${FFTW3_LIBRARY_DIR}")
-execute_process(COMMAND sed -e "s@CFLAGS=-O2@CFLAGS=-O2 -I${FFTW3_INCLUDE_DIR}@g" makefile
-                COMMAND sed -e "s@-lrt@-lstdc++@g"
-                COMMAND sed -e "s@^CLIBS_FFTW = @CLIBS_FFTW = -L${FFTW3_LIBRARY_DIR} @g"
-                COMMAND sed -e "s@-O2@-O3@g"
-                COMMAND sed -e "s@CXX=.*$@CXX=${CMAKE_CXX_COMPILER}@g"
-                COMMAND sed -e "s@c++[0-9][0-9]@c++11@g"
-                OUTPUT_FILE ${SPARSEIMAGING_MAKEFILE}
-                WORKING_DIRECTORY ${SPARSEIMAGING_BUILD_DIR})
+if(USE_INTEL_COMPILER)
+  execute_process(COMMAND sed -e "s:^CFLAGS=.*$:CFLAGS=-O3 -ipo -qopenmp -xHost -I${FFTW3_INCLUDE_DIR}:g" makefile
+                  COMMAND sed -e "s:-O2 -Wall:-Wall:g"
+                  COMMAND sed -e "s:^CXX=.*:CXX=icpc:g"
+                  OUTPUT_FILE ${SPARSEIMAGING_MAKEFILE}
+                  WORKING_DIRECTORY ${SPARSEIMAGING_BUILD_DIR})
+else()
+  execute_process(COMMAND sed -e "s:CFLAGS=-O2:CFLAGS=-O2 -I${FFTW3_INCLUDE_DIR}:g" makefile
+                  COMMAND sed -e "s:-lrt:-lstdc++:g"
+                  COMMAND sed -e "s:^CLIBS_FFTW = :CLIBS_FFTW = -L${FFTW3_LIBRARY_DIR} :g"
+                  COMMAND sed -e "s:-O2:-O3:g"
+                  COMMAND sed -e "s:CXX=.*$:CXX=${CMAKE_CXX_COMPILER}:g"
+                  COMMAND sed -e "s:c++[0-9][0-9]:c++11:g"
+                  OUTPUT_FILE ${SPARSEIMAGING_MAKEFILE}
+                  WORKING_DIRECTORY ${SPARSEIMAGING_BUILD_DIR})
+endif()
 if(EIGEN3_INCLUDE_DIR)
   message(STATUS "Edit makefile for sparseimaging")
   execute_process(COMMAND sed -i -e "s@/usr/include/eigen3@${EIGEN3_INCLUDE_DIR}@g" ${SPARSEIMAGING_MAKEFILE}
@@ -167,7 +179,8 @@ if(EIGEN3_INCLUDE_DIR)
 endif()
 
 # configure compile of sparseimaging to generate libmfista_fft.so
-add_custom_target(sparseimaging make -f ${SPARSEIMAGING_MAKEFILE} libraries
+add_custom_target(sparseimaging make clean
+                  COMMAND make -f ${SPARSEIMAGING_MAKEFILE} libraries
                   WORKING_DIRECTORY ${SPARSEIMAGING_BUILD_DIR})
 
 # add priism module
