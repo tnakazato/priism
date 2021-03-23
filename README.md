@@ -184,18 +184,18 @@ Usually, cmake will download source code for Sakura (+googletest) and sparseimag
 If network connection is not available, you need to obtain these files by yourself.
 
 In case if you need to download files by hand, links below might be useful:
-* Sakura library: [https://alma-intweb.mtk.nao.ac.jp/~nakazato/libsakura/libsakura-5.0.8.tgz](https://alma-intweb.mtk.nao.ac.jp/~nakazato/libsakura/libsakura-5.0.8.tgz)
+* Sakura library: [https://alma-intweb.mtk.nao.ac.jp/~sakura/libsakura/libsakura-5.0.8.tgz](https://alma-intweb.mtk.nao.ac.jp/~sakura/libsakura/libsakura-5.0.8.tgz)
 * googletest: [https://github.com/google/googletest/archive/master.zip](https://github.com/google/googletest/archive/master.zip)
 * sparseimaging library: [https://github.com/ikeda46/sparseimaging/archive/smili.zip](https://github.com/ikeda46/sparseimaging/archive/smili.zip)
 
 Downloaded files should be put under the "build" directory. For example,
 
     cd somewhere/network/is/available
-    curl -L -O https://alma-intweb.mtk.nao.ac.jp/~nakazato/libsakura/libsakura-5.0.8.tgz
+    curl -L -O https://alma-intweb.mtk.nao.ac.jp/~sakura/libsakura/libsakura-5.0.8.tgz
     curl -L -O https://github.com/google/googletest/archive/master.zip
     curl -L -O https://github.com/ikeda46/sparseimaging/archive/smili.zip
     cd priism_root_dir/priism/build
-    mv somewhere/network/is/available/libsakura-5.0.7.tgz .
+    mv somewhere/network/is/available/libsakura-5.0.8.tgz .
     mv somewhere/network/is/available/master.zip
     mv somewhere/network/is/available/development.zip
 

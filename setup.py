@@ -272,7 +272,7 @@ class download_sakura(config):
         package = 'libsakura'
         version = '5.0.8'
         tgzname = '{}-{}.tgz'.format(package, version)
-        url = 'https://alma-intweb.mtk.nao.ac.jp/~nakazato/libsakura/{}'.format(tgzname)
+        url = 'https://alma-intweb.mtk.nao.ac.jp/~sakura/libsakura/{}'.format(tgzname)
         if is_curl_ok:
             self.download_cmd = 'curl -L -O {}'.format(url)
         elif is_wget_ok:
