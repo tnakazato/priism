@@ -503,6 +503,7 @@ class VisibilityConverter(object):
         # UVW conversion
         u = sakura.empty_aligned((nrow, nchan), dtype=uvw.dtype)
         v = sakura.empty_like_aligned(u)
+        center_freq = numpy.asfarray([numpy.mean(lsr_edge_frequency[i:i+2]) for i in range(nchan)])
         for irow in range(nrow):
             # TODO: phase rotation if image phasecenter is different from
             #       the reference direction of the observation
@@ -510,8 +511,8 @@ class VisibilityConverter(object):
 
             # conversion from physical baseline length to the value
             # normalized by observing wavelength
-            u0 = uvw[0, irow]
-            v0 = uvw[1, irow]
+            # u0 = uvw[0, irow]
+            # v0 = uvw[1, irow]
             spw_id = data_desc_ids[irow]
             #chan_freq = lsr_frequency
             #chan_width = (lsr_edge_frequency[1:] - lsr_edge_frequency[:-1]).mean()
@@ -520,10 +521,10 @@ class VisibilityConverter(object):
             #freq_start = lsr_edge_frequency[0]
             #freq_end = lsr_edge_frequency[-1]
             #center_freq = (freq_start + freq_end) / 2
-            center_freq = numpy.fromiter((numpy.mean(lsr_edge_frequency[i:i+2]) for i in range(nchan)),
-                                         dtype=numpy.float64)
-            u[irow] = u0 * center_freq / c  # divided by wavelength
-            v[irow] = v0 * center_freq / c  # divided by wavelength
+            #center_freq = numpy.frombuffer(numpy.mean([(lsr_edge_frequency[i:i+2]) for i in range(nchan)]), dtype=numpy.float64)
+
+            # u[irow] = u0 * center_freq / c  # divided by wavelength
+            # v[irow] = v0 * center_freq / c  # divided by wavelength
 
             # TODO?: refocus UVW if distance to the source is known
             pass
@@ -546,15 +547,20 @@ class VisibilityConverter(object):
             #        0|(umin,vmin)      (umax,vmin)
             #         |__________________________
             #          0 1 2 ......nu/2...nu-1 u
-            u[irow] = u[irow] / delta_u + offset_u
+            # u[irow] = u[irow] / delta_u + offset_u
+            # u[irow] = (u0 * center_freq) / (delta_u * c) + offset_u
+            u[irow] = ( uvw[0, irow] * center_freq) / (delta_u * c) + offset_u
 
             # Sign of v must be inverted so that MFISTA routine generates
             # proper image. Otherwise, image will be flipped in the vertical
             # axis.
-            v[irow] = -v[irow] / delta_v + offset_v
+            # v[irow] = -v[irow] / delta_v + offset_v
+            # v[irow] = -(v0 * center_freq) / (delta_v * c) + offset_v
+            v[irow] = -( uvw[1, irow] * center_freq) / (delta_v * c) + offset_v
 
         ws.u = u
         ws.v = v
+
 
     def flatten(self, working_set):
         """
