@@ -17,4 +17,4 @@
 from __future__ import absolute_import
 
 # Version of the PRIISM module
-__version__ = '0.7.1'
+__version__ = '0.7.2'
