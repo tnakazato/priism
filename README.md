@@ -126,10 +126,12 @@ If you download zipped source code, you will get a file named `priism-<branch_na
 
 If you download priism-0.1.2 or earlier, you will see additional directory layer at the top. More specifically, you will see the following two subdirectories at the top-level directory:
 
-    $ pwd
-    priism
-    $ ls
-    almasparsemodeling  priism
+```
+$ pwd
+priism
+$ ls
+almasparsemodeling  priism
+```
 
 This is older directory structure and almasparsemodeling contains some initial code written at the dawn of the development. In that case, you can build and install priism just translating the directory `priism` into `priism/priism` in the following instruction.
 
