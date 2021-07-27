@@ -141,8 +141,10 @@ This is older directory structure and almasparsemodeling contains some initial c
 
 First, move to the extracted directory and make "build" directory.
 
-    cd priism
-    mkdir build
+```
+cd priism
+mkdir build
+```
 
 Then, cmake command should be run in the "build" directory. In the example below,
 only mandatory option is shown.
