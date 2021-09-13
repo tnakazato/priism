@@ -44,7 +44,7 @@ def format_lambda(v):
     elif v == 0:
         s = 'Zero'
     else:
-        s = '{}'.format(int(math.log10(v)))
+        s = '{:.2f}'.format(float(math.log10(v)))
     return s
 
 
