@@ -248,6 +248,18 @@ python setup.py install --help
 
 During installation of CASA 6, `numpy` will be installed by dependency. It is recommended to use that version when you install PRIISM.
 
+### Intel Compiler Support
+
+Intel compiler support (Intel OneAPI) is available. Currently only classic C++ compiler (`icpc`) is supported. After configuring the compiler, the following build option will compile performance critical C++ code with Intel compiler.
+
+```
+python setup.py build --use-intel-compiler=yes
+```
+
+Note that, due to the incompatibility of Python version, `setvars.sh` should not be used to configure the compiler. Please update `PATH` environment variable manually or use `oneapi/compiler/latest/env/vas.sh` instead.
+
+At runtime, you might need to add `oneapi/intelpython/python3.7/lib` to `LD_LIBRARY_PATH`.
+
 ## Using PRIISM
 
 ### Setting PYTHONPATH
