@@ -18,9 +18,11 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 import os
-import numpy
+import numpy as np
+import cmath
 import ctypes
 
+import priism.external.casa.casatools as casatools
 from . import sparseimagingnufft
 
 
@@ -35,10 +37,10 @@ class SparseImagingInputsClosure(sparseimagingnufft.SparseImagingInputsNUFFT):
         offset_u = nu // 2
         offset_v = nv // 2
 
-        u_converted = numpy.empty(u.shape, dtype=numpy.float64)
-        v_converted = numpy.empty_like(u_converted)
-        du = 2 * numpy.pi / (nu + 1)
-        dv = 2 * numpy.pi / (nv + 1)
+        u_converted = np.empty(u.shape, dtype=np.float64)
+        v_converted = np.empty_like(u_converted)
+        du = 2 * np.pi / (nu + 1)
+        dv = 2 * np.pi / (nv + 1)
         u_converted[:] = - (u - offset_u) * du
         v_converted[:] = - (v - offset_v) * dv
 
@@ -78,6 +80,15 @@ class SparseImagingInputsClosure(sparseimagingnufft.SparseImagingInputsNUFFT):
         self.ch = ch
 
     def export(self, filename):
+        """Export data to file.
+
+        Requirement from Ikeda-san
+        jd,year,doy,hour,min,sec,freq,stokesid,bandid,ifid,ch,u,v,w,st1,st2,amp,phase,weight,sigma
+
+        Args:
+            filename (str): output file name
+        """
+        qa = casatools.CasaToolGenerator.CreateQuantity()
         with open(filename, 'w') as f:
             print('M = {0}'.format(self.m), file=f)
             print('NX = {0}'.format(self.nx), file=f)
@@ -86,16 +97,31 @@ class SparseImagingInputsClosure(sparseimagingnufft.SparseImagingInputsNUFFT):
             print(self.header, file=f)
             print('', file=f)
             for i in range(self.m):
-                print('{}, {:d}, {:d}, {:d}, {}, {}, {:e}, {:e}, {:e}'.format(
-                    self.t[i],
-                    self.a1[i],
-                    self.a2[i],
-                    self.ch[i],
-                    self.u[i],
-                    self.v[i],
-                    self.yreal[i],
-                    self.yimag[i],
-                    self.noise[i]
+                qtime = qa.quantity(self.t[i], 's')
+                time_dict = qa.splitdate(qtime)
+                visibility = complex(self.yreal[i], self.yimag[i])
+                amp = abs(visibility)
+                phase = cmath.phase(visibility)
+                print('{time},{year:d},{month:d},{day:d},{hour:d},{minute:d},{sec},{freq},{stokes:d},{band:d},{ifid:d},{u},{v},{w},{st1},{st2},{amp:e},{phase:e},{sigma:e}'.format(
+                    time=time_dict['mjd'],
+                    year=int(time_dict['year']),
+                    month=int(time_dict['month']),
+                    day=int(time_dict['monthday']),
+                    hour=int(time_dict['hour']),
+                    minute=int(time_dict['min']),
+                    sec=time_dict['sec'] + time_dict['usec'] * 1e-6,
+                    freq=self.ch[i],  # temporary: will be replaced with channel frequency
+                    stokes=self.stokes[i],
+                    band=self.band[i],
+                    ifid=self.spw[i],  # spw id
+                    u=self.u[i],
+                    v=self.v[i],
+                    w=self.w[i],
+                    st1=self.a1[i],
+                    st2=self.a2[i],
+                    amp=amp,
+                    phase=phase,
+                    sigma=self.noise[i]  # should be sigma
                 ), file=f)
 
 
@@ -182,9 +208,9 @@ class SparseImagingExecutor(object):
         # inputs
         u_idx = ctypes.pointer(inputs.as_carray('u'))
         v_idx = ctypes.pointer(inputs.as_carray('v'))
-        assert inputs.yreal.dtype == numpy.float64, 'yreal.dtype = {}'.format(inputs.yreal.dtype)
-        assert inputs.yimag.dtype == numpy.float64, 'yimag.dtype = {}'.format(inputs.yimag.dtype)
-        assert inputs.noise.dtype == numpy.float64, 'noise.dtype = {}'.format(inputs.noise.dtype)
+        assert inputs.yreal.dtype == np.float64, 'yreal.dtype = {}'.format(inputs.yreal.dtype)
+        assert inputs.yimag.dtype == np.float64, 'yimag.dtype = {}'.format(inputs.yimag.dtype)
+        assert inputs.noise.dtype == np.float64, 'noise.dtype = {}'.format(inputs.noise.dtype)
         y_r = ctypes.pointer(inputs.as_carray('yreal'))
         y_i = ctypes.pointer(inputs.as_carray('yimag'))
         noise_stdev = ctypes.pointer(inputs.as_carray('noise'))
@@ -200,9 +226,9 @@ class SparseImagingExecutor(object):
         nonneg_flag = ctypes.c_int(1 if self.nonnegative else 0)
         box_flag = 0 if cl_box is None else 1
         if box_flag == 1:
-            cl_box = numpy.ctypeslib.as_ctypes(cl_box)
+            cl_box = np.ctypeslib.as_ctypes(cl_box)
         else:
-            cl_box = numpy.ctypeslib.as_ctypes(numpy.zeros(1, dtype=numpy.float32))
+            cl_box = np.ctypeslib.as_ctypes(np.zeros(1, dtype=np.float32))
         _box_flag = ctypes.c_int(box_flag)
 
         # outputs
@@ -321,19 +347,19 @@ class SparseImagingExecutor(object):
             f.readline()
 
             # read input data
-            u = numpy.empty(M, dtype=numpy.int32)
-            v = numpy.empty_like(u)
-            yreal = numpy.empty(M, dtype=numpy.double)
-            yimag = numpy.empty_like(yreal)
-            noise = numpy.empty_like(yreal)
+            u = np.empty(M, dtype=np.int32)
+            v = np.empty_like(u)
+            yreal = np.empty(M, dtype=np.double)
+            yimag = np.empty_like(yreal)
+            noise = np.empty_like(yreal)
             for i in range(M):
                 line = f.readline()
                 values = line.split(',')
-                u[i] = numpy.int32(values[0].strip())
-                v[i] = numpy.int32(values[1].strip())
-                yreal[i] = numpy.double(values[2].strip())
-                yimag[i] = numpy.double(values[3].strip())
-                noise[i] = numpy.double(values[4].strip())
+                u[i] = np.int32(values[0].strip())
+                v[i] = np.int32(values[1].strip())
+                yreal[i] = np.double(values[2].strip())
+                yimag[i] = np.double(values[3].strip())
+                noise[i] = np.double(values[4].strip())
                 #print '{0} {1} {2} {3}'.format(u[i], v[i], yreal[i], yimag[i], noise[i])
 
             inputs = self.Inputs(infile, M, NX, NY, u, v, yreal, yimag, noise)
@@ -341,12 +367,12 @@ class SparseImagingExecutor(object):
 
     def get_result(self, outfile):
         n = self.nx * self.ny
-        arraydata = numpy.fromfile(outfile, dtype=numpy.double)
+        arraydata = np.fromfile(outfile, dtype=np.double)
         assert len(arraydata) == n
 
         img = arraydata.reshape((self.nx, self.ny))
 
         # flip along longitude axis
-        img = numpy.fliplr(img)
+        img = np.fliplr(img)
 
         return img
