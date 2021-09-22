@@ -23,40 +23,17 @@ import cmath
 import ctypes
 
 import priism.external.casa.casatools as casatools
-from . import sparseimagingnufft
+from . import sparseimagingbase
 
 
-class SparseImagingInputsClosure(sparseimagingnufft.SparseImagingInputsNUFFT):
-    @classmethod
-    def convert_uv(cls, imageparam, u, v):
-        # nx, ny
-        nx = imageparam.imsize[0]
-        ny = imageparam.imsize[1]
-        nu = nx
-        nv = ny
-        offset_u = nu // 2
-        offset_v = nv // 2
-
-        u_converted = np.empty(u.shape, dtype=np.float64)
-        v_converted = np.empty_like(u_converted)
-        du = 2 * np.pi / (nu + 1)
-        dv = 2 * np.pi / (nv + 1)
-        u_converted[:] = - (u - offset_u) * du
-        v_converted[:] = - (v - offset_v) * dv
-
-        return u_converted, v_converted
-
-    @classmethod
-    def convert_vis(cls, u, v, rdata, idata):
-        return rdata, idata
-
+class SparseImagingInputsClosure(sparseimagingbase.SparseImagingInputs):
     @classmethod
     def from_visibility_working_set(cls, visibility, imageparam):
         """
         Convert VisibilityWorkingSet object into SparseImagingInputs object.
         uv-coordinate value is flipped for FFTW.
         """
-        base_inputs = sparseimagingnufft.SparseImagingInputsNUFFT.from_visibility_working_set(
+        base_inputs = sparseimagingbase.SparseImagingInputs.from_visibility_working_set(
             visibility,
             imageparam
         )
@@ -64,45 +41,49 @@ class SparseImagingInputsClosure(sparseimagingnufft.SparseImagingInputsNUFFT):
         a1 = visibility.a1
         a2 = visibility.a2
         chan = visibility.chan
+        weight = visibility.weight
         return cls(base_inputs.infile, base_inputs.m, base_inputs.nx, base_inputs.ny,
                    t, a1, a2, chan,
-                   base_inputs.u, base_inputs.v, base_inputs.yreal, base_inputs.yimag, base_inputs.noise)
+                   base_inputs.u, base_inputs.v, visibility.w,
+                   base_inputs.yreal, base_inputs.yimag,
+                   base_inputs.noise, weight)
 
     @property
     def header(self):
-        return 't_sec, a1, a2, chan, u_rad, v_rad, vis_r, vis_i, noise_std_dev'
+        return 'mjd,year,month,day,hour,min,sec,freq,stokesid,bandid,ifid,u,v,w,st1,st2,amp,phase,weight,sigma'
 
-    def __init__(self, infile, M, NX, NY, t, a1, a2, ch, u, v, yreal, yimag, noise):
+    def __init__(self, infile, M, NX, NY, t, a1, a2, ch, u, v, w, yreal, yimag, noise, weight):
         super(SparseImagingInputsClosure, self).__init__(infile, M, NX, NY, u, v, yreal, yimag, noise)
         self.t = t
         self.a1 = a1
         self.a2 = a2
         self.ch = ch
+        self.w = w
+        self.weight = weight
 
     def export(self, filename):
         """Export data to file.
 
         Requirement from Ikeda-san
-        jd,year,doy,hour,min,sec,freq,stokesid,bandid,ifid,ch,u,v,w,st1,st2,amp,phase,weight,sigma
+        mjd,year,month,day,hour,min,sec,freq,stokesid,bandid,ifid,u,v,w,st1,st2,amp,phase,weight,sigma,weight
 
         Args:
             filename (str): output file name
         """
         qa = casatools.CasaToolGenerator.CreateQuantity()
         with open(filename, 'w') as f:
-            print('M = {0}'.format(self.m), file=f)
-            print('NX = {0}'.format(self.nx), file=f)
-            print('NY = {0}'.format(self.ny), file=f)
-            print('', file=f)
-            print(self.header, file=f)
-            print('', file=f)
+            # print('M = {0}'.format(self.m), file=f)
+            # print('NX = {0}'.format(self.nx), file=f)
+            # print('NY = {0}'.format(self.ny), file=f)
+            # print('', file=f)
+            print(f'#{self.header}', file=f)
             for i in range(self.m):
                 qtime = qa.quantity(self.t[i], 's')
                 time_dict = qa.splitdate(qtime)
                 visibility = complex(self.yreal[i], self.yimag[i])
                 amp = abs(visibility)
                 phase = cmath.phase(visibility)
-                print('{time},{year:d},{month:d},{day:d},{hour:d},{minute:d},{sec},{freq},{stokes:d},{band:d},{ifid:d},{u},{v},{w},{st1},{st2},{amp:e},{phase:e},{sigma:e}'.format(
+                print('{time}, {year:d}, {month:d}, {day:d}, {hour:d}, {minute:d}, {sec}, {freq}, {stokes:d}, {band:d}, {ifid:d}, {u}, {v}, {w}, {st1}, {st2}, {amp:e}, {phase:e}, {weight:e}, {sigma:e}'.format(
                     time=time_dict['mjd'],
                     year=int(time_dict['year']),
                     month=int(time_dict['month']),
@@ -111,9 +92,9 @@ class SparseImagingInputsClosure(sparseimagingnufft.SparseImagingInputsNUFFT):
                     minute=int(time_dict['min']),
                     sec=time_dict['sec'] + time_dict['usec'] * 1e-6,
                     freq=self.ch[i],  # temporary: will be replaced with channel frequency
-                    stokes=self.stokes[i],
-                    band=self.band[i],
-                    ifid=self.spw[i],  # spw id
+                    stokes=0,  # TEMPORARY HARD-CODED: Stokes I
+                    band=6,  # TEMPORARY HARD-CODED: Band 6
+                    ifid=0,  # TEMPORARY HARD-CODED: spw 0
                     u=self.u[i],
                     v=self.v[i],
                     w=self.w[i],
@@ -121,7 +102,8 @@ class SparseImagingInputsClosure(sparseimagingnufft.SparseImagingInputsNUFFT):
                     st2=self.a2[i],
                     amp=amp,
                     phase=phase,
-                    sigma=self.noise[i]  # should be sigma
+                    weight=self.weight[i],
+                    sigma=self.noise[i]
                 ), file=f)
 
 
@@ -148,7 +130,7 @@ class MFISTAResultClosure(ctypes.Structure):
                 ('Lip_const', ctypes.c_double)]
 
 
-class SparseImagingResultsClosure(sparseimagingnufft.SparseImagingResultsNUFFT):
+class SparseImagingResultsClosure(sparseimagingbase.SparseImagingResults):
     ResultClass = MFISTAResultClosure
 
 

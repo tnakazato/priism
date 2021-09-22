@@ -176,6 +176,7 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
         """
         u = []
         v = []
+        w = []
         real = []
         imag = []
         weight = []
@@ -198,6 +199,7 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
                         t.extend(ws.t[valid[0]])
                         u.extend(ws.u[valid[0]])
                         v.extend(ws.v[valid[0]])
+                        w.extend(ws.w[valid[0]])
                         a1.extend(ws.a1[valid[0]])
                         a2.extend(ws.a2[valid[0]])
                         chan.extend(ws.chan[valid[0]])
@@ -210,6 +212,7 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
             t=numpy.asarray(t),
             u=numpy.asarray(u),
             v=numpy.asarray(v),
+            w=numpy.asarray(w),
             a1=numpy.asarray(a1),
             a2=numpy.asarray(a2),
             chan=numpy.asarray(chan),

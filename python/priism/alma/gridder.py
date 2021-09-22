@@ -45,11 +45,11 @@ class GridderWorkingSet(datacontainer.VisibilityWorkingSet):
     pol_map --- polarization mapping between raw visibility
                 and gridded visibility (npol)
     """
-    def __init__(self, data_id=None, t=0.0, u=0.0, v=0.0, a1=None, a2=None, chan=None,
+    def __init__(self, data_id=None, t=0.0, u=0.0, v=0.0, w=0.0, a1=None, a2=None, chan=None,
                  rdata=None, idata=None, flag=None, weight=None, row_flag=None,
                  channel_map=None, pol_map=None):
         super(GridderWorkingSet, self).__init__(
-            data_id, t, u, v, a1, a2, chan, rdata, idata, weight
+            data_id, t, u, v, w, a1, a2, chan, rdata, idata, weight
         )
         self.flag = flag
         self.row_flag = row_flag

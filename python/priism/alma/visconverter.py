@@ -505,6 +505,7 @@ class VisibilityConverter(object):
         # UVW conversion
         u = sakura.empty_aligned((nrow, nchan), dtype=uvw.dtype)
         v = sakura.empty_like_aligned(u)
+        w = sakura.empty_like_aligned(u)
         for irow in range(nrow):
             # TODO: phase rotation if image phasecenter is different from
             #       the reference direction of the observation
@@ -514,6 +515,7 @@ class VisibilityConverter(object):
             # normalized by observing wavelength
             u0 = uvw[0, irow]
             v0 = uvw[1, irow]
+            w0 = uvw[2, irow]
             spw_id = data_desc_ids[irow]
             #chan_freq = lsr_frequency
             #chan_width = (lsr_edge_frequency[1:] - lsr_edge_frequency[:-1]).mean()
@@ -526,6 +528,7 @@ class VisibilityConverter(object):
                                          dtype=numpy.float64)
             u[irow] = u0 * center_freq / c  # divided by wavelength
             v[irow] = v0 * center_freq / c  # divided by wavelength
+            w[irow] = w0 * center_freq / c  # divided by wavelength
 
             # TODO?: refocus UVW if distance to the source is known
             pass
@@ -548,15 +551,16 @@ class VisibilityConverter(object):
             #        0|(umin,vmin)      (umax,vmin)
             #         |__________________________
             #          0 1 2 ......nu/2...nu-1 u
-            u[irow] = u[irow] / delta_u + offset_u
+            # u[irow] = u[irow] / delta_u + offset_u
 
             # Sign of v must be inverted so that MFISTA routine generates
             # proper image. Otherwise, image will be flipped in the vertical
             # axis.
-            v[irow] = -v[irow] / delta_v + offset_v
+            # v[irow] = -v[irow] / delta_v + offset_v
 
         ws.u = u
         ws.v = v
+        ws.w = w
 
     def flatten(self, working_set):
         """
@@ -580,6 +584,7 @@ class VisibilityConverter(object):
             channel_map = sakura.empty_aligned((1,), dtype=working_set.channel_map.dtype)
             u = sakura.empty_aligned((nrow,), dtype=working_set.u.dtype)
             v = sakura.empty_like_aligned(u)
+            w = sakura.empty_like_aligned(u)
             t = sakura.empty_aligned((nrow,), dtype=working_set.t.dtype)
             a1 = sakura.empty_aligned((nrow,), dtype=working_set.a1.dtype)
             a2 = sakura.empty_like_aligned(a1)
@@ -595,6 +600,7 @@ class VisibilityConverter(object):
                 channel_map[0] = imchan
                 u[row_start:row_end] = working_set.u[:, ichan]
                 v[row_start:row_end] = working_set.v[:, ichan]
+                w[row_start:row_end] = working_set.w[:, ichan]
                 t[row_start:row_end] = working_set.t[:]
                 a1[row_start:row_end] = working_set.a1[:]
                 a2[row_start:row_end] = working_set.a2[:]
@@ -602,7 +608,7 @@ class VisibilityConverter(object):
                 row_start = row_end
 
             ws = gridder.GridderWorkingSet(
-                data_id=working_set.data_id, t=t, u=u, v=v,
+                data_id=working_set.data_id, t=t, u=u, v=v, w=w,
                 a1=a1, a2=a2, chan=chan, rdata=real, idata=imag, flag=flag,
                 weight=weight, row_flag=row_flag, channel_map=channel_map
             )

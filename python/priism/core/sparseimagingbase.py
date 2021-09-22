@@ -185,11 +185,13 @@ class SparseImagingInputs(CTypesUtilMixIn):
 
     @classmethod
     def convert_uv(cls, imageparam, u, v):
-        raise NotImplementedError('convert_uv must be implemented in subclasses!')
+        # raise NotImplementedError('convert_uv must be implemented in subclasses!')
+        return u, v
 
     @classmethod
     def convert_vis(cls, u, v, yreal, yimag):
-        raise NotImplementedError('convert_vis must be implemented in subclasses!')
+        # raise NotImplementedError('convert_vis must be implemented in subclasses!')
+        return yreal, yimag
 
     @classmethod
     def from_visibility_working_set(cls, visibility, imageparam):

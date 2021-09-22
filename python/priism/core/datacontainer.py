@@ -166,7 +166,7 @@ class VisibilityWorkingSet(paramcontainer.ParamContainer):
     idata --- imaginary part of visibility data (nrow, npol, nchan)
     weight --- visibility weight (nrow, nchan)
     """
-    def __init__(self, data_id=None, t=0.0, u=0.0, v=0.0, a1=None, a2=None,
+    def __init__(self, data_id=None, t=0.0, u=0.0, v=0.0, w=0.0, a1=None, a2=None,
                  chan=None, rdata=None, idata=None, weight=None):
         self.InitContainer(locals())
 
