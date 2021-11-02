@@ -34,11 +34,11 @@ class MfistaSolverBase(object):
         self.mfistaparam = mfistaparam
         self.initialimage = None
 
-    def __from_param(self, name):
+    def __from_param(self, name, default_value=None):
         if hasattr(self, 'mfistaparam'):
-            return getattr(self.mfistaparam, name)
+            return getattr(self.mfistaparam, name, default_value)
         else:
-            None
+            return None
 
     @property
     def l1(self):
@@ -63,6 +63,10 @@ class MfistaSolverBase(object):
     @property
     def box_flag(self):
         return 0 if self.clean_box is None else 1
+
+    @property
+    def nonnegative(self):
+        return self.__from_param('nonnegative', True)
 
     def solve(self, grid_data):
         """
@@ -105,7 +109,7 @@ class MfistaSolverTemplate(MfistaSolverBase):
         # TODO: nonnegative must be specified by the user
         executor = self.Executor(lambda_L1=self.l1,
                                  lambda_TSV=self.ltsv,
-                                 nonnegative=True)
+                                 nonnegative=self.nonnegative)
         inputs = executor.Inputs.from_visibility_working_set(visibility,
                                                              imageparam)
 

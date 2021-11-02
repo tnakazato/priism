@@ -108,13 +108,13 @@ def get_python_library(include_dir):
     libname2 = sysconfig.get_config_var('LDLIBRARY')
     if isinstance(libname2, str) and len(libname2) > 0:
         libnames.append(libname2)
-    
+
     libpath = sysconfig.get_config_var('LIBDIR')
     for libname in libnames:
         pylib = os.path.join(libpath, libname)
         if os.path.exists(pylib):
             return pylib
-    
+
     libpath2 = os.path.join(libpath, sysconfig.get_config_var('MULTIARCH'))
     for libname in libnames:
         pylib = os.path.join(libpath2, libname)
@@ -126,20 +126,20 @@ def get_python_library(include_dir):
     while tail != 'include' and prefix != '/':
         prefix, tail = os.path.split(prefix)
     assert prefix != '/'
-    
+
     for l in ['lib', 'lib64']:
         libpath = os.path.join(prefix, l)
         for libname in libnames:
             pylib = os.path.join(libpath, libname)
             if os.path.exists(pylib):
                 return pylib
-        
+
         libpath2 = os.path.join(libpath, sysconfig.get_config_var('MULTIARCH'))
         for libname in libnames:
             pylib = os.path.join(libpath2, libname)
             if os.path.exists(pylib):
                 return pylib
-        
+
     assert False
 
 
@@ -149,7 +149,8 @@ class priism_build(build):
         ('python-root-dir=', 'P', 'specify root directory for Python'),
         ('python-include-dir=', 'I', 'specify include directory for Python.h (take priority over python-root-dir)'),
         ('python-library=', 'L', 'specify Python library (take priority over python-root-dir)'),
-        ('numpy-include-dir=', 'N', 'specify include directory for NumPy (take priority over python-root-dir)')
+        ('numpy-include-dir=', 'N', 'specify include directory for NumPy (take priority over python-root-dir)'),
+        ('use-intel-compiler=', 'X', 'use intel C++ compiler to build sparseimaging (yes|no)')
     ]
 
     def initialize_options(self):
@@ -165,6 +166,10 @@ class priism_build(build):
             binary_dir, _ = os.path.split(executable_path)
             root_dir, _ = os.path.split(binary_dir)
             self.python_root_dir = root_dir
+        if isinstance(self.use_intel_compiler, str) and self.use_intel_compiler.lower() in ('true', 'yes', 'on'):
+            self.use_intel_compiler = True
+        else:
+            self.use_intel_compiler = False
         debug_print_user_options(self)
         print('fftw3-root-dir={}'.format(self.fftw3_root_dir))
 
@@ -221,26 +226,27 @@ class download_smili(config):
         is_git_ok, is_curl_ok, is_wget_ok = check_command_availability(['git', 'curl', 'wget'])
         package = 'sparseimaging'
         branch = 'smili'
-        zipname = '{}.zip'.format(branch)
+        commit = '7afb0543acabc97dc31c9707b221feb27f34af66'
+        zipname = '{}.zip'.format(commit)
         base_url = 'https://github.com/ikeda46/{}'.format(package)
         if is_git_ok:
             url = base_url + '.git'
             self.download_cmd = 'git clone {}'.format(url)
         elif is_curl_ok:
-            url = base_url + '/archive/{}'.format(zipname)
+            url = base_url + '/archive/{}.zip'.format(commit)
             self.download_cmd = 'curl -L -O {}'.format(url)
         elif is_wget_ok:
-            url = base_url + '/archive/{}'.format(zipname)
+            url = base_url + '/archive/{}.zip'.format(commit)
             self.download_cmd = 'wget {}'.format(url)
         else:
             raise PriismDependencyError('No download command found: you have to install git or curl or wget')
 
         if is_git_ok:
-            self.epilogue_cmds = ['git checkout {}'.format(branch)]
+            self.epilogue_cmds = ['git checkout {}'.format(commit)]
             self.epilogue_cwd = package
         else:
             self.epilogue_cmds = ['unzip {}'.format(zipname),
-                                  'ln -s {0}-{1} {0}'.format(package, branch)]
+                                  'ln -s {0}-{1} {0}'.format(package, commit)]
             self.epilogue_cwd = '.'
         self.package_directory = package
 
@@ -266,7 +272,7 @@ class download_sakura(config):
         package = 'libsakura'
         version = '5.0.8'
         tgzname = '{}-{}.tgz'.format(package, version)
-        url = 'https://alma-intweb.mtk.nao.ac.jp/~nakazato/libsakura/{}'.format(tgzname)
+        url = 'https://alma-intweb.mtk.nao.ac.jp/~sakura/libsakura/{}'.format(tgzname)
         if is_curl_ok:
             self.download_cmd = 'curl -L -O {}'.format(url)
         elif is_wget_ok:
@@ -276,6 +282,7 @@ class download_sakura(config):
 
         self.epilogue_cmds = ['tar zxf {}'.format(tgzname)]
         self.epilogue_cwd = '.'
+        self.distfile = tgzname
         self.package_directory = package
         self.working_directory = self.package_directory
 
@@ -286,7 +293,8 @@ class download_sakura(config):
         super(download_sakura, self).run()
 
         if not os.path.exists(self.package_directory):
-            execute_command(self.download_cmd)
+            if not os.path.exists(self.distfile):
+                execute_command(self.download_cmd)
             for cmd in self.epilogue_cmds:
                 execute_command(cmd, cwd=self.epilogue_cwd)
 
@@ -311,7 +319,8 @@ class download_eigen(config):
 
         self.epilogue_cmds = ['tar jxf {}'.format(tgzname)]
         self.epilogue_cwd = '.'
-        self.package_directory = package
+        self.distfile = tgzname
+        self.package_directory = f'{package}-{version}'
         self.working_directory = self.package_directory
 
     def finalize_options(self):
@@ -321,7 +330,9 @@ class download_eigen(config):
         super(download_eigen, self).run()
 
         if not os.path.exists(self.package_directory):
-            execute_command(self.download_cmd)
+            if not os.path.exists(self.distfile):
+                print('Extracting eigen...')
+                execute_command(self.download_cmd)
             for cmd in self.epilogue_cmds:
                 execute_command(cmd, cwd=self.epilogue_cwd)
 
@@ -381,6 +392,9 @@ class configure_ext(Command):
 
         if self.cxx_compiler is not None:
             cmd += ' -DCMAKE_CXX_COMPILER={}'.format(self.cxx_compiler)
+
+        if self.use_intel_compiler is True:
+            cmd += ' -DUSE_INTEL_COMPILER=ON'
 
         #print('generated cmake command:')
         #print('  {}'.format(cmd))

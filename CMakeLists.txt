@@ -18,14 +18,19 @@ cmake_minimum_required(VERSION 2.8)
 
 project(priism)
 
+option(USE_INTEL_COMPILER
+       "set ON to use Intel C++ compiler to build sparseimaging"
+       OFF)
+
 # download sparseimaging
 set(SPARSEIMAGING_DIR sparseimaging)
 execute_process(COMMAND which git
                 RESULT_VARIABLE GIT_ERROR_CODE
                 OUTPUT_VARIABLE GIT_CMD)
 message(STATUS "Found git: ${GIT_CMD}")
-set(SPARSEIMAGING_EXTRACT sparseimaging-smili)
-set(SPARSEIMAGING_ZIP smili.zip)
+set(SPARSEIMAGING_COMMIT_ID 7afb0543acabc97dc31c9707b221feb27f34af66)
+set(SPARSEIMAGING_EXTRACT ${SPARSEIMAGING_DIR}-${SPARSEIMAGING_COMMIT_ID})
+set(SPARSEIMAGING_ZIP ${SPARSEIMAGING_COMMIT_ID}.zip)
 if(NOT GIT_ERROR_CODE)
   if(NOT EXISTS ${PROJECT_SOURCE_DIR}/${SPARSEIMAGING_DIR})
     message(STATUS "Sparseimaging is not downloaded yet")
@@ -33,8 +38,8 @@ if(NOT GIT_ERROR_CODE)
     execute_process(COMMAND git clone ${SPARSEIMAGING_URL}
                     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
     # make sure we are correct branch
-    execute_process(COMMAND git checkout smili
-                    WORKING_DIRECTORY ${SPARSEIMAGING_DIR})
+    execute_process(COMMAND git checkout ${SPARSEIMAGING_COMMIT_ID}
+                    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/${SPARSEIMAGING_DIR})
   endif()
 else()
   if(NOT EXISTS ${PROJECT_SOURCE_DIR}/${SPARSEIMAGING_DIR})
@@ -61,7 +66,7 @@ set(SAKURA_TAR libsakura-5.0.8.tgz)
 if(NOT EXISTS ${PROJECT_SOURCE_DIR}/${SAKURA_DIR})
   if(NOT EXISTS ${CMAKE_BINARY_DIR}/${SAKURA_TAR})
     message(STATUS "Sakura is not downloaded yet")
-    set(SAKURA_URL https://alma-intweb.mtk.nao.ac.jp/~nakazato/libsakura/${SAKURA_TAR})
+    set(SAKURA_URL https://alma-intweb.mtk.nao.ac.jp/~sakura/libsakura/${SAKURA_TAR})
     execute_process(COMMAND curl -L -O ${SAKURA_URL}
                     WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
   endif()
@@ -141,24 +146,32 @@ set(SPARSEIMAGING_BUILD_DIR ${PROJECT_SOURCE_DIR}/${SPARSEIMAGING_DIR}/c++)
 set(SPARSEIMAGING_MAKEFILE makefile.priism)
 message(STATUS "FFTW3_INCLUDE_DIR is ${FFTW3_INCLUDE_DIR}")
 execute_process(COMMAND echo ${FFTW3_INCLUDE_DIR}
-                COMMAND sed -e "s@include@lib64@g"
+                COMMAND sed -e "s/include/lib64/g"
                 COMMAND tr -d "\n"
                 OUTPUT_VARIABLE FFTW3_LIBRARY_DIR)
 if(NOT EXISTS ${FFTW3_LIBRARY_DIR}/libfftw3.so)
   execute_process(COMMAND echo ${FFTW3_INCLUDE_DIR}
-                COMMAND sed -e "s@include@lib@g"
+                COMMAND sed -e "s/include/lib/g"
                 COMMAND tr -d "\n"
                 OUTPUT_VARIABLE FFTW3_LIBRARY_DIR)
 endif()
 message(STATUS "FFTW3_LIBRARY_DIR is ${FFTW3_LIBRARY_DIR}")
-execute_process(COMMAND sed -e "s@CFLAGS=-O2@CFLAGS=-O2 -I${FFTW3_INCLUDE_DIR}@g" makefile
-                COMMAND sed -e "s@-lrt@-lstdc++@g"
-                COMMAND sed -e "s@^CLIBS_FFTW = @CLIBS_FFTW = -L${FFTW3_LIBRARY_DIR} @g"
-                COMMAND sed -e "s@-O2@-O3@g"
-                COMMAND sed -e "s@CXX=.*$@CXX=${CMAKE_CXX_COMPILER}@g"
-                COMMAND sed -e "s@c++[0-9][0-9]@c++11@g"
-                OUTPUT_FILE ${SPARSEIMAGING_MAKEFILE}
-                WORKING_DIRECTORY ${SPARSEIMAGING_BUILD_DIR})
+if(USE_INTEL_COMPILER)
+  execute_process(COMMAND sed -e "s:^CFLAGS=.*$:CFLAGS=-O3 -ipo -qopenmp -xHost -I${FFTW3_INCLUDE_DIR}:g" makefile
+                  COMMAND sed -e "s:-O2 -Wall:-Wall:g"
+                  COMMAND sed -e "s:^CXX=.*:CXX=icpc:g"
+                  OUTPUT_FILE ${SPARSEIMAGING_MAKEFILE}
+                  WORKING_DIRECTORY ${SPARSEIMAGING_BUILD_DIR})
+else()
+  execute_process(COMMAND sed -e "s:CFLAGS=-O2:CFLAGS=-O2 -I${FFTW3_INCLUDE_DIR}:g" makefile
+                  COMMAND sed -e "s:-lrt:-lstdc++:g"
+                  COMMAND sed -e "s:^CLIBS_FFTW = :CLIBS_FFTW = -L${FFTW3_LIBRARY_DIR} :g"
+                  COMMAND sed -e "s:-O2:-O3:g"
+                  COMMAND sed -e "s:CXX=.*$:CXX=${CMAKE_CXX_COMPILER}:g"
+                  COMMAND sed -e "s:c++[0-9][0-9]:c++11:g"
+                  OUTPUT_FILE ${SPARSEIMAGING_MAKEFILE}
+                  WORKING_DIRECTORY ${SPARSEIMAGING_BUILD_DIR})
+endif()
 if(EIGEN3_INCLUDE_DIR)
   message(STATUS "Edit makefile for sparseimaging")
   execute_process(COMMAND sed -i -e "s@/usr/include/eigen3@${EIGEN3_INCLUDE_DIR}@g" ${SPARSEIMAGING_MAKEFILE}
@@ -166,7 +179,8 @@ if(EIGEN3_INCLUDE_DIR)
 endif()
 
 # configure compile of sparseimaging to generate libmfista_fft.so
-add_custom_target(sparseimaging make -f ${SPARSEIMAGING_MAKEFILE} libraries
+add_custom_target(sparseimaging make clean
+                  COMMAND make -f ${SPARSEIMAGING_MAKEFILE} libraries
                   WORKING_DIRECTORY ${SPARSEIMAGING_BUILD_DIR})
 
 # add priism module

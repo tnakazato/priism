@@ -76,8 +76,8 @@ prerequisites for both `priism` and CASA.
 
 `priism.alma` has been tested on the plotforms listed below.
 
-* Red Hat Enterprise Linux 7 (RHEL7) with CASA 6.0 modular release
-* Ubuntu 18.04 with CASA 6.0 modular release
+* Red Hat Enterprise Linux 7 (RHEL7) with CASA 6.0 and 6.1 modular release
+* Ubuntu 18.04 with CASA 6.0 and 6.1 modular release
 * Red Hat Enterprise Linux 6 (RHEL6) with CASA 5.1.1
 * Red Hat Enterprise Linux 7 (RHEL7) with CASA 5.0.0
 * Red Hat Enterprise Linux 7 (RHEL7) with CASA 5.1.1
@@ -126,10 +126,12 @@ If you download zipped source code, you will get a file named `priism-<branch_na
 
 If you download priism-0.1.2 or earlier, you will see additional directory layer at the top. More specifically, you will see the following two subdirectories at the top-level directory:
 
-    $ pwd
-    priism
-    $ ls
-    almasparsemodeling  priism
+```
+$ pwd
+priism
+$ ls
+almasparsemodeling  priism
+```
 
 This is older directory structure and almasparsemodeling contains some initial code written at the dawn of the development. In that case, you can build and install priism just translating the directory `priism` into `priism/priism` in the following instruction.
 
@@ -139,8 +141,10 @@ This is older directory structure and almasparsemodeling contains some initial c
 
 First, move to the extracted directory and make "build" directory.
 
-    cd priism
-    mkdir build
+```
+cd priism
+mkdir build
+```
 
 Then, cmake command should be run in the "build" directory. In the example below,
 only mandatory option is shown.
@@ -184,18 +188,18 @@ Usually, cmake will download source code for Sakura (+googletest) and sparseimag
 If network connection is not available, you need to obtain these files by yourself.
 
 In case if you need to download files by hand, links below might be useful:
-* Sakura library: [https://alma-intweb.mtk.nao.ac.jp/~nakazato/libsakura/libsakura-5.0.8.tgz](https://alma-intweb.mtk.nao.ac.jp/~nakazato/libsakura/libsakura-5.0.8.tgz)
+* Sakura library: [https://alma-intweb.mtk.nao.ac.jp/~sakura/libsakura/libsakura-5.0.8.tgz](https://alma-intweb.mtk.nao.ac.jp/~sakura/libsakura/libsakura-5.0.8.tgz)
 * googletest: [https://github.com/google/googletest/archive/master.zip](https://github.com/google/googletest/archive/master.zip)
 * sparseimaging library: [https://github.com/ikeda46/sparseimaging/archive/smili.zip](https://github.com/ikeda46/sparseimaging/archive/smili.zip)
 
 Downloaded files should be put under the "build" directory. For example,
 
     cd somewhere/network/is/available
-    curl -L -O https://alma-intweb.mtk.nao.ac.jp/~nakazato/libsakura/libsakura-5.0.8.tgz
+    curl -L -O https://alma-intweb.mtk.nao.ac.jp/~sakura/libsakura/libsakura-5.0.8.tgz
     curl -L -O https://github.com/google/googletest/archive/master.zip
     curl -L -O https://github.com/ikeda46/sparseimaging/archive/smili.zip
     cd priism_root_dir/priism/build
-    mv somewhere/network/is/available/libsakura-5.0.7.tgz .
+    mv somewhere/network/is/available/libsakura-5.0.8.tgz .
     mv somewhere/network/is/available/master.zip
     mv somewhere/network/is/available/development.zip
 
@@ -243,6 +247,18 @@ python setup.py install --help
 ```
 
 During installation of CASA 6, `numpy` will be installed by dependency. It is recommended to use that version when you install PRIISM.
+
+### Intel Compiler Support
+
+Intel compiler support (Intel OneAPI) is available. Currently only classic C++ compiler (`icpc`) is supported. After configuring the compiler, the following build option will compile performance critical C++ code with Intel compiler.
+
+```
+python setup.py build --use-intel-compiler=yes
+```
+
+Note that, due to the incompatibility of Python version, `setvars.sh` should not be used to configure the compiler. Please update `PATH` environment variable manually or use `oneapi/compiler/latest/env/vas.sh` instead.
+
+At runtime, you might need to add `oneapi/intelpython/python3.7/lib` to `LD_LIBRARY_PATH`.
 
 ## Using PRIISM
 
@@ -294,4 +310,5 @@ If you have any questions about PRIISM, please contact Takeshi Nakazato at Natio
 
 ## Reference
 
-[Nakazato, T., Ikeda, S., Akiyama, K., Kosugi, G., Yamaguchi, M., and Honma, M., 2019, Astronomical Data Analysis Software and Systems XXVIII. ASP Conference Series, Vol. 523, p. 143](http://aspbooks.org/custom/publications/paper/523-0143.html)
+* [Nakazato, T., Ikeda, S., Akiyama, K., Kosugi, G., Yamaguchi, M., and Honma, M., 2019, Astronomical Data Analysis Software and Systems XXVIII. ASP Conference Series, Vol. 523, p. 143](http://aspbooks.org/custom/publications/paper/523-0143.html)
+* [Nakazato, T. and Ikeda, S., 2020, Astrophysics Source Code Library, record ascl:2006.002](https://ui.adsabs.harvard.edu/abs/2020ascl.soft06002N/abstract)

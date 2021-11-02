@@ -265,7 +265,7 @@ class VisibilityConverter(object):
         #return lsr_frequency, lsr_width
         return lsr_frequency
 
-    def fill_data(self, ws, chunk, lsr_edge_frequency):
+    def fill_data(self, ws, chunk, lsr_edge_frequency, datacolumn):
         qa = casa.CreateCasaQuantity()
 
         lsr_frequency = (lsr_edge_frequency[1:] + lsr_edge_frequency[:-1]) / 2.0
@@ -278,8 +278,8 @@ class VisibilityConverter(object):
         start = self.imageparam.start
         width = self.imageparam.width
         nchan = self.imageparam.nchan
-        npol = chunk['data'].shape[0]
-        nrow = chunk['data'].shape[2]
+        npol = chunk[datacolumn].shape[0]
+        nrow = chunk[datacolumn].shape[2]
         qstart = qa.quantity(start)
         qwidth = qa.quantity(width)
         qnchan = qa.quantity(nchan)
@@ -369,9 +369,9 @@ class VisibilityConverter(object):
 
             # real, image: linear interpolation
             #print 'LOG: lsr_frequency length {0} real.shape {1}'.format(
-            #    len(lsr_frequency), chunk['data'].shape)
-            if chunk['data'].shape[1] > 1:
-                data_interp = interpolate.interp1d(lsr_frequency, chunk['data'],
+            #    len(lsr_frequency), chunk[datacolumn].shape)
+            if chunk[datacolumn].shape[1] > 1:
+                data_interp = interpolate.interp1d(lsr_frequency, chunk[datacolumn],
                                                    kind='linear', axis=1,
                                                    fill_value='extrapolate')
                 _data = data_interp(image_freq)
@@ -381,7 +381,7 @@ class VisibilityConverter(object):
                                                    fill_value='extrapolate')
                 _flag = flag_interp(image_freq)
             else:
-                _data = chunk['data']
+                _data = chunk[datacolumn]
                 _flag = chunk['flag']
 
             _weight = chunk['weight']
@@ -427,7 +427,7 @@ class VisibilityConverter(object):
                         break
 
                 # fill in data
-                _data = chunk['data'][:, chan_chunk:chan_chunk + 1, :]
+                _data = chunk[datacolumn][:, chan_chunk:chan_chunk + 1, :]
                 _flag = chunk['flag'][:, chan_chunk:chan_chunk + 1, :]
                 _weight = chunk['weight']
                 self._to_stokesI(_data, _flag, _weight, weight_factor,
@@ -491,7 +491,7 @@ class VisibilityConverter(object):
         qa = casa.CreateCasaQuantity()
         speed_of_light = qa.constants('c')
         c = qa.convert(speed_of_light, 'm/s')['value']
-        data_shape = chunk['data'].shape
+        data_shape = chunk['flag'].shape
         nrow = data_shape[2]
         nchan = data_shape[1]
         uvw = chunk['uvw']
@@ -506,6 +506,7 @@ class VisibilityConverter(object):
         u = sakura.empty_aligned((nrow, nchan), dtype=uvw.dtype)
         v = sakura.empty_like_aligned(u)
         w = sakura.empty_like_aligned(u)
+        center_freq = numpy.asfarray([numpy.mean(lsr_edge_frequency[i:i+2]) for i in range(nchan)])
         for irow in range(nrow):
             # TODO: phase rotation if image phasecenter is different from
             #       the reference direction of the observation
@@ -524,8 +525,8 @@ class VisibilityConverter(object):
             #freq_start = lsr_edge_frequency[0]
             #freq_end = lsr_edge_frequency[-1]
             #center_freq = (freq_start + freq_end) / 2
-            center_freq = numpy.fromiter((numpy.mean(lsr_edge_frequency[i:i+2]) for i in range(nchan)),
-                                         dtype=numpy.float64)
+            # center_freq = numpy.fromiter((numpy.mean(lsr_edge_frequency[i:i+2]) for i in range(nchan)),
+            #                              dtype=numpy.float64)
             u[irow] = u0 * center_freq / c  # divided by wavelength
             v[irow] = v0 * center_freq / c  # divided by wavelength
             w[irow] = w0 * center_freq / c  # divided by wavelength
@@ -561,6 +562,7 @@ class VisibilityConverter(object):
         ws.u = u
         ws.v = v
         ws.w = w
+
 
     def flatten(self, working_set):
         """
@@ -633,8 +635,12 @@ class VisibilityConverter(object):
         """
         # sanity check
         # - chunk should contain all required data
+        candidate_datacolumns = set(('data', 'corrected_data', 'residual_data'))
         for column in self.required_columns:
-            assert column in chunk
+            if column == 'data':
+                assert any(col in chunk for col in candidate_datacolumns)
+            else:
+                assert column in chunk
         # - all chunk entry should have same timestamp (mitigate in future?)
         assert numpy.all(chunk['time'] == chunk['time'][0])
         # - all chunk entry should have same spw (mitigate in future?)
@@ -665,7 +671,10 @@ class VisibilityConverter(object):
 
         # 2. channel mapping or regridding (i.e., fill data/flag/weight
         #    with channel map. interpolating data if necessary)
-        self.fill_data(working_set, chunk, lsr_frequency)
+        available_datacolumns = set(chunk.keys()).intersection(candidate_datacolumns)
+        assert len(available_datacolumns) == 1
+        datacolumn = available_datacolumns.pop()
+        self.fill_data(working_set, chunk, lsr_frequency, datacolumn)
 
         # 3~5. UVW manipulation
         self.fill_uvw(working_set, chunk, lsr_frequency)

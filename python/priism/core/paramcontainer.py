@@ -35,7 +35,7 @@ class ParamContainer(object):
 
 
 class MfistaParamContainer(ParamContainer):
-    def __init__(self, l1, ltsv, maxiter=50000, eps=1.0e-5, clean_box=None):
+    def __init__(self, l1, ltsv, maxiter=50000, eps=1.0e-5, clean_box=None, nonnegative=True):
         """
         Constructor
         """
