@@ -9,7 +9,8 @@ $ python3 setup.py build
 $ python3 setup.py install
 ```
 
-Note that the above installation procedure only works for Linux. If you want to install PRIISM on macOS, or you want to install PRIISM in combination with tar-ball release of CASA, please follow installation instruction below. You can install PRIISM with either [cmake](#installation-with-cmake) or [Python setuptools](#installation-with-setuptools-python-3--casa-6-only) depending on your preference.
+You can install PRIISM with either [Python setuptools](#installation-with-setuptools-python-3--casa-6-only) or [cmake](#installation-with-cmake) depending on your preference.
+
 
 <!-- TOC -->
 
