@@ -77,6 +77,7 @@ prerequisites for both `priism` and CASA.
 
 `priism.alma` has been tested on the plotforms listed below.
 
+* macOS 11.6.1 with CASA 6.4.0 modular release
 * Red Hat Enterprise Linux 7 (RHEL7) with CASA 6.0 and 6.1 modular release
 * Ubuntu 18.04 with CASA 6.0 and 6.1 modular release
 * Red Hat Enterprise Linux 6 (RHEL6) with CASA 5.1.1
