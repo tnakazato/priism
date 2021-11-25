@@ -432,5 +432,7 @@ setup(
         'download_smili': download_smili,
         'download_eigen': download_eigen,
         'configure_ext': configure_ext,
-    }
+    },
+    # to disable egg compression
+    zip_safe=False
 )
