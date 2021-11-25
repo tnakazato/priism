@@ -172,6 +172,10 @@ else()
                   OUTPUT_FILE ${SPARSEIMAGING_MAKEFILE}
                   WORKING_DIRECTORY ${SPARSEIMAGING_BUILD_DIR})
 endif()
+if(APPLE)
+  execute_process(COMMAND sed -i -e "s:-fopenmp:-Xpreprocessor -fopenmp -lomp :g" ${SPARSEIMAGING_MAKEFILE}
+                  WORKING_DIRECTORY ${SPARSEIMAGING_BUILD_DIR})
+endif()
 if(EIGEN3_INCLUDE_DIR)
   message(STATUS "Edit makefile for sparseimaging")
   execute_process(COMMAND sed -i -e "s@/usr/include/eigen3@${EIGEN3_INCLUDE_DIR}@g" ${SPARSEIMAGING_MAKEFILE}
