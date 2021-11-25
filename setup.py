@@ -205,6 +205,7 @@ class priism_build_ext(build_ext):
 
         self.build_sakura()
         self.build_smili()
+        self.install_ext()
 
     def build_sakura(self):
         execute_command('make sakurapy', cwd=self.priism_build_dir)
@@ -213,6 +214,9 @@ class priism_build_ext(build_ext):
     def build_smili(self):
         execute_command('make sparseimaging', cwd=self.priism_build_dir)
         execute_command('cmake -DCOMPONENT=Smili -P cmake_install.cmake', cwd=self.priism_build_dir)
+
+    def install_ext(self):
+        execute_command('make install/fast', cwd=self.priism_build_dir)
 
     sub_commands = build_ext.sub_commands + [('configure_ext', None)]
 
