@@ -1,5 +1,5 @@
-# Copyright (C) 2019
-# National Astronomical Observatory of Japan
+# Copyright (C) 2019-2022
+# Inter-University Research Institute Corporation, National Institutes of Natural Sciences
 # 2-21-1, Osawa, Mitaka, Tokyo, 181-8588, Japan.
 #
 # This file is part of PRIISM.
@@ -20,8 +20,8 @@ message(STATUS "Entering priism subdirectory...")
 
 install(FILES priism/__init__.py
         DESTINATION priism)
-        
-install(FILES 
+
+install(FILES
         priism/core/__init__.py
         priism/core/cv.py
         priism/core/datacontainer.py
@@ -34,7 +34,7 @@ install(FILES
         priism/core/util.py
         priism/core/version.py
         DESTINATION priism/core)
-        
+
 install(FILES
         priism/alma/__init__.py
         priism/alma/gridder.py
@@ -45,16 +45,16 @@ install(FILES
         priism/alma/visconverter.py
         priism/alma/visreader.py
         DESTINATION priism/alma)
-        
+
 install(FILES priism/external/__init__.py
         DESTINATION priism/external)
-        
+
 install(FILES
         priism/external/casa/__init__.py
         priism/external/casa/casa_atexit.py
         priism/external/casa/casatools.py
         DESTINATION priism/external/casa)
-        
+
 install(FILES
         priism/external/sakura/__init__.py
         priism/external/sakura/allocator.py
