@@ -228,8 +228,7 @@ class download_smili(config):
 
         is_git_ok, is_curl_ok, is_wget_ok = check_command_availability(['git', 'curl', 'wget'])
         package = 'sparseimaging'
-        branch = 'smili'
-        commit = 'bec46045036beace806f379684bc5f63eeedae41'
+        commit = '5d285c54fa68ed0c006302c52b92723970a05f46'
         zipname = '{}.zip'.format(commit)
         base_url = 'https://github.com/ikeda46/{}'.format(package)
         if is_git_ok:
