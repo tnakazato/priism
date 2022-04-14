@@ -1,7 +1,8 @@
 /build
 /build_ext
 /dist
-/libsakura
+/libsakura*
+/sakura*
 /sparseimaging*
 /eigen*
 /.vscode

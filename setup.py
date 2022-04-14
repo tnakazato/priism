@@ -270,20 +270,32 @@ class download_sakura(config):
     def initialize_options(self):
         super(download_sakura, self).initialize_options()
 
-        is_curl_ok, is_wget_ok = check_command_availability(['curl', 'wget'])
-        package = 'libsakura'
-        version = '5.0.8'
+        is_git_ok, is_curl_ok, is_wget_ok = check_command_availability(['git', 'curl', 'wget'])
+        package = 'sakura'
+        version = 'libsakura-5.0.8'
+        zipname = '{}.zip'.format(version)
         tgzname = '{}-{}.tgz'.format(package, version)
-        url = 'https://alma-intweb.mtk.nao.ac.jp/~sakura/libsakura/{}'.format(tgzname)
-        if is_curl_ok:
+        base_url = 'https://github.com/tnakazato/sakura'
+        if is_git_ok:
+            url = base_url + '.git'
+            self.download_cmd = 'git clone {}'.format(url)
+        elif is_curl_ok:
+            url = base_url + '/archive/{}.zip'.format(version)
             self.download_cmd = 'curl -L -O {}'.format(url)
         elif is_wget_ok:
+            url = base_url + '/archive/{}.zip'.format(version)
             self.download_cmd = 'wget {}'.format(url)
         else:
             raise PriismDependencyError('No download command found: you have to install curl or wget')
 
-        self.epilogue_cmds = ['tar zxf {}'.format(tgzname)]
-        self.epilogue_cwd = '.'
+        if is_git_ok:
+            self.epilogue_cmds = ['git checkout {}'.format(version),
+                                  'ln -s sakura/libsakura ../']
+            self.epilogue_cwd = package
+        else:
+            self.epilogue_cmds = ['unzip {}'.format(zipname),
+                                  'ln -s {0}-{1} {0}'.format(package, version)]
+            self.epilogue_cwd = '.'
         self.distfile = tgzname
         self.package_directory = package
         self.working_directory = self.package_directory
