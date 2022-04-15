@@ -22,6 +22,7 @@ You can install PRIISM with either [Python setuptools](#installation-with-setupt
 - [Installation with `setuptools` (Python 3 / CASA 6 only)](#installation-with-setuptools-python-3--casa-6-only)
 - [Using PRIISM](#using-priism)
 - [License](#license)
+- [Developer](#developer)
 - [Contact](#contact)
 - [Acknowledgement](#acknowledgement)
 - [Reference](#reference)
@@ -303,6 +304,11 @@ template scripts for each solver. Name of the scripts are as follows:
 ## License
 
 PRIISM is licensed under GPLv3 as described in COPYING.
+
+## Developer 
+
+* Takeshi Nakazato [@tnakazato](https://github.com/tnakazato) - infrastructure, python interface, performance tuning
+* Shiro Ikeda [@ikeda46](https://github.com/ikeda46) - algorithm, maintenance of core C++ library, sparseimaging https://github.com/ikeda46/sparseimaging 
 
 ## Contact
 
