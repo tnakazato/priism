@@ -305,16 +305,18 @@ template scripts for each solver. Name of the scripts are as follows:
 
 PRIISM is licensed under GPLv3 as described in COPYING.
 
-## Developer 
+## Developer
 
 * Takeshi Nakazato [@tnakazato](https://github.com/tnakazato) - infrastructure, python interface, performance tuning
-* Shiro Ikeda [@ikeda46](https://github.com/ikeda46) - algorithm, maintenance of core C++ library, sparseimaging https://github.com/ikeda46/sparseimaging 
+* Shiro Ikeda [@ikeda46](https://github.com/ikeda46) - algorithm, maintenance of core C++ library, sparseimaging https://github.com/ikeda46/sparseimaging
 
 ## Contact
 
 If you have any questions about PRIISM, please contact Takeshi Nakazato at National Astronomical Observatory of Japan ([@tnakazato](https://github.com/tnakazato) on GitHub).
 
 ## Acknowledgement
+
+We thank T. Tsukagoshi, M. Yamaguchi, K. Akiyama, and Y. Tamura among many other collaborators.
 
 ## Reference
 
