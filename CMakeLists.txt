@@ -78,9 +78,9 @@ message(STATUS "CMAKE_BINARY_DIR=${CMAKE_BINARY_DIR}")
 
 # download googletest
 set(GTEST_DIR gtest)
-set(GTEST_ZIP master.zip)
+set(GTEST_ZIP main.zip)
 if(NOT EXISTS ${PROJECT_SOURCE_DIR}/${SAKURA_DIR}/${GTEST_DIR})
-  set(GTEST_EXTRACT googletest-master)
+  set(GTEST_EXTRACT googletest-main)
   if(NOT EXISTS ${PROJECT_SOURCE_DIR}/${SAKURA_DIR}/${GTEST_EXTRACT})
      if(NOT EXISTS ${CMAKE_BINARY_DIR}/${GTEST_ZIP})
        message(STATUS "GoogleTest is not downloaded yet")
