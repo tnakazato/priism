@@ -272,7 +272,7 @@ class download_sakura(config):
 
         is_git_ok, is_curl_ok, is_wget_ok = check_command_availability(['git', 'curl', 'wget'])
         package = 'sakura'
-        version = '7946314724551ea24681ce66bc8b15de0e3750cb'
+        version = 'e0c43b1b748684f14470a4ccbd4915a8da8e0f54'
         zipname = '{}.zip'.format(version)
         tgzname = '{}-{}.tgz'.format(package, version)
         base_url = 'https://github.com/tnakazato/sakura'
