@@ -23,7 +23,7 @@ import sysconfig
 from distutils.command.build import build
 from distutils.command.build_ext import build_ext
 from distutils.command.config import config
-from distutils.sysconfig import get_python_inc
+from distutils.sysconfig import get_python_inc, get_python_version
 from setuptools import setup, find_packages, Command
 
 
@@ -272,7 +272,7 @@ class download_sakura(config):
 
         is_git_ok, is_curl_ok, is_wget_ok = check_command_availability(['git', 'curl', 'wget'])
         package = 'sakura'
-        version = 'libsakura-5.0.8'
+        version = '7946314724551ea24681ce66bc8b15de0e3750cb'
         zipname = '{}.zip'.format(version)
         tgzname = '{}-{}.tgz'.format(package, version)
         base_url = 'https://github.com/tnakazato/sakura'
@@ -391,6 +391,8 @@ class configure_ext(Command):
         if self.python_library is None:
             self.python_library = get_python_library(self.python_include_dir)
 
+        self.python_version = get_python_version()
+
         debug_print_user_options(self)
         print('fftw3-root-dir={}'.format(self.fftw3_root_dir))
 
@@ -405,6 +407,8 @@ class configure_ext(Command):
         cmd += ' -DPYTHON_INCLUDE_PATH={}'.format(self.python_include_dir)
 
         cmd += ' -DPYTHON_LIBRARY={}'.format(self.python_library)
+
+        cmd += f' -DPYTHON_VERSION={self.python_version}'
 
         if self.cxx_compiler is not None:
             cmd += ' -DCMAKE_CXX_COMPILER={}'.format(self.cxx_compiler)
