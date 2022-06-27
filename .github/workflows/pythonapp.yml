@@ -16,7 +16,10 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-11]
-        python-version: ["3.6", "3.8"]
+        python-version: [3.6, 3.8]
+        exclude:
+          - os: macos-11
+          - python-version: 3.6
       
     runs-on: ${{ matrix.os }}
 
