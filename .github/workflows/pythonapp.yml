@@ -15,9 +15,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-latest, macos-11]
         python-version: ["3.6", "3.8"]
       
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v2
@@ -26,9 +27,16 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
         
+    - name: Install FFTW3 (Ubuntu)
+      if: ${{ matrix.os == 'ubuntu-latest' }}
+      run: sudo apt-get install -y libfftw3-bin libfftw3-dev
+      
+    - name: Install FFTW3 (macOS)
+      if: ${{ matrix.os == macos-11 }}
+      run: brew install fftw
+    
     - name: Install dependencies
       run: |
-        sudo apt-get install -y libfftw3-bin libfftw3-dev
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         
