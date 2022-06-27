@@ -42,10 +42,9 @@ the PRIISM (`priism.core`).
 
 By using `priism.alma`, users can directly obtain the FITS image from MS data, and they can immediately analyse the result using the applications that support to process FITS images (such as CASA).
 
-PRIISM is simple to use, easy to install. Regarding the processing, there are two template script that consist of initialization, configuration, and processing steps. These are dedicated for `priism.core` and `priism.alma`. Scripts are so short that they are within 60 lines including comments and empty lines for readability. Users can use these scripts by just editing some lines according to their usage. The scripts should be useful to learn how to use PRIISM interactively. On install, PRIISM adopts cmake for easy install. As long as prerequisites for PRIISM are fulfilled, cmake will configure your build automatically. Also, cmake provides a lot of customization options to suits your environment. For Python 3 / CASA 6 environment, PRIISM also supports installation based on `setuptools` that wraps cmake build for convenience.
+PRIISM is simple to use, easy to install. Regarding the processing, there are two template script that consist of initialization, configuration, and processing steps. These are dedicated for `priism.core` and `priism.alma`. Scripts are so short that they are within 60 lines including comments and empty lines for readability. Users can use these scripts by just editing some lines according to their usage. The scripts should be useful to learn how to use PRIISM interactively. We also provide Jupyter Notebook tutorial and demo (see [Using PRIISM](#using-priism) section below). On install, PRIISM adopts installation based on `setuptools` that wraps cmake build for convenience.
 
-It is our hope that PRIISM lower the barrier to entry in the new imaging technique based on the
-sparse modeling.
+It is our hope that PRIISM lower the barrier to entry in the new imaging technique based on the sparse modeling.
 
 ## Supported Platform
 
