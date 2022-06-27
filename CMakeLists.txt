@@ -76,25 +76,6 @@ endif()
 
 message(STATUS "CMAKE_BINARY_DIR=${CMAKE_BINARY_DIR}")
 
-# download googletest
-set(GTEST_DIR gtest)
-set(GTEST_ZIP main.zip)
-if(NOT EXISTS ${PROJECT_SOURCE_DIR}/${SAKURA_DIR}/${GTEST_DIR})
-  set(GTEST_EXTRACT googletest-main)
-  if(NOT EXISTS ${PROJECT_SOURCE_DIR}/${SAKURA_DIR}/${GTEST_EXTRACT})
-     if(NOT EXISTS ${CMAKE_BINARY_DIR}/${GTEST_ZIP})
-       message(STATUS "GoogleTest is not downloaded yet")
-       set(GTEST_URL https://github.com/google/googletest/archive/${GTEST_ZIP})
-       execute_process(COMMAND curl -L -O ${GTEST_URL}
-                       WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
-     endif()
-     execute_process(COMMAND unzip ${CMAKE_BINARY_DIR}/${GTEST_ZIP}
-                     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/${SAKURA_DIR})
-  endif()
-  execute_process(COMMAND ln -s "${GTEST_EXTRACT}/googletest" "${GTEST_DIR}"
-                  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/${SAKURA_DIR})
-endif()
-
 # download Eigen
 set(EIGEN_DIR eigen-3.3.7)
 set(EIGEN_TAR eigen-3.3.7.tar.bz2)
