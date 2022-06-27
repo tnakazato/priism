@@ -12,18 +12,37 @@ on:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-11]
+        python-version: [3.8]
+        include:
+          - os: ubuntu-latest
+            python-version: 3.6
+      
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v2
-    - name: Set up Python 3.6
+    - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v1
       with:
-        python-version: 3.6
+        python-version: ${{ matrix.python-version }}
+        
+    - name: Install FFTW3 (Ubuntu)
+      if: ${{ matrix.os == 'ubuntu-latest' }}
+      run: sudo apt-get install -y libfftw3-bin libfftw3-dev
+      
+    - name: Install FFTW3 (macOS)
+      if: ${{ matrix.os == 'macos-11' }}
+      run: brew install fftw
+    
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install --extra-index-url https://casa-pip.nrao.edu/repository/pypi-casa-release/simple -r requirements.txt
+        pip install -r requirements.txt
+        
     - name: Lint with flake8
       run: |
         pip install flake8
@@ -31,6 +50,13 @@ jobs:
         flake8 python --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 python --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        
+    - name: Build PRIISM
+      run: python3 setup.py build
+      
+    - name: Install PRIISM
+      run: python3 setup.py install
+      
     - name: Test with pytest
       run: |
         pip install pytest
