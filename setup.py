@@ -314,16 +314,17 @@ class download_sakura(config):
 
 
 class download_eigen(config):
+    PACKAGE_NAME = 'eigen'
+    PACKAGE_VERSION = '3.3.7'
+
     user_options = []
 
     def initialize_options(self):
         super(download_eigen, self).initialize_options()
 
         is_curl_ok, is_wget_ok = check_command_availability(['curl', 'wget'])
-        package = 'eigen'
-        version = '3.3.7'
-        tgzname = '{}-{}.tar.bz2'.format(package, version)
-        url = 'https://gitlab.com/libeigen/eigen/-/archive/{}/{}'.format(version, tgzname)
+        tgzname = f'{self.PACKAGE_NAME}-{self.PACKAGE_VERSION}.tar.bz2'
+        url = f'https://gitlab.com/libeigen/eigen/-/archive/{self.PACKAGE_VERSION}/{tgzname}'
         if is_curl_ok:
             self.download_cmd = 'curl -L -O {}'.format(url)
         elif is_wget_ok:
@@ -334,7 +335,7 @@ class download_eigen(config):
         self.epilogue_cmds = ['tar jxf {}'.format(tgzname)]
         self.epilogue_cwd = '.'
         self.distfile = tgzname
-        self.package_directory = f'{package}-{version}'
+        self.package_directory = f'{self.PACKAGE_NAME}-{self.PACKAGE_VERSION}'
         self.working_directory = self.package_directory
 
     def finalize_options(self):
@@ -345,7 +346,7 @@ class download_eigen(config):
 
         if not os.path.exists(self.package_directory):
             if not os.path.exists(self.distfile):
-                print('Extracting eigen...')
+                print(f'Extracting {self.PACKAGE_NAME}...')
                 execute_command(self.download_cmd)
             for cmd in self.epilogue_cmds:
                 execute_command(cmd, cwd=self.epilogue_cwd)
@@ -409,6 +410,8 @@ class configure_ext(Command):
         cmd += ' -DPYTHON_LIBRARY={}'.format(self.python_library)
 
         cmd += f' -DPYTHON_VERSION={self.python_version}'
+
+        cmd += f' -DEIGEN_DIR={download_eigen.PACKAGE_NAME}-{download_eigen.PACKAGE_VERSION}'
 
         if self.cxx_compiler is not None:
             cmd += ' -DCMAKE_CXX_COMPILER={}'.format(self.cxx_compiler)
