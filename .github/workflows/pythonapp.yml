@@ -26,6 +26,11 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     
+    - name: Set up environment variable (macOS)
+      if: ${{ matrix.os == 'macos-11' }}
+      run: |
+        echo "SDKROOT=$(xcrun --sdk macosx --show-sdk-path)" >> $GITHUB_ENV
+    
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v1
       with:
@@ -39,7 +44,6 @@ jobs:
       if: ${{ matrix.os == 'macos-11' }}
       run: |
         brew install fftw
-        export SDKROOT=$(xcrun --sdk macosx --show-sdk-path)
     
     - name: Install dependencies
       run: |
