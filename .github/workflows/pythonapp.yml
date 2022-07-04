@@ -25,6 +25,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v1
       with:
@@ -36,7 +37,9 @@ jobs:
       
     - name: Install FFTW3 (macOS)
       if: ${{ matrix.os == 'macos-11' }}
-      run: brew install fftw
+      run: |
+        brew install fftw
+        export SDKROOT=$(xcrun --sdk macosx --show-sdk-path)
     
     - name: Install dependencies
       run: |
