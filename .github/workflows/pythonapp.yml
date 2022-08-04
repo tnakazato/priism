@@ -41,7 +41,7 @@ jobs:
       run: sudo apt-get install -y libfftw3-bin libfftw3-dev
       
     - name: Install FFTW3 (macOS)
-      if: ${{ startsWidh(matrix.os, 'macos-') }}
+      if: ${{ startsWith(matrix.os, 'macos-') }}
       run: |
         brew install fftw
     
