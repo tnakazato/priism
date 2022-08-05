@@ -27,7 +27,7 @@ jobs:
     - uses: actions/checkout@v2
     
     - name: Set up environment variable (macOS)
-      if: ${{ matrix.os == 'macos-11' }}
+      if: ${{ startsWith(matrix.os, 'macos-') }}
       run: |
         echo "SDKROOT=$(xcrun --sdk macosx --show-sdk-path)" >> $GITHUB_ENV
     
