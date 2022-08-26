@@ -258,7 +258,7 @@ class SparseImagingResults(CTypesUtilMixIn):
         self.xinit = numpy.empty(nn, dtype=numpy.double)
         if initialimage is None:
             # by default, initially all pixels are 1.0
-            self.xinit[:] = 1.0
+            self.xinit[:] = 0.0
         else:
             # initial image is set by the user
             assert isinstance(initialimage, numpy.ndarray) or isinstance(initialimage, list)
