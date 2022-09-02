@@ -320,7 +320,7 @@ class SparseModelingImager(object):
 
     def crossvalidation(self, l1_list, ltsv_list, num_fold=10, imageprefix='image', imagepolicy='full',
                         summarize=True, figfile=None, datafile=None, maxiter=50000, eps=1.0e-5, clean_box=None,
-                        resultasinitialimage=True, nonnegative=True):
+                        resultasinitialimage=True, nonnegative=True, scalehyperparam=True):
         """
         Perform cross validation and search the best parameter for L1 and Ltsv from
         the given list of these.
@@ -344,6 +344,9 @@ class SparseModelingImager(object):
             clean_box -- clean box as a float array (default None)
             resultasinitialimage -- keep resulting image as an initial condition for next run
             nonnegative -- allow negative value (False) or not (True)
+            scalehyperparam -- apply hyper-parameter scaling (L1 and Ltsv) to reproduce
+                               the behavior compatible with previous version (earlier than
+                               0.8.0). Default is True (backward-compatible).
 
         Output:
             dictionary containing best L1 (key: L1), best Ltsv (key;Ltsv), and
@@ -396,6 +399,9 @@ class SparseModelingImager(object):
         # initialize CV
         self.initializecv(num_fold=num_fold)
 
+        # scaling factor for hyper-parameter
+        hp_scale = 2.0 / numpy.sqrt(self.imparam.imsize[0] * self.imparam.imsize[1])
+
         # loop Ltsv in ascending order
         for j in range(num_Ltsv):
             Ltsv = sorted_ltsv_list[j]
@@ -413,7 +419,16 @@ class SparseModelingImager(object):
                                                          format_lambda(L1),
                                                          format_lambda(Ltsv),
                                                          self.imagesuffix)
-                self.solve(L1, Ltsv, maxiter=maxiter, eps=eps, clean_box=clean_box,
+
+                if scalehyperparam:
+                    internal_L1 = L1 * hp_scale
+                    internal_Ltsv = Ltsv * hp_scale * hp_scale
+                else:
+                    internal_L1 = L1
+                    internal_Ltsv = Ltsv
+
+                self.solve(internal_L1, internal_Ltsv,
+                           maxiter=maxiter, eps=eps, clean_box=clean_box,
                            nonnegative=nonnegative,
                            storeinitialimage=resultasinitialimage,
                            overwriteinitialimage=overwrite_initial)
@@ -421,7 +436,7 @@ class SparseModelingImager(object):
                 result_image.append(imagename)
 
                 # then evaluate MSE
-                mse = self.computemse(L1, Ltsv, maxiter, eps, clean_box, nonnegative=nonnegative)
+                mse = self.computemse(internal_L1, internal_Ltsv, maxiter, eps, clean_box, nonnegative=nonnegative)
                 result_mse.append(mse)
 
                 print('L1 10^{0} Ltsv 10^{1}: MSE {2} FITS {3}'.format(format_lambda(L1),
