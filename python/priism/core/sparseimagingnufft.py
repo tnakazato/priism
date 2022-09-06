@@ -46,7 +46,7 @@ class SparseImagingInputsNUFFT(sparseimagingbase.SparseImagingInputs):
 
     @classmethod
     def convert_vis(cls, u, v, rdata, idata):
-        return rdata, idata
+        return rdata.copy(), idata.copy()
 
     @property
     def header(self):
