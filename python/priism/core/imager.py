@@ -154,7 +154,8 @@ class SparseModelingImager(object):
                    storeinitialimage, overwriteinitialimage, nonnegative)
 
     def solve(self, l1, ltsv, maxiter=50000, eps=1.0e-5, clean_box=None,
-              storeinitialimage=True, overwriteinitialimage=False, nonnegative=True):
+              storeinitialimage=True, overwriteinitialimage=False, nonnegative=True,
+              scalehyperparam=True):
         """
         Run MFISTA algorithm on visibility data loaded on memory.
         gridvis or readvis must be executed beforehand.
@@ -168,8 +169,20 @@ class SparseModelingImager(object):
             storeinitialimage -- keep the result as an initial image for next run
             overwriteinitialimage -- overwrite existing initial image
             nonnegative -- allow negative value (False) or not (True)
+            scalehyperparam -- apply hyper-parameter scaling (L1 and Ltsv) to reproduce
+                               the behavior compatible with previous version (earlier than
+                               0.9.x). Default is True (backward-compatible).
         """
-        self.mfistaparam = paramcontainer.MfistaParamContainer(l1=l1, ltsv=ltsv,
+        if scalehyperparam:
+            # scaling factor for hyper-parameter
+            hp_scale = 2.0 / numpy.sqrt(self.imparam.imsize[0] * self.imparam.imsize[1])
+            internal_L1 = l1 * hp_scale
+            internal_Ltsv = ltsv * hp_scale * hp_scale
+        else:
+            internal_L1 = l1
+            internal_Ltsv = ltsv
+
+        self.mfistaparam = paramcontainer.MfistaParamContainer(l1=internal_L1, ltsv=internal_Ltsv,
                                                                maxiter=maxiter, eps=eps,
                                                                clean_box=clean_box,
                                                                nonnegative=nonnegative)
@@ -346,7 +359,7 @@ class SparseModelingImager(object):
             nonnegative -- allow negative value (False) or not (True)
             scalehyperparam -- apply hyper-parameter scaling (L1 and Ltsv) to reproduce
                                the behavior compatible with previous version (earlier than
-                               0.8.0). Default is True (backward-compatible).
+                               0.9.x). Default is True (backward-compatible).
 
         Output:
             dictionary containing best L1 (key: L1), best Ltsv (key;Ltsv), and
@@ -431,7 +444,8 @@ class SparseModelingImager(object):
                            maxiter=maxiter, eps=eps, clean_box=clean_box,
                            nonnegative=nonnegative,
                            storeinitialimage=resultasinitialimage,
-                           overwriteinitialimage=overwrite_initial)
+                           overwriteinitialimage=overwrite_initial,
+                           scalehyperparam=False)
                 self.exportimage(imagename, overwrite=True)
                 result_image.append(imagename)
 
