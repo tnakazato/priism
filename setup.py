@@ -244,11 +244,15 @@ class download_smili(config):
             raise PriismDependencyError('No download command found: you have to install git or curl or wget')
 
         if is_git_ok:
+            self.unpack_cmds = []
+            self.unpack_cwd = '.'
             self.epilogue_cmds = ['git checkout {}'.format(commit)]
             self.epilogue_cwd = package
         else:
-            self.epilogue_cmds = ['unzip {}'.format(zipname),
+            self.unpack_cmds = ['unzip {}'.format(zipname),
                                   'ln -s {0}-{1} {0}'.format(package, commit)]
+            self.unpack_cwd = '.'
+            self.epilogue_cmds = []
             self.epilogue_cwd = '.'
         self.package_directory = package
 
@@ -260,8 +264,11 @@ class download_smili(config):
 
         if not os.path.exists(self.package_directory):
             execute_command(self.download_cmd)
-            for cmd in self.epilogue_cmds:
-                execute_command(cmd, cwd=self.epilogue_cwd)
+            for cmd in self.unpack_cmds:
+                execute_command(cmd, cwd=self.unpack_cwd)
+
+        for cmd in self.epilogue_cmds:
+            execute_command(cmd, cwd=self.epilogue_cwd)
 
 
 class download_sakura(config):
