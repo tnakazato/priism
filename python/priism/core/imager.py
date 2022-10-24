@@ -17,19 +17,18 @@
 from __future__ import absolute_import
 from __future__ import print_function
 
-import os
-import shutil
-import math
-import numpy
-import collections
-import pylab as pl
-import matplotlib
-import time
 from argparse import ArgumentError
-try:
-    import cPickle as pickle
-except Exception:
-    import pickle
+import collections
+import functools
+import math
+import os
+import pickle
+import shutil
+import time
+
+import numpy as np
+import matplotlib
+import matplotlib.pyplot as plt
 
 from . import datacontainer
 from . import paramcontainer
@@ -175,7 +174,7 @@ class SparseModelingImager(object):
         """
         if scalehyperparam:
             # scaling factor for hyper-parameter
-            hp_scale = 2.0 / numpy.sqrt(self.imparam.imsize[0] * self.imparam.imsize[1])
+            hp_scale = 2.0 / np.sqrt(self.imparam.imsize[0] * self.imparam.imsize[1])
             internal_L1 = l1 * hp_scale
             internal_Ltsv = ltsv * hp_scale * hp_scale
         else:
@@ -237,20 +236,20 @@ class SparseModelingImager(object):
             default_nv = datashape[0]
             if weight is None:
                 # use default weight (all 1.0)
-                weight = numpy.ones(datashape, dtype=numpy.float32)
+                weight = np.ones(datashape, dtype=np.float32)
 
             weightshape = weight.shape
             if datashape != weightshape:
                 raise RuntimeError('Array shape of weight must conform with that of data.')
 
             if len(datashape) == 2:
-                newdata = numpy.expand_dims(numpy.expand_dims(data, axis=-1), axis=-1)
-                newweight = numpy.reshape(weight, newdata.shape)
+                newdata = np.expand_dims(np.expand_dims(data, axis=-1), axis=-1)
+                newweight = np.reshape(weight, newdata.shape)
             elif len(datashape) == 3:
                 if datashape[2] > 1:
                     raise RuntimeError('Invalid array shape {}'.format(list(datashape)))
-                newdata = numpy.expand_dims(data, axis=-1)
-                newweight = numpy.reshape(weight, newdata.shape)
+                newdata = np.expand_dims(data, axis=-1)
+                newweight = np.reshape(weight, newdata.shape)
             elif len(datashape) == 4:
                 if datashape[2] > 1 or datashape[3] > 1:
                     raise RuntimeError('Invalid array shape {}'.format(list(datashape)))
@@ -259,16 +258,16 @@ class SparseModelingImager(object):
             else:
                 raise RuntimeError('Invalid array shape {}'.format(list(datashape)))
 
-            if newdata.dtype not in (numpy.complex, complex):
+            if newdata.dtype not in (np.complex, complex):
                 raise TypeError('data must be float complex array')
 
             realdata = newdata.real
             imagdata = newdata.imag
 
-            if newweight.dtype not in (numpy.float32, numpy.float, float, numpy.complex, complex):
+            if newweight.dtype not in (np.float32, np.float, float, np.complex, complex):
                 raise TypeError('weight must be float or float complex array')
 
-            if newweight.dtype in (numpy.float32, numpy.float, float):
+            if newweight.dtype in (np.float32, np.float, float):
                 realweight = newweight
                 imagweight = None
             else:
@@ -277,11 +276,11 @@ class SparseModelingImager(object):
 
         # flip back operation if necessary
         if flipped is True:
-            realdata = numpy.fft.fftshift(realdata)
-            imagdata = numpy.fft.fftshift(imagdata)
-            realweight = numpy.fft.fftshift(realweight)
+            realdata = np.fft.fftshift(realdata)
+            imagdata = np.fft.fftshift(imagdata)
+            realweight = np.fft.fftshift(realweight)
             if imagweight is not None:
-                imagweight = numpy.fft.fftshift(imagweight)
+                imagweight = np.fft.fftshift(imagweight)
 
         self.griddedvis = datacontainer.GriddedVisibilityStorage(grid_real=realdata,
                                                                  grid_imag=imagdata,
@@ -372,8 +371,8 @@ class SparseModelingImager(object):
             raise ArgumentError('imagepolicy must be best or full. {0} was provided.'.format(imagepolicy))
 
         try:
-            np_l1_list = numpy.asarray(l1_list)
-            np_ltsv_list = numpy.asarray(ltsv_list)
+            np_l1_list = np.asarray(l1_list)
+            np_ltsv_list = np.asarray(ltsv_list)
         except Exception as e:
             print('Exception occurred')
             print(str(e))
@@ -391,8 +390,8 @@ class SparseModelingImager(object):
 
         num_L1 = len(np_l1_list)
         num_Ltsv = len(np_ltsv_list)
-        L1_sort_index = numpy.argsort(np_l1_list)
-        Ltsv_sort_index = numpy.argsort(np_ltsv_list)
+        L1_sort_index = np.argsort(np_l1_list)
+        Ltsv_sort_index = np.argsort(np_ltsv_list)
 
         sorted_l1_list = np_l1_list[L1_sort_index]
         sorted_ltsv_list = np_ltsv_list[Ltsv_sort_index]
@@ -413,7 +412,7 @@ class SparseModelingImager(object):
         self.initializecv(num_fold=num_fold)
 
         # scaling factor for hyper-parameter
-        hp_scale = 2.0 / numpy.sqrt(self.imparam.imsize[0] * self.imparam.imsize[1])
+        hp_scale = 2.0 / np.sqrt(self.imparam.imsize[0] * self.imparam.imsize[1])
 
         # loop Ltsv in ascending order
         for j in range(num_Ltsv):
@@ -461,7 +460,7 @@ class SparseModelingImager(object):
 
                 if summarize is True:
                     imagearray = self.getimage(imagename)
-                    data = numpy.squeeze(imagearray.data)  # data will be 2D
+                    data = np.squeeze(imagearray.data)  # data will be 2D
                     plotter.plotimage(i, j, data, mse)
 
                 # As long as Ltsv is kept, initial image will not be updated
@@ -472,7 +471,7 @@ class SparseModelingImager(object):
 
         f.close()
 
-        best_solution = numpy.argmin(result_mse)
+        best_solution = np.argmin(result_mse)
         best_mse = result_mse[best_solution]
         best_image = result_image[best_solution]
         best_L1 = result_L1[best_solution]
@@ -480,8 +479,8 @@ class SparseModelingImager(object):
 
 #         L1_index = np_l1_list.tolist().index(best_L1)
 #         Ltsv_index = np_ltsv_list.tolist().index(best_Ltsv)
-        L1_index = numpy.where(sorted_l1_list == best_L1)[0][0]
-        Ltsv_index = numpy.where(sorted_ltsv_list == best_Ltsv)[0][0]
+        L1_index = np.where(sorted_l1_list == best_L1)[0][0]
+        Ltsv_index = np.where(sorted_ltsv_list == best_Ltsv)[0][0]
         if best_mse >= 0.0:
             plotter.mark_bestimage(L1_index, Ltsv_index)
 
@@ -590,13 +589,13 @@ class CVPlotter(object):
         dy = total_height / float(self.nv)
         self.dx = min(dx, dy)
         self.dy = self.dx
-        f = pl.figure(num='CVPlot', figsize=(8, 8))
-        pl.clf()
+        f = plt.figure(num='CVPlot', figsize=(8, 8))
+        plt.clf()
         left = self.left_margin
         bottom = self.bottom_margin
         height = self.dy * self.nv
         width = self.dx * self.nh
-        outer_frame = pl.axes([left, bottom, width, height])
+        outer_frame = plt.axes([left, bottom, width, height])
         outer_frame.set_xlim(-0.5, self.nh - 0.5)
         outer_frame.set_ylim(-0.5, self.nv - 0.5)
         outer_frame.set_xlabel('log10(Ltsv)')
@@ -617,10 +616,10 @@ class CVPlotter(object):
         bottom = self.bottom_margin + row * self.dy
         height = self.dx
         width = self.dy
-        #print 'pl.axes([{0}, {1}, {2}, {3}])'.format(left, bottom, width, height)
+        #print 'plt.axes([{0}, {1}, {2}, {3}])'.format(left, bottom, width, height)
         nx, ny = data.shape
-        a = pl.axes([left, bottom, width, height])
-        a.imshow(numpy.flipud(data.transpose()))
+        a = plt.axes([left, bottom, width, height])
+        a.imshow(np.flipud(data.transpose()))
         if mse >= 0.0:
             a.text(nx - 2, 5, '{:.5g}'.format(mse), ha='right', va='top', fontdict={'size': 'small', 'color': 'white'})
         a.xaxis.set_major_locator(matplotlib.ticker.NullLocator())
@@ -631,9 +630,9 @@ class CVPlotter(object):
         best_axes = self.axes_list[row][column]
         bbox = best_axes.get_position()
         if int(matplotlib.__version__.split('.')[0]) > 1:
-            best_frame = pl.axes(bbox, facecolor='none')
+            best_frame = plt.axes(bbox, facecolor='none')
         else:
-            best_frame = pl.axes(bbox, axisbg='none')
+            best_frame = plt.axes(bbox, axisbg='none')
         best_frame.xaxis.set_major_locator(matplotlib.ticker.NullLocator())
         best_frame.yaxis.set_major_locator(matplotlib.ticker.NullLocator())
         for loc, spine in best_frame.spines.items():
@@ -641,10 +640,10 @@ class CVPlotter(object):
             spine.set_linewidth(3)
 
     def draw(self):
-        pl.draw()
+        plt.draw()
 
     def savefig(self, figfile):
-        pl.savefig(figfile)
+        plt.savefig(figfile)
 
 
 class NullPlotter(object):
