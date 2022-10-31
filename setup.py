@@ -72,6 +72,10 @@ def opt2attr(s):
     return s[0].strip('=').replace('-', '_')
 
 
+def opt2env(s):
+    return "PRIISM_" + opt2attr(s).upper()
+
+
 def debug_print_user_options(cmd):
     print('Command: {}'.format(cmd.__class__.__name__))
     print('User Options:')
@@ -88,7 +92,8 @@ def arg_for_set_undefined_options(cmd):
 def initialize_attr_for_user_options(cmd):
     for option in cmd.user_options:
         attrname = opt2attr(option)
-        setattr(cmd, attrname, None)
+        envname = opt2env(option)
+        setattr(cmd, attrname, os.environ.get(envname))
 
 
 def get_python_library(include_dir):
