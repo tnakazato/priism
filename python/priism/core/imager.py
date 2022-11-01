@@ -26,6 +26,7 @@ import pickle
 import shutil
 import time
 
+import GPyOpt
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
@@ -337,7 +338,8 @@ class SparseModelingImager(object):
 
     def crossvalidation(self, l1_list, ltsv_list, num_fold=10, imageprefix='image', imagepolicy='full',
                         summarize=True, figfile=None, datafile=None, maxiter=50000, eps=1.0e-5, clean_box=None,
-                        resultasinitialimage=True, nonnegative=True, scalehyperparam=True, optimizer='classical'):
+                        resultasinitialimage=True, nonnegative=True, scalehyperparam=True, optimizer='classical',
+                        bayesopt_maxiter=15):
         """
         Perform cross validation and search the best parameter for L1 and Ltsv from
         the given list of these.
@@ -365,6 +367,7 @@ class SparseModelingImager(object):
                                the behavior compatible with previous version (earlier than
                                0.9.x). Default is True (backward-compatible).
             optimizer -- optimization algorithm. 'classical' or 'bayesian'
+            bayesopt_maxiter -- (specific to bayesian optimization)
 
         Output:
             dictionary containing best L1 (key: L1), best Ltsv (key;Ltsv), and
@@ -409,13 +412,16 @@ class SparseModelingImager(object):
         if optimizer == 'classical':
             result = self._cv_classical(
                 l1_list=sorted_l1_list, ltsv_list=sorted_ltsv_list, hp_scale=hp_scale,
-                num_fold=num_fold, imageprefix=imageprefix,
-                maxiter=maxiter, eps=eps, clean_box=clean_box,
-                nonnegative=nonnegative,
-                resultasinitialimage=resultasinitialimage,
+                imageprefix=imageprefix, maxiter=maxiter, eps=eps, clean_box=clean_box,
+                nonnegative=nonnegative, resultasinitialimage=resultasinitialimage,
             )
         elif optimizer == 'bayesian':
-            result = self._cv_bayesian(...)
+            result = self._cv_bayesian(
+                l1_list=sorted_l1_list, ltsv_list=sorted_ltsv_list, hp_scale=hp_scale,
+                imageprefix=imageprefix, maxiter=maxiter, eps=eps, clean_box=clean_box,
+                nonnegative=nonnegative, resultasinitialimage=resultasinitialimage,
+                bayesopt_maxiter=bayesopt_maxiter
+            )
         else:
             print(f'Unrecognized optimizer: {optimizer}')
 
@@ -434,7 +440,7 @@ class SparseModelingImager(object):
                 for mse, _, L1, Ltsv in zip(*result):
                     print(f'{L1}, {Ltsv}, {mse}', file=f)
 
-        if summarize is True:
+        if summarize is True and optimizer == 'classical':
             self._plot_cv_result(
                 sorted_l1_list, sorted_ltsv_list, result, best_solution, figfile=figfile
             )
@@ -479,7 +485,34 @@ class SparseModelingImager(object):
     def finalizecv(self):
         self.visset = None
 
-    def _cv_classical(self, l1_list, ltsv_list, hp_scale=1.0, num_fold=10, imageprefix='image',
+    def _cv_exec(self, l1, ltsv, hp_scale, imageprefix='image',
+                 maxiter=1000, eps=1.0e-5, clean_box=None, nonnegative=True,
+                 resultasinitialimage=True, overwriteinitialimage=True):
+
+        # get full visibility image first
+        l1_str = format_lambda(l1)
+        ltsv_str = format_lambda(ltsv)
+        imagename = f'{imageprefix}_L1_{l1_str}_Ltsv_{ltsv_str}.{self.imagesuffix}'
+
+        internal_l1 = l1 * hp_scale
+        internal_ltsv = ltsv * hp_scale * hp_scale
+
+        self.solve(internal_l1, internal_ltsv,
+                   maxiter=maxiter, eps=eps, clean_box=clean_box,
+                   nonnegative=nonnegative,
+                   storeinitialimage=resultasinitialimage,
+                   overwriteinitialimage=overwriteinitialimage,
+                   scalehyperparam=False)
+        self.exportimage(imagename, overwrite=True)
+
+        # then evaluate MSE
+        mse = self.computemse(internal_l1, internal_ltsv, maxiter, eps, clean_box, nonnegative=nonnegative)
+
+        print(f'L1 10^{l1_str} Ltsv 10^{ltsv_str}: MSE {mse} FITS {imagename}')
+
+        return mse, imagename
+
+    def _cv_classical(self, l1_list, ltsv_list, hp_scale=1.0, imageprefix='image',
                       maxiter=1000, eps=1.0e-5, clean_box=None, nonnegative=True,
                       resultasinitialimage=True):
         result_L1 = []
@@ -498,33 +531,59 @@ class SparseModelingImager(object):
                 result_L1.append(L1)
                 result_Ltsv.append(Ltsv)
 
-                # get full visibility image first
-                l1_str = format_lambda(L1)
-                ltsv_str = format_lambda(Ltsv)
-                imagename = f'{imageprefix}_L1_{l1_str}_Ltsv_{ltsv_str}.{self.imagesuffix}'
+                mse, imagename = self._cv_exec(
+                    L1, Ltsv, hp_scale, imageprefix, maxiter,
+                    eps, clean_box, nonnegative, resultasinitialimage,
+                    overwrite_initial
+                )
 
-                internal_L1 = L1 * hp_scale
-                internal_Ltsv = Ltsv * hp_scale * hp_scale
-
-                self.solve(internal_L1, internal_Ltsv,
-                           maxiter=maxiter, eps=eps, clean_box=clean_box,
-                           nonnegative=nonnegative,
-                           storeinitialimage=resultasinitialimage,
-                           overwriteinitialimage=overwrite_initial,
-                           scalehyperparam=False)
-                self.exportimage(imagename, overwrite=True)
                 result_image.append(imagename)
-
-                # then evaluate MSE
-                mse = self.computemse(internal_L1, internal_Ltsv, maxiter, eps, clean_box, nonnegative=nonnegative)
                 result_mse.append(mse)
 
-                print(f'L1 10^{l1_str} Ltsv 10^{ltsv_str}: MSE {mse} FITS {imagename}')
+                overwrite_initial = False
 
         return self.CrossValidationResult(
             mse=result_mse, image=result_image,
             L1=result_L1, Ltsv=result_Ltsv
         )
+
+    def _cv_bayesian(self, l1_list, ltsv_list, hp_scale=1.0, num_fold=10, imageprefix='image',
+                      maxiter=1000, eps=1.0e-5, clean_box=None, nonnegative=True,
+                      resultasinitialimage=True, bayesopt_maxiter=15):
+        result_L1 = []
+        result_Ltsv = []
+        result_mse = []
+        result_image = []
+
+        def __objective_function(x):
+            L1 = x[0][0]
+            Ltsv = x[0][1]
+
+            mse, imagename = self._cv_exec(
+                L1, Ltsv, hp_scale, imageprefix, maxiter,
+                eps, clean_box, nonnegative, resultasinitialimage
+            )
+
+            result_L1.append(L1)
+            result_Ltsv.append(Ltsv)
+            result_mse.append(mse)
+            result_image.append(imagename)
+
+            return mse
+
+        bounds = [
+            {'name': 'var_1', 'type': 'discrete', 'domain': l1_list},
+            {'name': 'var_2', 'type': 'discrete', 'domain': ltsv_list},
+        ]
+
+        problem = GPyOpt.methods.BayesianOptimization(__objective_function, bounds)
+        problem.run_optimization(bayesopt_maxiter)
+
+        return self.CrossValidationResult(
+            mse=result_mse, image=result_image,
+            L1=result_L1, Ltsv=result_Ltsv
+        )
+
 
     def _plot_cv_result(self, l1_list, ltsv_list, result, best_solution, figfile=None):
         best_L1 = result.L1[best_solution]
