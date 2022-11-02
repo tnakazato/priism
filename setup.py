@@ -92,6 +92,12 @@ def arg_for_set_undefined_options(cmd):
 def initialize_attr_for_user_options(cmd):
     for option in cmd.user_options:
         attrname = opt2attr(option)
+        setattr(cmd, attrname, None)
+
+
+def overwrite_attr_for_user_options_by_environ(cmd):
+    for option in cmd.user_options:
+        attrname = opt2attr(option)
         envname = opt2env(option)
         setattr(cmd, attrname, os.environ.get(envname))
 
@@ -161,6 +167,7 @@ class priism_build(build):
         super(priism_build, self).initialize_options()
         self.fftw3_root_dir = None
         initialize_attr_for_user_options(self)
+        overwrite_attr_for_user_options_by_environ(self)
 
     def finalize_options(self):
         super(priism_build, self).finalize_options()
