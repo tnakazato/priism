@@ -572,6 +572,16 @@ class SparseModelingImager(object):
             result_mse.append(mse)
             result_image.append(imagename)
 
+            # There are "plateau" MSE region that corresponds to empty image
+            # due to too large L1 constraint. To avoid redundant estimation
+            # on the plateau, return value is scaled with L1 value, which
+            # virtually produces slope on the plateau.
+            data = self.getimage(imagename)
+            if np.all(data == 0):
+                factor = max(2, math.log10(L1))
+                print(f'!!!scaling MSE by {factor}!!!')
+                mse *= factor
+
             return mse
 
         bounds = [
