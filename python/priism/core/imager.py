@@ -579,7 +579,6 @@ class SparseModelingImager(object):
             data = self.getimage(imagename)
             if np.all(data == 0):
                 factor = max(2, math.log10(L1))
-                print(f'!!!scaling MSE by {factor}!!!')
                 mse *= factor
 
             return mse
