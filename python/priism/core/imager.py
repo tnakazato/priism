@@ -424,6 +424,7 @@ class SparseModelingImager(object):
             )
         else:
             print(f'Unrecognized optimizer: {optimizer}')
+            raise ArgumentError("optimizer should be either 'classical' or 'bayesian'")
 
         # finalize CV
         self.finalizecv()
@@ -440,10 +441,12 @@ class SparseModelingImager(object):
                 for mse, _, L1, Ltsv in zip(*result):
                     print(f'{L1}, {Ltsv}, {mse}', file=f)
 
-        if summarize is True and optimizer == 'classical':
+        if summarize:
             self._plot_cv_result(
-                sorted_l1_list, sorted_ltsv_list, result, best_solution, figfile=figfile
+                sorted_l1_list, sorted_ltsv_list, result, best_solution, figfile=figfile,
+                optimizer=optimizer
             )
+
 
         # completed
         end_time = time.time()
@@ -585,7 +588,16 @@ class SparseModelingImager(object):
         )
 
 
-    def _plot_cv_result(self, l1_list, ltsv_list, result, best_solution, figfile=None):
+    def _plot_cv_result(self, l1_list, ltsv_list, result, best_solution, figfile=None, optimizer='classical'):
+        plotter_cls = None
+        if optimizer == 'classical':
+            plotter_cls = CVPlotter
+        elif optimizer == 'bayesian':
+            plotter_cls = CVBayesPlotter
+
+        if not plotter_cls:
+            return
+
         best_L1 = result.L1[best_solution]
         best_Ltsv = result.Ltsv[best_solution]
         best_mse = result.mse[best_solution]
@@ -594,16 +606,13 @@ class SparseModelingImager(object):
 
         num_l1 = len(l1_list)
         num_ltsv = len(ltsv_list)
-        plotter = CVPlotter(num_l1, num_ltsv, l1_list, ltsv_list)
+
+        plotter = plotter_cls(num_l1, num_ltsv, l1_list, ltsv_list)
 
         for mse, imagename, L1, Ltsv in zip(*result):
-            assert L1 in l1_list
-            assert Ltsv in ltsv_list
-            i = np.where(l1_list == L1)[0][0]
-            j = np.where(ltsv_list == Ltsv)[0][0]
             imagearray = self.getimage(imagename)
             data = np.squeeze(imagearray.data)  # data will be 2D
-            plotter.plotimage(i, j, data, mse)
+            plotter.plotimage(L1, Ltsv, data, mse)
 
         if best_mse >= 0.0:
             plotter.mark_bestimage(L1_index, Ltsv_index)
@@ -658,8 +667,7 @@ class SparseModelingImager(object):
 #         acv = evaluator.evaluate(self.griddedvis)
 #         return 0.0
 
-
-class CVPlotter(object):
+class CVPlotOuterFrame:
     def __init__(self, nv, nh, L1_list, Ltsv_list):
         self.nh = nh
         self.nv = nv
@@ -691,19 +699,32 @@ class CVPlotter(object):
         outer_frame.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda x, pos: format_tick(x, Ltsv_list)))
         outer_frame.yaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda x, pos: format_tick(x, L1_list)))
 
+        self.axes = outer_frame
+        self.figure = plt.gcf()
+
+
+class CVPlotter:
+    def __init__(self, nv, nh, L1_list, Ltsv_list):
+        self.outer_frame = CVPlotOuterFrame(nv, nh, L1_list, Ltsv_list)
+
         self.L1_list = L1_list
         self.Ltsv_list = Ltsv_list
 
+        self.image_height = self.outer_frame.dy
+        self.image_width = self.outer_frame.dx
+
         self.axes_list = collections.defaultdict(dict)
 
-    def plotimage(self, row, column, data, mse):
-        left = self.left_margin + column * self.dx
-        bottom = self.bottom_margin + row * self.dy
-        height = self.dx
-        width = self.dy
+    def plotimage(self, L1, Ltsv, data, mse):
+        assert L1 in self.L1_list
+        assert Ltsv in self.Ltsv_list
+        row = np.where(self.L1_list == L1)[0][0]
+        column = np.where(self.Ltsv_list == Ltsv)[0][0]
+        left = self.outer_frame.left_margin + column * self.image_width
+        bottom = self.outer_frame.bottom_margin + row * self.image_height
         #print 'plt.axes([{0}, {1}, {2}, {3}])'.format(left, bottom, width, height)
         nx, ny = data.shape
-        a = plt.axes([left, bottom, width, height])
+        a = plt.axes([left, bottom, self.image_width, self.image_height])
         a.imshow(np.flipud(data.transpose()))
         if mse >= 0.0:
             a.text(nx - 2, 5, '{:.5g}'.format(mse), ha='right', va='top', fontdict={'size': 'small', 'color': 'white'})
@@ -723,6 +744,50 @@ class CVPlotter(object):
         for loc, spine in best_frame.spines.items():
             spine.set_color('red')
             spine.set_linewidth(3)
+
+    def draw(self):
+        plt.sca(self.outer_frame.axes)
+        plt.draw()
+
+    def savefig(self, figfile):
+        plt.sca(self.outer_frame.axes)
+        plt.savefig(figfile)
+
+
+class CVBayesPlotter(object):
+    def __init__(self, nv, nh, L1_list, Ltsv_list):
+        self.outer_frame = CVPlotOuterFrame(nv, nh, L1_list, Ltsv_list)
+
+        self.L1_list = L1_list
+        self.Ltsv_list = Ltsv_list
+
+        self.image_height = self.outer_frame.dy
+        self.image_width = self.outer_frame.dx
+
+        self.axes_list = collections.defaultdict(dict)
+
+    def plotimage(self, L1, Ltsv, data, mse):
+        assert L1 in self.L1_list
+        assert Ltsv in self.Ltsv_list
+        row = np.where(self.L1_list == L1)[0][0]
+        column = np.where(self.Ltsv_list == Ltsv)[0][0]
+
+        column = np.where(self.Ltsv_list == Ltsv)[0][0]
+        left = self.outer_frame.left_margin + column * self.image_width
+        bottom = self.outer_frame.bottom_margin + row * self.image_height
+        #print 'plt.axes([{0}, {1}, {2}, {3}])'.format(left, bottom, width, height)
+        nx, ny = data.shape
+        a = plt.axes([left, bottom, self.image_width, self.image_height])
+        a.imshow(np.flipud(data.transpose()))
+        if mse >= 0.0:
+            a.text(nx - 2, 5, '{:.5g}'.format(mse), ha='right', va='top', fontdict={'size': 'small', 'color': 'white'})
+        a.xaxis.set_major_locator(matplotlib.ticker.NullLocator())
+        a.yaxis.set_major_locator(matplotlib.ticker.NullLocator())
+        self.axes_list[row][column] = a
+
+
+    def mark_bestimage(self, row, column):
+        pass
 
     def draw(self):
         plt.draw()
