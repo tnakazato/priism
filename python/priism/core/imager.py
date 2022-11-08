@@ -326,7 +326,7 @@ class SparseModelingImager(object):
         with open(imagename, 'rb') as f:
             data = pickle.load(f)
 
-        return data
+        return datacontainer.ResultingImageStorage(data)
 
     def cvforgridvis(self, l1_list, ltsv_list, num_fold=10, imageprefix='image', imagepolicy='full',
                      summarize=True, figfile=None, datafile=None, maxiter=50000, eps=1.0e-5, clean_box=None,
