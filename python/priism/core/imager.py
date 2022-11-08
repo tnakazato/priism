@@ -576,9 +576,10 @@ class SparseModelingImager(object):
             # due to too large L1 constraint. To avoid redundant estimation
             # on the plateau, return value is scaled with L1 value, which
             # virtually produces slope on the plateau.
-            data = self.getimage(imagename)
+            data_storage = self.getimage(imagename)
+            data = data_storage.data
             if np.all(data == 0):
-                factor = max(2, math.log10(L1))
+                factor = 1 + max(2, math.log10(L1)) / 10
                 mse *= factor
 
             return mse
