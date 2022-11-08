@@ -20,6 +20,7 @@ from __future__ import print_function
 from argparse import ArgumentError
 import collections
 import functools
+import itertools
 import math
 import os
 import pickle
@@ -591,6 +592,10 @@ class SparseModelingImager(object):
 
         problem = GPyOpt.methods.BayesianOptimization(__objective_function, bounds)
         problem.run_optimization(bayesopt_maxiter)
+        # for debugging
+        # problem.save_evaluations('cv_eval.txt')
+        # problem.save_models('cv_model.txt')
+        # problem.save_report('cv_report.txt')
 
         return self.CrossValidationResult(
             mse=result_mse, image=result_image,
@@ -611,8 +616,6 @@ class SparseModelingImager(object):
         best_L1 = result.L1[best_solution]
         best_Ltsv = result.Ltsv[best_solution]
         best_mse = result.mse[best_solution]
-        L1_index = np.where(l1_list == best_L1)[0][0]
-        Ltsv_index = np.where(ltsv_list == best_Ltsv)[0][0]
 
         num_l1 = len(l1_list)
         num_ltsv = len(ltsv_list)
@@ -625,7 +628,7 @@ class SparseModelingImager(object):
             plotter.plotimage(L1, Ltsv, data, mse)
 
         if best_mse >= 0.0:
-            plotter.mark_bestimage(L1_index, Ltsv_index)
+            plotter.mark_bestimage(best_L1, best_Ltsv)
 
         plotter.draw()
         if figfile is not None:
@@ -713,7 +716,7 @@ class CVPlotOuterFrame:
         self.figure = plt.gcf()
 
 
-class CVPlotter:
+class CVPlotterBase:
     def __init__(self, nv, nh, L1_list, Ltsv_list):
         self.outer_frame = CVPlotOuterFrame(nv, nh, L1_list, Ltsv_list)
 
@@ -730,8 +733,12 @@ class CVPlotter:
         assert Ltsv in self.Ltsv_list
         row = np.where(self.L1_list == L1)[0][0]
         column = np.where(self.Ltsv_list == Ltsv)[0][0]
-        left = self.outer_frame.left_margin + column * self.image_width
-        bottom = self.outer_frame.bottom_margin + row * self.image_height
+
+        column = np.where(self.Ltsv_list == Ltsv)[0][0]
+        cx = self.outer_frame.left_margin + (column + 0.5) * self.outer_frame.dx
+        cy = self.outer_frame.bottom_margin + (row + 0.5) * self.outer_frame.dy
+        left = cx - self.image_width / 2
+        bottom = cy - self.image_height / 2
         #print 'plt.axes([{0}, {1}, {2}, {3}])'.format(left, bottom, width, height)
         nx, ny = data.shape
         a = plt.axes([left, bottom, self.image_width, self.image_height])
@@ -742,7 +749,11 @@ class CVPlotter:
         a.yaxis.set_major_locator(matplotlib.ticker.NullLocator())
         self.axes_list[row][column] = a
 
-    def mark_bestimage(self, row, column):
+    def mark_bestimage(self, L1, Ltsv):
+        assert L1 in self.L1_list
+        assert Ltsv in self.Ltsv_list
+        row = np.where(self.L1_list == L1)[0][0]
+        column = np.where(self.Ltsv_list == Ltsv)[0][0]
         best_axes = self.axes_list[row][column]
         bbox = best_axes.get_position()
         if int(matplotlib.__version__.split('.')[0]) > 1:
@@ -755,6 +766,11 @@ class CVPlotter:
             spine.set_color('red')
             spine.set_linewidth(3)
 
+        axes_list = map(lambda x: x.values(), self.axes_list.values())
+        max_zorder = max(map(lambda x: x.get_zorder(), itertools.chain(*axes_list)))
+        best_axes.set_zorder(max_zorder + 1)
+        plt.draw()
+
     def draw(self):
         plt.sca(self.outer_frame.axes)
         plt.draw()
@@ -764,43 +780,18 @@ class CVPlotter:
         plt.savefig(figfile)
 
 
-class CVBayesPlotter(object):
+class CVPlotter(CVPlotterBase):
+    pass
+
+
+class CVBayesPlotter(CVPlotterBase):
     def __init__(self, nv, nh, L1_list, Ltsv_list):
-        self.outer_frame = CVPlotOuterFrame(nv, nh, L1_list, Ltsv_list)
+        super().__init__(nv, nh, L1_list, Ltsv_list)
 
-        self.L1_list = L1_list
-        self.Ltsv_list = Ltsv_list
-
-        self.image_height = self.outer_frame.dy
-        self.image_width = self.outer_frame.dx
-
-        self.axes_list = collections.defaultdict(dict)
-
-    def plotimage(self, L1, Ltsv, data, mse):
-        assert L1 in self.L1_list
-        assert Ltsv in self.Ltsv_list
-        row = np.where(self.L1_list == L1)[0][0]
-        column = np.where(self.Ltsv_list == Ltsv)[0][0]
-
-        column = np.where(self.Ltsv_list == Ltsv)[0][0]
-        left = self.outer_frame.left_margin + column * self.image_width
-        bottom = self.outer_frame.bottom_margin + row * self.image_height
-        #print 'plt.axes([{0}, {1}, {2}, {3}])'.format(left, bottom, width, height)
-        nx, ny = data.shape
-        a = plt.axes([left, bottom, self.image_width, self.image_height])
-        a.imshow(np.flipud(data.transpose()))
-        if mse >= 0.0:
-            a.text(nx - 2, 5, '{:.5g}'.format(mse), ha='right', va='top', fontdict={'size': 'small', 'color': 'white'})
-        a.xaxis.set_major_locator(matplotlib.ticker.NullLocator())
-        a.yaxis.set_major_locator(matplotlib.ticker.NullLocator())
-        self.axes_list[row][column] = a
-
-
-    def mark_bestimage(self, row, column):
-        pass
-
-    def draw(self):
-        plt.draw()
-
-    def savefig(self, figfile):
-        plt.savefig(figfile)
+        n = max(self.outer_frame.nh, self.outer_frame.nv)
+        if n > 9:
+            self.image_height *= 2
+            self.image_width *= 2
+        elif n > 4:
+            self.image_height *= 1.5
+            self.image_width *= 1.5
