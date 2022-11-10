@@ -14,11 +14,15 @@
 # GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License
 # along with PRIISM.  If not, see <https://www.gnu.org/licenses/>.
+import io
 import os
 import shlex
 import subprocess
 import sys
 import sysconfig
+import tarfile
+import urllib.request as request
+import zipfile
 
 from distutils.command.build import build
 from distutils.command.build_ext import build_ext
@@ -61,11 +65,25 @@ def check_command_availability(cmd):
         return subprocess.call(['which', cmd], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL) == 0
 
 
+IS_GIT_OK = check_command_availability('git')
+
+
 def execute_command(cmdstring, cwd=None):
     retcode = subprocess.call(shlex.split(cmdstring), cwd=cwd)
     if retcode != 0:
         print('WARNING: command "{}" failed to execute'.format(cmdstring))
     return retcode
+
+
+def download_extract(url, filetype):
+    req = request.urlopen(url)
+    bstream = io.BytesIO(req.read())
+    if filetype == 'zip':
+        with zipfile.ZipFile(bstream, mode='r') as zf:
+            zf.extractall()
+    elif filetype == 'tar':
+        with tarfile.open(mode='r', fileobj=bstream) as tf:
+            tf.extractall()
 
 
 def opt2attr(s):
@@ -238,34 +256,25 @@ class download_smili(config):
     def initialize_options(self):
         super(download_smili, self).initialize_options()
 
-        is_git_ok, is_curl_ok, is_wget_ok = check_command_availability(['git', 'curl', 'wget'])
         package = 'sparseimaging'
         commit = '4e28903c1fc0256cec5d4b8d5a6371718eff53b9'
-        zipname = '{}.zip'.format(commit)
-        base_url = 'https://github.com/ikeda46/{}'.format(package)
-        if is_git_ok:
+        zipname = f'{commit}.zip'
+        base_url = f'https://github.com/ikeda46/{package}'
+        if IS_GIT_OK:
             url = base_url + '.git'
-            self.download_cmd = 'git clone {}'.format(url)
-        elif is_curl_ok:
-            url = base_url + '/archive/{}.zip'.format(commit)
-            self.download_cmd = 'curl -L -O {}'.format(url)
-        elif is_wget_ok:
-            url = base_url + '/archive/{}.zip'.format(commit)
-            self.download_cmd = 'wget {}'.format(url)
-        else:
-            raise PriismDependencyError('No download command found: you have to install git or curl or wget')
+            def clone_and_checkout():
+                execute_command(f'git clone {url}')
+                execute_command(f'git checkout {commit}', cwd=package)
 
-        if is_git_ok:
-            self.unpack_cmds = []
-            self.unpack_cwd = '.'
-            self.epilogue_cmds = ['git checkout {}'.format(commit)]
-            self.epilogue_cwd = package
+            self.download_cmd = clone_and_checkout
         else:
-            self.unpack_cmds = ['unzip {}'.format(zipname),
-                                  'ln -s {0}-{1} {0}'.format(package, commit)]
-            self.unpack_cwd = '.'
-            self.epilogue_cmds = []
-            self.epilogue_cwd = '.'
+            url = base_url + f'/archive/{zipname}'
+            def download_and_extract():
+                download_extract(url, filetype='zip')
+                os.symlink(f'{package}-{commit}', package)
+
+            self.download_cmd = download_and_extract
+
         self.package_directory = package
 
     def finalize_options(self):
@@ -275,12 +284,7 @@ class download_smili(config):
         super(download_smili, self).run()
 
         if not os.path.exists(self.package_directory):
-            execute_command(self.download_cmd)
-            for cmd in self.unpack_cmds:
-                execute_command(cmd, cwd=self.unpack_cwd)
-
-        for cmd in self.epilogue_cmds:
-            execute_command(cmd, cwd=self.epilogue_cwd)
+            self.download_cmd()
 
 
 class download_sakura(config):
@@ -289,35 +293,28 @@ class download_sakura(config):
     def initialize_options(self):
         super(download_sakura, self).initialize_options()
 
-        is_git_ok, is_curl_ok, is_wget_ok = check_command_availability(['git', 'curl', 'wget'])
         package = 'sakura'
-        version = 'libsakura-5.1.0'
-        zipname = '{}.zip'.format(version)
-        tgzname = '{}-{}.tgz'.format(package, version)
+        target = 'libsakura'
+        version = 'libsakura-5.1.3'
+        zipname = f'{version}.zip'
         base_url = 'https://github.com/tnakazato/sakura'
-        if is_git_ok:
+        if IS_GIT_OK:
             url = base_url + '.git'
-            self.download_cmd = 'git clone {}'.format(url)
-        elif is_curl_ok:
-            url = base_url + '/archive/{}.zip'.format(version)
-            self.download_cmd = 'curl -L -O {}'.format(url)
-        elif is_wget_ok:
-            url = base_url + '/archive/{}.zip'.format(version)
-            self.download_cmd = 'wget {}'.format(url)
-        else:
-            raise PriismDependencyError('No download command found: you have to install curl or wget')
+            def clone_and_checkout():
+                execute_command(f'git clone {url}')
+                execute_command(f'git checkout {version}', cwd=package)
 
-        if is_git_ok:
-            self.epilogue_cmds = ['git checkout {}'.format(version),
-                                  'ln -s sakura/libsakura ../']
-            self.epilogue_cwd = package
+            self.download_cmd = clone_and_checkout
         else:
-            self.epilogue_cmds = ['unzip {}'.format(zipname),
-                                  'ln -s {0}-{1} {0}'.format(package, version)]
-            self.epilogue_cwd = '.'
-        self.distfile = tgzname
+            url = base_url + f'/archive/{zipname}'
+            def download_and_extract():
+                download_extract(url, filetype='zip')
+                os.symlink(f'{package}-{version}', package)
+
+            self.download_cmd = download_and_extract
+
         self.package_directory = package
-        self.working_directory = self.package_directory
+        self.target_directory = target
 
     def finalize_options(self):
         super(download_sakura, self).finalize_options()
@@ -326,10 +323,10 @@ class download_sakura(config):
         super(download_sakura, self).run()
 
         if not os.path.exists(self.package_directory):
-            if not os.path.exists(self.distfile):
-                execute_command(self.download_cmd)
-            for cmd in self.epilogue_cmds:
-                execute_command(cmd, cwd=self.epilogue_cwd)
+            self.download_cmd()
+
+        if not os.path.exists(self.target_directory):
+            os.symlink(f'{self.package_directory}/{self.target_directory}', self.target_directory)
 
 
 class download_eigen(config):
@@ -338,37 +335,14 @@ class download_eigen(config):
 
     user_options = []
 
-    def initialize_options(self):
-        super(download_eigen, self).initialize_options()
-
-        is_curl_ok, is_wget_ok = check_command_availability(['curl', 'wget'])
-        tgzname = f'{self.PACKAGE_NAME}-{self.PACKAGE_VERSION}.tar.bz2'
-        url = f'https://gitlab.com/libeigen/eigen/-/archive/{self.PACKAGE_VERSION}/{tgzname}'
-        if is_curl_ok:
-            self.download_cmd = 'curl -L -O {}'.format(url)
-        elif is_wget_ok:
-            self.download_cmd = 'wget {}'.format(url)
-        else:
-            raise PriismDependencyError('No download command found: you have to install curl or wget')
-
-        self.epilogue_cmds = ['tar jxf {}'.format(tgzname)]
-        self.epilogue_cwd = '.'
-        self.distfile = tgzname
-        self.package_directory = f'{self.PACKAGE_NAME}-{self.PACKAGE_VERSION}'
-        self.working_directory = self.package_directory
-
-    def finalize_options(self):
-        super(download_eigen, self).finalize_options()
-
     def run(self):
         super(download_eigen, self).run()
 
-        if not os.path.exists(self.package_directory):
-            if not os.path.exists(self.distfile):
-                print(f'Extracting {self.PACKAGE_NAME}...')
-                execute_command(self.download_cmd)
-            for cmd in self.epilogue_cmds:
-                execute_command(cmd, cwd=self.epilogue_cwd)
+        package_directory = f'{self.PACKAGE_NAME}-{self.PACKAGE_VERSION}'
+        if not os.path.exists(package_directory):
+            tgzname = f'{package_directory}.tar.bz2'
+            url = f'https://gitlab.com/libeigen/eigen/-/archive/{self.PACKAGE_VERSION}/{tgzname}'
+            download_extract(url, filetype='tar')
 
 
 class configure_ext(Command):
@@ -432,6 +406,8 @@ class configure_ext(Command):
 
         cmd += f' -DEIGEN_DIR={download_eigen.PACKAGE_NAME}-{download_eigen.PACKAGE_VERSION}'
 
+        cmd += ' -DENABLE_TEST=OFF'
+
         if self.cxx_compiler is not None:
             cmd += ' -DCMAKE_CXX_COMPILER={}'.format(self.cxx_compiler)
 
@@ -450,10 +426,6 @@ class configure_ext(Command):
         # configure with cmake
         if not os.path.exists(self.priism_build_dir):
             os.mkdir(self.priism_build_dir)
-
-        #cache_file = os.path.join(self.priism_build_dir, 'CMakeCache.txt')
-        #if os.path.exists(cache_file):
-        #    os.remove(cache_file)
 
         cmd = self.__configure_cmake_command()
         execute_command(cmd, cwd=self.priism_build_dir)
