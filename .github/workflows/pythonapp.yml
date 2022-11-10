@@ -30,6 +30,8 @@ jobs:
       if: ${{ startsWith(matrix.os, 'macos-') }}
       run: |
         echo "SDKROOT=$(xcrun --sdk macosx --show-sdk-path)" >> $GITHUB_ENV
+        echo 'LDFLAGS="-L/usr/local/opt/libomp/lib' >> $GITHUB_ENV
+        echo 'CPPFLAGS="-I/usr/local/opt/libomp/include"' >> $GITHUB_ENV
     
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v1
@@ -40,10 +42,10 @@ jobs:
       if: ${{ matrix.os == 'ubuntu-latest' }}
       run: sudo apt-get install -y libfftw3-bin libfftw3-dev
       
-    - name: Install FFTW3 and OpenMP (macOS)
+    - name: Install FFTW3 (macOS)
       if: ${{ startsWith(matrix.os, 'macos-') }}
       run: |
-        brew install fftw libomp
+        brew install fftw
     
     - name: Install dependencies
       run: |
