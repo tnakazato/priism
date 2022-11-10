@@ -30,7 +30,7 @@ jobs:
       if: ${{ startsWith(matrix.os, 'macos-') }}
       run: |
         echo "SDKROOT=$(xcrun --sdk macosx --show-sdk-path)" >> $GITHUB_ENV
-        echo 'LDFLAGS="-L/usr/local/opt/libomp/lib' >> $GITHUB_ENV
+        echo 'LDFLAGS="-L/usr/local/opt/libomp/lib"' >> $GITHUB_ENV
         echo 'CPPFLAGS="-I/usr/local/opt/libomp/include"' >> $GITHUB_ENV
     
     - name: Set up Python ${{ matrix.python-version }}
