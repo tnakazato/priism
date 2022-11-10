@@ -40,10 +40,10 @@ jobs:
       if: ${{ matrix.os == 'ubuntu-latest' }}
       run: sudo apt-get install -y libfftw3-bin libfftw3-dev
       
-    - name: Install FFTW3 (macOS)
+    - name: Install FFTW3 and OpenMP (macOS)
       if: ${{ startsWith(matrix.os, 'macos-') }}
       run: |
-        brew install fftw
+        brew install fftw libomp
     
     - name: Install dependencies
       run: |
