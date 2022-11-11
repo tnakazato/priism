@@ -28,6 +28,7 @@ jobs:
       run: |
         echo "SDKROOT=$(xcrun --sdk macosx --show-sdk-path)" >> $GITHUB_ENV
         echo $GITHUB_ENV
+        cat $GITHUB_ENV
     
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v1
