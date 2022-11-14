@@ -43,7 +43,6 @@ jobs:
       if: ${{ startsWith(matrix.os, 'macos-') }}
       run: |
         brew install fftw
-        brew reinstall gcc
     
     - name: Install dependencies
       run: |
@@ -60,7 +59,8 @@ jobs:
         
     - name: Build PRIISM
       run: |
-        find /usr/local/include -name omp.h
+        ls -l /usr/local/Cellar/libomp/*/include
+        ls -l /usr/local/include/omp.h
         python3 setup.py build
       
     - name: Install PRIISM
