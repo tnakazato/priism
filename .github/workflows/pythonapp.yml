@@ -43,7 +43,7 @@ jobs:
       if: ${{ startsWith(matrix.os, 'macos-') }}
       run: |
         brew install fftw
-        brew install libomp
+        brew reinstall libomp
     
     - name: Install dependencies
       run: |
