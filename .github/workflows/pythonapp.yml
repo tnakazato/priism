@@ -58,7 +58,9 @@ jobs:
         flake8 python --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
         
     - name: Build PRIISM
-      run: python3 setup.py build
+      run: |
+        find /usr/local/include -name omp.h
+        python3 setup.py build
       
     - name: Install PRIISM
       run: python3 setup.py install
