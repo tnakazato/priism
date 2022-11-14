@@ -15,8 +15,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-11, macos-12]
+        os: [ubuntu-latest, macos-11, macos-12]
         python-version: [3.8]
+        include:
+          - os: ubuntu-latest
+            python-version: 3.6
   
     runs-on: ${{ matrix.os }}
 
@@ -73,6 +76,11 @@ jobs:
       
     - name: Install PRIISM
       run: python3 setup.py install
+   
+    - name: Test libmfista library
+      run: |
+        PRIISM_INSTALL_DIR=$(python3 -c 'import os, sys, priism; print(os.path.dirname(priism.__file__))' | grep -E "^/.*/python3.*/priism")
+        ls -l $PRIISM_INSTALL_DIR/core/libmfista_nufft.so
       
     - name: Test with pytest
       run: |
