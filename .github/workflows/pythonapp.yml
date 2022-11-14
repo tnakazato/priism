@@ -27,8 +27,6 @@ jobs:
       if: ${{ startsWith(matrix.os, 'macos-') }}
       run: |
         echo "SDKROOT=$(xcrun --sdk macosx --show-sdk-path)" >> $GITHUB_ENV
-        echo "LDFLAGS=-L/usr/local/opt/llvm/lib" >> $GITHUB_ENV
-        echo "CPPFLAGS=-I/usr/local/opt/llvm/include" >> $GITHUB_ENV
         echo $GITHUB_ENV
         cat $GITHUB_ENV
     
@@ -45,7 +43,7 @@ jobs:
       if: ${{ startsWith(matrix.os, 'macos-') }}
       run: |
         brew install fftw
-        brew reinstall llvm
+        brew reinstall gcc
     
     - name: Install dependencies
       run: |
@@ -62,7 +60,7 @@ jobs:
         
     - name: Build PRIISM
       run: |
-        find /usr/local/opt/llvm/include -name omp.h
+        find /usr/local/include -name omp.h
         python3 setup.py build
       
     - name: Install PRIISM
