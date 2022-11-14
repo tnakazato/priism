@@ -29,6 +29,9 @@ jobs:
         echo "SDKROOT=$(xcrun --sdk macosx --show-sdk-path)" >> $GITHUB_ENV
         echo $GITHUB_ENV
         cat $GITHUB_ENV
+        find /usr/local/Cellar -name omp.h
+        ln -s $(find /usr/local/Cellar -name omp.h) /usr/local/include/omp.h
+        find /usr/local/include -name omp.h
     
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v1
