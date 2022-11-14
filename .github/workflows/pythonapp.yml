@@ -30,8 +30,6 @@ jobs:
       if: ${{ startsWith(matrix.os, 'macos-') }}
       run: |
         echo "SDKROOT=$(xcrun --sdk macosx --show-sdk-path)" >> $GITHUB_ENV
-        echo $GITHUB_ENV
-        cat $GITHUB_ENV
     
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v1
@@ -70,8 +68,6 @@ jobs:
         
     - name: Build PRIISM
       run: |
-        ls -l /usr/local/Cellar/libomp/*/include
-        ls -l /usr/local/include/omp.h
         python3 setup.py build
       
     - name: Install PRIISM
