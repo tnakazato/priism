@@ -43,8 +43,9 @@ jobs:
       if: ${{ startsWith(matrix.os, 'macos-') }}
       run: |
         brew install fftw
-        find /usr/local/Cellar -name omp.h
-        ln -s $(find /usr/local/Cellar -name omp.h) /usr/local/include/omp.h
+        OMP_INCLUDE_FILE=$(find /usr/local/Cellar -name omp.h)
+        echo $OMP_INCLUDE_FILE
+        ln -s $OMP_INCLUDE_FILE /usr/local/include/
         find /usr/local/include -name omp.h        
     
     - name: Install dependencies
