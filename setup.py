@@ -125,10 +125,10 @@ def get_python_library(include_dir):
     libname1 = sysconfig.get_config_var('PY3LIBRARY')
     if libname1 is None or (isinstance(libname1, str) and len(libname1) == 0):
         libprefix = '.'.join(sysconfig.get_config_var('LIBRARY').split('.')[:-1])
-        libname = '.'.join([libprefix, sysconfig.get_config_var('SO')])
+        libname = '.'.join([libprefix, sysconfig.get_config_var('EXT_SUFFIX')])
         libname = libname.replace('..', '.')
         libnames.append(libname)
-        if sysconfig.get_config_var('SO').find('darwin') != -1:
+        if sysconfig.get_config_var('EXT_SUFFIX').find('darwin') != -1:
             libname = '.'.join([libprefix, 'dylib'])
             libnames.append(libname)
     else:
