@@ -37,14 +37,6 @@ foreach(SAKURA_SUBDIR IN ITEMS src python-binding)
                   WORKING_DIRECTORY ${_DIR})
   execute_process(COMMAND sed -i -e "s@PUBLIC_HEADER DESTINATION include@PUBLIC_HEADER DESTINATION priism/external/sakura/include@g" CMakeLists.txt
                   WORKING_DIRECTORY ${_DIR})
-  execute_process(COMMAND grep "COMPONENT Sakura" CMakeLists.txt
-                  OUTPUT_VARIABLE _RESULT
-                  WORKING_DIRECTORY ${_DIR})
-  if (NOT _RESULT)
-    execute_process(COMMAND sed -i -e "/^install/a COMPONENT Sakura" CMakeLists.txt
-                    WORKING_DIRECTORY ${_DIR})
-  endif()
-  unset(_RESULT)
   unset(_DIR)
 endforeach()
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/${SAKURA_DIR}/cmake-modules CACHE STRING "List of directories to search for CMake modules")
