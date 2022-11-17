@@ -391,7 +391,7 @@ class configure_ext(Command):
         print('fftw3-root-dir={}'.format(self.fftw3_root_dir))
 
     def __configure_cmake_command(self):
-        cmd = 'cmake .. -DCMAKE_INSTALL_PREFIX={}'.format(os.path.relpath(self.build_lib, self.priism_build_dir))
+        cmd = 'cmake -Wno-dev .. -DCMAKE_INSTALL_PREFIX={}'.format(os.path.relpath(self.build_lib, self.priism_build_dir))
 
         #if self.python_root_dir is not None:
         #    cmd += ' -DPYTHON_ROOTDIR={}'.format(self.python_root_dir)
