@@ -21,6 +21,20 @@ source ~/pyenv/priism/bin/activate
 python3 -m pip install --upgrade pip
 ```
 
+仮想環境を新規に作成する代わりに、CASAを仮想環境とみなしてPRIISMをCASAに直接インストールすることもできます。
+
+```
+# ADCの共有エリアからCASAを丸ごとコピー（この例では CASA 6.5.2）
+cp -r /usr/local/casa/casa-6.5.2-26-py3.8 .
+
+# パスを通す
+# which python3などとしてCASAにパスが通っていることを確認してください。
+export PATH=$PWD/casa-6.5.2-26-py3.8/bin:$PATH
+
+# pipをアップグレードしておきます。またwheelもインストールしておきます。
+python3 -m pip install --upgrade pip wheel
+```
+
 ## PRIISMのクローン
 
 もしまだクローンしていない場合はクローンしてください。すでにクローン済みの場合はスキップして構いません。
