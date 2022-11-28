@@ -1,5 +1,5 @@
-# Copyright (C) 2019
-# National Astronomical Observatory of Japan
+# Copyright (C) 2019-2022
+# Inter-University Research Institute Corporation, National Institutes of Natural Sciences
 # 2-21-1, Osawa, Mitaka, Tokyo, 181-8588, Japan.
 #
 # This file is part of PRIISM.
@@ -87,6 +87,14 @@ class VisibilityReader(object):
         """
         vis = self.visparam.vis
         msselect = self.visparam.as_msselection()
+
+        datacolumn = self.visparam.datacolumn.lower()
+        items = items.copy()
+        index = items.index('data')
+        if datacolumn == 'corrected':
+            items[index] = 'corrected_data'
+        elif datacolumn == 'residual':
+            items[index] = 'residual_data'
 
         with casa.OpenMS(vis) as ms:
             ms.msselect(msselect, onlyparse=False)

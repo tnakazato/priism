@@ -1,5 +1,5 @@
-# Copyright (C) 2019
-# National Astronomical Observatory of Japan
+# Copyright (C) 2019-2022
+# Inter-University Research Institute Corporation, National Institutes of Natural Sciences
 # 2-21-1, Osawa, Mitaka, Tokyo, 181-8588, Japan.
 #
 # This file is part of PRIISM.
@@ -14,17 +14,20 @@
 # GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License
 # along with PRIISM.  If not, see <https://www.gnu.org/licenses/>.
+import io
 import os
-import numpy
 import shlex
 import subprocess
 import sys
 import sysconfig
+import tarfile
+import urllib.request as request
+import zipfile
 
 from distutils.command.build import build
 from distutils.command.build_ext import build_ext
 from distutils.command.config import config
-from distutils.sysconfig import get_python_inc
+from distutils.sysconfig import get_python_inc, get_python_version
 from setuptools import setup, find_packages, Command
 
 
@@ -62,6 +65,9 @@ def check_command_availability(cmd):
         return subprocess.call(['which', cmd], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL) == 0
 
 
+IS_GIT_OK = check_command_availability('git')
+
+
 def execute_command(cmdstring, cwd=None):
     retcode = subprocess.call(shlex.split(cmdstring), cwd=cwd)
     if retcode != 0:
@@ -69,8 +75,23 @@ def execute_command(cmdstring, cwd=None):
     return retcode
 
 
+def download_extract(url, filetype):
+    req = request.urlopen(url)
+    bstream = io.BytesIO(req.read())
+    if filetype == 'zip':
+        with zipfile.ZipFile(bstream, mode='r') as zf:
+            zf.extractall()
+    elif filetype == 'tar':
+        with tarfile.open(mode='r', fileobj=bstream) as tf:
+            tf.extractall()
+
+
 def opt2attr(s):
     return s[0].strip('=').replace('-', '_')
+
+
+def opt2env(s):
+    return "PRIISM_" + opt2attr(s).upper()
 
 
 def debug_print_user_options(cmd):
@@ -92,15 +113,22 @@ def initialize_attr_for_user_options(cmd):
         setattr(cmd, attrname, None)
 
 
+def overwrite_attr_for_user_options_by_environ(cmd):
+    for option in cmd.user_options:
+        attrname = opt2attr(option)
+        envname = opt2env(option)
+        setattr(cmd, attrname, os.environ.get(envname))
+
+
 def get_python_library(include_dir):
     libnames = []
     libname1 = sysconfig.get_config_var('PY3LIBRARY')
     if libname1 is None or (isinstance(libname1, str) and len(libname1) == 0):
         libprefix = '.'.join(sysconfig.get_config_var('LIBRARY').split('.')[:-1])
-        libname = '.'.join([libprefix, sysconfig.get_config_var('SO')])
+        libname = '.'.join([libprefix, sysconfig.get_config_var('EXT_SUFFIX')])
         libname = libname.replace('..', '.')
         libnames.append(libname)
-        if sysconfig.get_config_var('SO').find('darwin') != -1:
+        if sysconfig.get_config_var('EXT_SUFFIX').find('darwin') != -1:
             libname = '.'.join([libprefix, 'dylib'])
             libnames.append(libname)
     else:
@@ -108,13 +136,13 @@ def get_python_library(include_dir):
     libname2 = sysconfig.get_config_var('LDLIBRARY')
     if isinstance(libname2, str) and len(libname2) > 0:
         libnames.append(libname2)
-    
+
     libpath = sysconfig.get_config_var('LIBDIR')
     for libname in libnames:
         pylib = os.path.join(libpath, libname)
         if os.path.exists(pylib):
             return pylib
-    
+
     libpath2 = os.path.join(libpath, sysconfig.get_config_var('MULTIARCH'))
     for libname in libnames:
         pylib = os.path.join(libpath2, libname)
@@ -126,20 +154,20 @@ def get_python_library(include_dir):
     while tail != 'include' and prefix != '/':
         prefix, tail = os.path.split(prefix)
     assert prefix != '/'
-    
+
     for l in ['lib', 'lib64']:
         libpath = os.path.join(prefix, l)
         for libname in libnames:
             pylib = os.path.join(libpath, libname)
             if os.path.exists(pylib):
                 return pylib
-        
+
         libpath2 = os.path.join(libpath, sysconfig.get_config_var('MULTIARCH'))
         for libname in libnames:
             pylib = os.path.join(libpath2, libname)
             if os.path.exists(pylib):
                 return pylib
-        
+
     assert False
 
 
@@ -149,13 +177,15 @@ class priism_build(build):
         ('python-root-dir=', 'P', 'specify root directory for Python'),
         ('python-include-dir=', 'I', 'specify include directory for Python.h (take priority over python-root-dir)'),
         ('python-library=', 'L', 'specify Python library (take priority over python-root-dir)'),
-        ('numpy-include-dir=', 'N', 'specify include directory for NumPy (take priority over python-root-dir)')
+        ('numpy-include-dir=', 'N', 'specify include directory for NumPy (take priority over python-root-dir)'),
+        ('use-intel-compiler=', 'X', 'use intel C++ compiler to build sparseimaging (yes|no)')
     ]
 
     def initialize_options(self):
         super(priism_build, self).initialize_options()
         self.fftw3_root_dir = None
         initialize_attr_for_user_options(self)
+        overwrite_attr_for_user_options_by_environ(self)
 
     def finalize_options(self):
         super(priism_build, self).finalize_options()
@@ -165,6 +195,10 @@ class priism_build(build):
             binary_dir, _ = os.path.split(executable_path)
             root_dir, _ = os.path.split(binary_dir)
             self.python_root_dir = root_dir
+        if isinstance(self.use_intel_compiler, str) and self.use_intel_compiler.lower() in ('true', 'yes', 'on'):
+            self.use_intel_compiler = True
+        else:
+            self.use_intel_compiler = False
         debug_print_user_options(self)
         print('fftw3-root-dir={}'.format(self.fftw3_root_dir))
 
@@ -200,6 +234,7 @@ class priism_build_ext(build_ext):
 
         self.build_sakura()
         self.build_smili()
+        self.install_ext()
 
     def build_sakura(self):
         execute_command('make sakurapy', cwd=self.priism_build_dir)
@@ -208,6 +243,9 @@ class priism_build_ext(build_ext):
     def build_smili(self):
         execute_command('make sparseimaging', cwd=self.priism_build_dir)
         execute_command('cmake -DCOMPONENT=Smili -P cmake_install.cmake', cwd=self.priism_build_dir)
+
+    def install_ext(self):
+        execute_command('make install/fast', cwd=self.priism_build_dir)
 
     sub_commands = build_ext.sub_commands + [('configure_ext', None)]
 
@@ -218,30 +256,25 @@ class download_smili(config):
     def initialize_options(self):
         super(download_smili, self).initialize_options()
 
-        is_git_ok, is_curl_ok, is_wget_ok = check_command_availability(['git', 'curl', 'wget'])
         package = 'sparseimaging'
-        branch = 'smili'
-        zipname = '{}.zip'.format(branch)
-        base_url = 'https://github.com/ikeda46/{}'.format(package)
-        if is_git_ok:
+        commit = '4e28903c1fc0256cec5d4b8d5a6371718eff53b9'
+        zipname = f'{commit}.zip'
+        base_url = f'https://github.com/ikeda46/{package}'
+        if IS_GIT_OK:
             url = base_url + '.git'
-            self.download_cmd = 'git clone {}'.format(url)
-        elif is_curl_ok:
-            url = base_url + '/archive/{}'.format(zipname)
-            self.download_cmd = 'curl -L -O {}'.format(url)
-        elif is_wget_ok:
-            url = base_url + '/archive/{}'.format(zipname)
-            self.download_cmd = 'wget {}'.format(url)
-        else:
-            raise PriismDependencyError('No download command found: you have to install git or curl or wget')
+            def clone_and_checkout():
+                execute_command(f'git clone {url}')
+                execute_command(f'git checkout {commit}', cwd=package)
 
-        if is_git_ok:
-            self.epilogue_cmds = ['git checkout {}'.format(branch)]
-            self.epilogue_cwd = package
+            self.download_cmd = clone_and_checkout
         else:
-            self.epilogue_cmds = ['unzip {}'.format(zipname),
-                                  'ln -s {0}-{1} {0}'.format(package, branch)]
-            self.epilogue_cwd = '.'
+            url = base_url + f'/archive/{zipname}'
+            def download_and_extract():
+                download_extract(url, filetype='zip')
+                os.symlink(f'{package}-{commit}', package)
+
+            self.download_cmd = download_and_extract
+
         self.package_directory = package
 
     def finalize_options(self):
@@ -251,9 +284,7 @@ class download_smili(config):
         super(download_smili, self).run()
 
         if not os.path.exists(self.package_directory):
-            execute_command(self.download_cmd)
-            for cmd in self.epilogue_cmds:
-                execute_command(cmd, cwd=self.epilogue_cwd)
+            self.download_cmd()
 
 
 class download_sakura(config):
@@ -262,22 +293,28 @@ class download_sakura(config):
     def initialize_options(self):
         super(download_sakura, self).initialize_options()
 
-        is_curl_ok, is_wget_ok = check_command_availability(['curl', 'wget'])
-        package = 'libsakura'
-        version = '5.0.8'
-        tgzname = '{}-{}.tgz'.format(package, version)
-        url = 'https://alma-intweb.mtk.nao.ac.jp/~nakazato/libsakura/{}'.format(tgzname)
-        if is_curl_ok:
-            self.download_cmd = 'curl -L -O {}'.format(url)
-        elif is_wget_ok:
-            self.download_cmd = 'wget {}'.format(url)
-        else:
-            raise PriismDependencyError('No download command found: you have to install curl or wget')
+        package = 'sakura'
+        target = 'libsakura'
+        version = 'libsakura-5.1.6'
+        zipname = f'{version}.zip'
+        base_url = 'https://github.com/tnakazato/sakura'
+        if IS_GIT_OK:
+            url = base_url + '.git'
+            def clone_and_checkout():
+                execute_command(f'git clone {url}')
+                execute_command(f'git checkout {version}', cwd=package)
 
-        self.epilogue_cmds = ['tar zxf {}'.format(tgzname)]
-        self.epilogue_cwd = '.'
+            self.download_cmd = clone_and_checkout
+        else:
+            url = base_url + f'/archive/{zipname}'
+            def download_and_extract():
+                download_extract(url, filetype='zip')
+                os.symlink(f'{package}-{version}', package)
+
+            self.download_cmd = download_and_extract
+
         self.package_directory = package
-        self.working_directory = self.package_directory
+        self.target_directory = target
 
     def finalize_options(self):
         super(download_sakura, self).finalize_options()
@@ -286,44 +323,26 @@ class download_sakura(config):
         super(download_sakura, self).run()
 
         if not os.path.exists(self.package_directory):
-            execute_command(self.download_cmd)
-            for cmd in self.epilogue_cmds:
-                execute_command(cmd, cwd=self.epilogue_cwd)
+            self.download_cmd()
+
+        if not os.path.exists(self.target_directory):
+            os.symlink(f'{self.package_directory}/{self.target_directory}', self.target_directory)
 
 
 class download_eigen(config):
+    PACKAGE_NAME = 'eigen'
+    PACKAGE_VERSION = '3.3.7'
+
     user_options = []
-
-    def initialize_options(self):
-        super(download_eigen, self).initialize_options()
-
-        is_curl_ok, is_wget_ok = check_command_availability(['curl', 'wget'])
-        package = 'eigen'
-        version = '3.3.7'
-        tgzname = '{}-{}.tar.bz2'.format(package, version)
-        url = 'https://gitlab.com/libeigen/eigen/-/archive/{}/{}'.format(version, tgzname)
-        if is_curl_ok:
-            self.download_cmd = 'curl -L -O {}'.format(url)
-        elif is_wget_ok:
-            self.download_cmd = 'wget {}'.format(url)
-        else:
-            raise PriismDependencyError('No download command found: you have to install curl or wget')
-
-        self.epilogue_cmds = ['tar jxf {}'.format(tgzname)]
-        self.epilogue_cwd = '.'
-        self.package_directory = package
-        self.working_directory = self.package_directory
-
-    def finalize_options(self):
-        super(download_eigen, self).finalize_options()
 
     def run(self):
         super(download_eigen, self).run()
 
-        if not os.path.exists(self.package_directory):
-            execute_command(self.download_cmd)
-            for cmd in self.epilogue_cmds:
-                execute_command(cmd, cwd=self.epilogue_cwd)
+        package_directory = f'{self.PACKAGE_NAME}-{self.PACKAGE_VERSION}'
+        if not os.path.exists(package_directory):
+            tgzname = f'{package_directory}.tar.bz2'
+            url = f'https://gitlab.com/libeigen/eigen/-/archive/{self.PACKAGE_VERSION}/{tgzname}'
+            download_extract(url, filetype='tar')
 
 
 class configure_ext(Command):
@@ -339,6 +358,8 @@ class configure_ext(Command):
         initialize_attr_for_user_options(self)
 
     def finalize_options(self):
+        import numpy
+
         self.set_undefined_options(
             'build',
             *arg_for_set_undefined_options(self)
@@ -364,11 +385,13 @@ class configure_ext(Command):
         if self.python_library is None:
             self.python_library = get_python_library(self.python_include_dir)
 
+        self.python_version = get_python_version()
+
         debug_print_user_options(self)
         print('fftw3-root-dir={}'.format(self.fftw3_root_dir))
 
     def __configure_cmake_command(self):
-        cmd = 'cmake .. -DCMAKE_INSTALL_PREFIX={}'.format(os.path.relpath(self.build_lib, self.priism_build_dir))
+        cmd = 'cmake -Wno-dev .. -DCMAKE_INSTALL_PREFIX={}'.format(os.path.relpath(self.build_lib, self.priism_build_dir))
 
         #if self.python_root_dir is not None:
         #    cmd += ' -DPYTHON_ROOTDIR={}'.format(self.python_root_dir)
@@ -379,8 +402,17 @@ class configure_ext(Command):
 
         cmd += ' -DPYTHON_LIBRARY={}'.format(self.python_library)
 
+        cmd += f' -DPYTHON_VERSION={self.python_version}'
+
+        cmd += f' -DEIGEN_DIR={download_eigen.PACKAGE_NAME}-{download_eigen.PACKAGE_VERSION}'
+
+        cmd += ' -DENABLE_TEST=OFF'
+
         if self.cxx_compiler is not None:
             cmd += ' -DCMAKE_CXX_COMPILER={}'.format(self.cxx_compiler)
+
+        if self.use_intel_compiler is True:
+            cmd += ' -DUSE_INTEL_COMPILER=ON'
 
         #print('generated cmake command:')
         #print('  {}'.format(cmd))
@@ -395,10 +427,6 @@ class configure_ext(Command):
         if not os.path.exists(self.priism_build_dir):
             os.mkdir(self.priism_build_dir)
 
-        #cache_file = os.path.join(self.priism_build_dir, 'CMakeCache.txt')
-        #if os.path.exists(cache_file):
-        #    os.remove(cache_file)
-
         cmd = self.__configure_cmake_command()
         execute_command(cmd, cwd=self.priism_build_dir)
 
@@ -411,6 +439,7 @@ setup(
     packages=find_packages('python', exclude=['priism.test']),
     package_dir={'': 'python'},
     install_requires=['numpy'],
+    setup_requires=['numpy'],
     cmdclass={
         'build': priism_build,
         'build_ext': priism_build_ext,
@@ -418,5 +447,7 @@ setup(
         'download_smili': download_smili,
         'download_eigen': download_eigen,
         'configure_ext': configure_ext,
-    }
+    },
+    # to disable egg compression
+    zip_safe=False
 )

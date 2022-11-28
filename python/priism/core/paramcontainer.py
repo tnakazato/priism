@@ -1,5 +1,5 @@
-# Copyright (C) 2019
-# National Astronomical Observatory of Japan
+# Copyright (C) 2019-2022
+# Inter-University Research Institute Corporation, National Institutes of Natural Sciences
 # 2-21-1, Osawa, Mitaka, Tokyo, 181-8588, Japan.
 #
 # This file is part of PRIISM.
@@ -35,7 +35,7 @@ class ParamContainer(object):
 
 
 class MfistaParamContainer(ParamContainer):
-    def __init__(self, l1, ltsv, maxiter=50000, eps=1.0e-5, clean_box=None):
+    def __init__(self, l1, ltsv, maxiter=50000, eps=1.0e-5, clean_box=None, nonnegative=True):
         """
         Constructor
         """

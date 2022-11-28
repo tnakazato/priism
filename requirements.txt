@@ -1,3 +1,4 @@
---extra-index-url https://casa-pip.nrao.edu/repository/pypi-casa-release/simple
-casatasks==6.1.0.118
-casatools==6.1.0.118
+casatasks
+casatools
+casadata
+GPyOpt

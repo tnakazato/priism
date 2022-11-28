@@ -1,5 +1,5 @@
-# Copyright (C) 2019
-# National Astronomical Observatory of Japan
+# Copyright (C) 2019-2022
+# Inter-University Research Institute Corporation, National Institutes of Natural Sciences
 # 2-21-1, Osawa, Mitaka, Tokyo, 181-8588, Japan.
 #
 # This file is part of PRIISM.
@@ -37,8 +37,8 @@ class VisParamContainer(base_container.ParamContainer):
 
     @datacolumn.setter
     def datacolumn(self, value):
-        if value not in ('data', 'corrected',):
-            raise ValueError('datacolumn should be either \'data\' or \'corrected\'')
+        if value not in ('data', 'corrected', 'residual',):
+            raise ValueError('datacolumn should be either \'data\' or \'corrected\' or \'residual\'')
         else:
             self._datacolumn = value
 

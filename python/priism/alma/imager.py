@@ -1,5 +1,5 @@
-# Copyright (C) 2019
-# National Astronomical Observatory of Japan
+# Copyright (C) 2019-2022
+# Inter-University Research Institute Corporation, National Institutes of Natural Sciences
 # 2-21-1, Osawa, Mitaka, Tokyo, 181-8588, Japan.
 #
 # This file is part of PRIISM.
@@ -100,7 +100,7 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
             scan            scan selection (default '' ---> all)
             observation     observation ID selection (default '' ---> all)
             intent          intent selection (default '' ---> all)
-            datacolumn      data column to be used ('data' or 'corrected')
+            datacolumn      data column to be used ('data' or 'corrected' or 'residual')
         """
         visparam = paramcontainer.VisParamContainer.CreateContainer(**locals())
         self.visparams.append(visparam)
