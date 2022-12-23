@@ -46,7 +46,7 @@ class SparseImagingInputsNUFFT(sparseimagingbase.SparseImagingInputs):
 
     @classmethod
     def convert_vis(cls, u, v, rdata, idata):
-        return rdata, idata
+        return rdata.copy(), idata.copy()
 
     @property
     def header(self):
@@ -190,7 +190,7 @@ class SparseImagingExecutor(object):
         print('')
         print(' FFTW file:              {0}'.format(inputs.infile))
         if initialimage is None:
-            print(' x was initialized with 1.0')
+            print(' x was initialized with 0.0')
         else:
             print(' x was initialize by the user')
         #print ' x is saved to:          xout'

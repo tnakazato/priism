@@ -17,19 +17,20 @@
 from __future__ import absolute_import
 from __future__ import print_function
 
-import os
-import shutil
-import math
-import numpy as np
-import collections
-import pylab as pl
-import matplotlib
-import time
 from argparse import ArgumentError
-try:
-    import cPickle as pickle
-except Exception:
-    import pickle
+import collections
+import functools
+import itertools
+import math
+import os
+import pickle
+import shutil
+import time
+
+import GPyOpt
+import numpy as np
+import matplotlib
+import matplotlib.pyplot as plt
 
 from . import datacontainer
 from . import paramcontainer
@@ -58,6 +59,11 @@ class SparseModelingImager(object):
     Core implementation of sparse modeling specialized for ALMA.
     It performs visibility gridding on uv-plane.
     """
+
+    CrossValidationResult = collections.namedtuple(
+        'CrossValidationResult',
+        ['mse', 'image', 'L1', 'Ltsv']
+    )
 
     @property
     def griddedvis(self):
@@ -154,7 +160,8 @@ class SparseModelingImager(object):
                    storeinitialimage, overwriteinitialimage, nonnegative)
 
     def solve(self, l1, ltsv, maxiter=50000, eps=1.0e-5, clean_box=None,
-              storeinitialimage=True, overwriteinitialimage=False, nonnegative=True):
+              storeinitialimage=True, overwriteinitialimage=False, nonnegative=True,
+              scalehyperparam=True):
         """
         Run MFISTA algorithm on visibility data loaded on memory.
         gridvis or readvis must be executed beforehand.
@@ -168,8 +175,20 @@ class SparseModelingImager(object):
             storeinitialimage -- keep the result as an initial image for next run
             overwriteinitialimage -- overwrite existing initial image
             nonnegative -- allow negative value (False) or not (True)
+            scalehyperparam -- apply hyper-parameter scaling (L1 and Ltsv) to reproduce
+                               the behavior compatible with previous version (earlier than
+                               0.9.x). Default is True (backward-compatible).
         """
-        self.mfistaparam = paramcontainer.MfistaParamContainer(l1=l1, ltsv=ltsv,
+        if scalehyperparam:
+            # scaling factor for hyper-parameter
+            hp_scale = 2.0 / np.sqrt(self.imparam.imsize[0] * self.imparam.imsize[1])
+            internal_L1 = l1 * hp_scale
+            internal_Ltsv = ltsv * hp_scale * hp_scale
+        else:
+            internal_L1 = l1
+            internal_Ltsv = ltsv
+
+        self.mfistaparam = paramcontainer.MfistaParamContainer(l1=internal_L1, ltsv=internal_Ltsv,
                                                                maxiter=maxiter, eps=eps,
                                                                clean_box=clean_box,
                                                                nonnegative=nonnegative)
@@ -308,7 +327,7 @@ class SparseModelingImager(object):
         with open(imagename, 'rb') as f:
             data = pickle.load(f)
 
-        return data
+        return datacontainer.ResultingImageStorage(data)
 
     def cvforgridvis(self, l1_list, ltsv_list, num_fold=10, imageprefix='image', imagepolicy='full',
                      summarize=True, figfile=None, datafile=None, maxiter=50000, eps=1.0e-5, clean_box=None,
@@ -320,7 +339,8 @@ class SparseModelingImager(object):
 
     def crossvalidation(self, l1_list, ltsv_list, num_fold=10, imageprefix='image', imagepolicy='full',
                         summarize=True, figfile=None, datafile=None, maxiter=50000, eps=1.0e-5, clean_box=None,
-                        resultasinitialimage=True, nonnegative=True):
+                        resultasinitialimage=True, nonnegative=True, scalehyperparam=True, optimizer='classical',
+                        bayesopt_maxiter=15):
         """
         Perform cross validation and search the best parameter for L1 and Ltsv from
         the given list of these.
@@ -344,6 +364,11 @@ class SparseModelingImager(object):
             clean_box -- clean box as a float array (default None)
             resultasinitialimage -- keep resulting image as an initial condition for next run
             nonnegative -- allow negative value (False) or not (True)
+            scalehyperparam -- apply hyper-parameter scaling (L1 and Ltsv) to reproduce
+                               the behavior compatible with previous version (earlier than
+                               0.9.x). Default is True (backward-compatible).
+            optimizer -- optimization algorithm. 'classical' or 'bayesian'
+            bayesopt_maxiter -- (specific to bayesian optimization)
 
         Output:
             dictionary containing best L1 (key: L1), best Ltsv (key;Ltsv), and
@@ -368,11 +393,6 @@ class SparseModelingImager(object):
         if str(np_ltsv_list.dtype) == 'object':
             raise ArgumentError('ltsv_list contains invalid value')
 
-        result_L1 = []
-        result_Ltsv = []
-        result_mse = []
-        result_image = []
-
         num_L1 = len(np_l1_list)
         num_Ltsv = len(np_ltsv_list)
         L1_sort_index = np.argsort(np_l1_list)
@@ -381,84 +401,54 @@ class SparseModelingImager(object):
         sorted_l1_list = np_l1_list[L1_sort_index]
         sorted_ltsv_list = np_ltsv_list[Ltsv_sort_index]
 
-        if summarize is True:
-            PlotterClass = CVPlotter
-        else:
-            PlotterClass = NullPlotter
-        plotter = PlotterClass(num_L1, num_Ltsv, sorted_l1_list, sorted_ltsv_list)
-
-        if datafile is not None:
-            f = open(datafile, 'w')
-        else:
-            f = open(os.devnull, 'w')
-        print('# L1, Ltsv, MSE', file=f)
-
         # initialize CV
         self.initializecv(num_fold=num_fold)
 
-        # loop Ltsv in ascending order
-        for j in range(num_Ltsv):
-            Ltsv = sorted_ltsv_list[j]
-            # trick to update initial image when Ltsv is changed
-            overwrite_initial = True
+        # scaling factor for hyper-parameter
+        if scalehyperparam:
+            hp_scale = 2.0 / np.sqrt(self.imparam.imsize[0] * self.imparam.imsize[1])
+        else:
+            hp_scale = 1.0
 
-            # loop L1 in descending order
-            for i in range(num_L1 - 1, -1, -1):
-                L1 = sorted_l1_list[i]
-                result_L1.append(L1)
-                result_Ltsv.append(Ltsv)
-
-                # get full visibility image first
-                imagename = '{}_L1_{}_Ltsv_{}.{}'.format(imageprefix,
-                                                         format_lambda(L1),
-                                                         format_lambda(Ltsv),
-                                                         self.imagesuffix)
-                self.solve(L1, Ltsv, maxiter=maxiter, eps=eps, clean_box=clean_box,
-                           nonnegative=nonnegative,
-                           storeinitialimage=resultasinitialimage,
-                           overwriteinitialimage=overwrite_initial)
-                self.exportimage(imagename, overwrite=True)
-                result_image.append(imagename)
-
-                # then evaluate MSE
-                mse = self.computemse(L1, Ltsv, maxiter, eps, clean_box, nonnegative=nonnegative)
-                result_mse.append(mse)
-
-                print('L1 10^{0} Ltsv 10^{1}: MSE {2} FITS {3}'.format(format_lambda(L1),
-                                                                       format_lambda(Ltsv),
-                                                                       mse,
-                                                                       imagename))
-                print('{0}, {1}, {2}'.format(L1, Ltsv, mse), file=f)
-
-                if summarize is True:
-                    imagearray = self.getimage(imagename)
-                    data = np.squeeze(imagearray.data)  # data will be 2D
-                    plotter.plotimage(i, j, data, mse)
-
-                # As long as Ltsv is kept, initial image will not be updated
-                #overwrite_initial = False
+        if optimizer == 'classical':
+            result = self._cv_classical(
+                l1_list=sorted_l1_list, ltsv_list=sorted_ltsv_list, hp_scale=hp_scale,
+                imageprefix=imageprefix, maxiter=maxiter, eps=eps, clean_box=clean_box,
+                nonnegative=nonnegative, resultasinitialimage=resultasinitialimage,
+            )
+        elif optimizer == 'bayesian':
+            result = self._cv_bayesian(
+                l1_list=sorted_l1_list, ltsv_list=sorted_ltsv_list, hp_scale=hp_scale,
+                imageprefix=imageprefix, maxiter=maxiter, eps=eps, clean_box=clean_box,
+                nonnegative=nonnegative, resultasinitialimage=resultasinitialimage,
+                bayesopt_maxiter=bayesopt_maxiter
+            )
+        else:
+            print(f'Unrecognized optimizer: {optimizer}')
+            raise ArgumentError("optimizer should be either 'classical' or 'bayesian'")
 
         # finalize CV
         self.finalizecv()
 
-        f.close()
+        best_solution = np.argmin(result.mse)
+        best_mse = result.mse[best_solution]
+        best_image = result.image[best_solution]
+        best_L1 = result.L1[best_solution]
+        best_Ltsv = result.Ltsv[best_solution]
 
-        best_solution = np.argmin(result_mse)
-        best_mse = result_mse[best_solution]
-        best_image = result_image[best_solution]
-        best_L1 = result_L1[best_solution]
-        best_Ltsv = result_Ltsv[best_solution]
+        if datafile is not None:
+            with open(datafile, 'w') as f:
+                print('# L1, Ltsv, MSE', file=f)
+                for mse, _, L1, Ltsv in zip(*result):
+                    print(f'{L1}, {Ltsv}, {mse}', file=f)
 
-#         L1_index = np_l1_list.tolist().index(best_L1)
-#         Ltsv_index = np_ltsv_list.tolist().index(best_Ltsv)
-        L1_index = np.where(sorted_l1_list == best_L1)[0][0]
-        Ltsv_index = np.where(sorted_ltsv_list == best_Ltsv)[0][0]
-        if best_mse >= 0.0:
-            plotter.mark_bestimage(L1_index, Ltsv_index)
+        if summarize:
+            self._plot_cv_result(
+                sorted_l1_list, sorted_ltsv_list, result, best_solution, figfile=figfile,
+                optimizer=optimizer
+            )
 
-        plotter.draw()
-        if figfile is not None:
-            plotter.savefig(figfile)
+
         # completed
         end_time = time.time()
 
@@ -482,7 +472,7 @@ class SparseModelingImager(object):
             pass
         elif imagepolicy == 'best':
             # remove all intermediate images
-            for imagename in result_image:
+            for imagename in result.image:
                 os.remove(imagename)
         else:
             assert False
@@ -498,6 +488,151 @@ class SparseModelingImager(object):
 
     def finalizecv(self):
         self.visset = None
+
+    def _cv_exec(self, l1, ltsv, hp_scale, imageprefix='image',
+                 maxiter=1000, eps=1.0e-5, clean_box=None, nonnegative=True,
+                 resultasinitialimage=True, overwriteinitialimage=True):
+
+        # get full visibility image first
+        l1_str = format_lambda(l1)
+        ltsv_str = format_lambda(ltsv)
+        imagename = f'{imageprefix}_L1_{l1_str}_Ltsv_{ltsv_str}.{self.imagesuffix}'
+
+        internal_l1 = l1 * hp_scale
+        internal_ltsv = ltsv * hp_scale * hp_scale
+
+        self.solve(internal_l1, internal_ltsv,
+                   maxiter=maxiter, eps=eps, clean_box=clean_box,
+                   nonnegative=nonnegative,
+                   storeinitialimage=resultasinitialimage,
+                   overwriteinitialimage=overwriteinitialimage,
+                   scalehyperparam=False)
+        self.exportimage(imagename, overwrite=True)
+
+        # then evaluate MSE
+        mse = self.computemse(internal_l1, internal_ltsv, maxiter, eps, clean_box, nonnegative=nonnegative)
+
+        print(f'L1 10^{l1_str} Ltsv 10^{ltsv_str}: MSE {mse} FITS {imagename}')
+
+        return mse, imagename
+
+    def _cv_classical(self, l1_list, ltsv_list, hp_scale=1.0, imageprefix='image',
+                      maxiter=1000, eps=1.0e-5, clean_box=None, nonnegative=True,
+                      resultasinitialimage=True):
+        result_L1 = []
+        result_Ltsv = []
+        result_mse = []
+        result_image = []
+
+        # loop Ltsv in ascending order
+        for j, Ltsv in enumerate(ltsv_list):
+            # trick to update initial image when Ltsv is changed
+            overwrite_initial = True
+
+            # loop L1 in descending order
+            for i in range(len(l1_list) - 1, -1, -1):
+                L1 = l1_list[i]
+                result_L1.append(L1)
+                result_Ltsv.append(Ltsv)
+
+                mse, imagename = self._cv_exec(
+                    L1, Ltsv, hp_scale, imageprefix, maxiter,
+                    eps, clean_box, nonnegative, resultasinitialimage,
+                    overwrite_initial
+                )
+
+                result_image.append(imagename)
+                result_mse.append(mse)
+
+                overwrite_initial = False
+
+        return self.CrossValidationResult(
+            mse=result_mse, image=result_image,
+            L1=result_L1, Ltsv=result_Ltsv
+        )
+
+    def _cv_bayesian(self, l1_list, ltsv_list, hp_scale=1.0, num_fold=10, imageprefix='image',
+                      maxiter=1000, eps=1.0e-5, clean_box=None, nonnegative=True,
+                      resultasinitialimage=True, bayesopt_maxiter=15):
+        result_L1 = []
+        result_Ltsv = []
+        result_mse = []
+        result_image = []
+
+        def __objective_function(x):
+            L1 = x[0][0]
+            Ltsv = x[0][1]
+
+            mse, imagename = self._cv_exec(
+                L1, Ltsv, hp_scale, imageprefix, maxiter,
+                eps, clean_box, nonnegative, resultasinitialimage
+            )
+
+            result_L1.append(L1)
+            result_Ltsv.append(Ltsv)
+            result_mse.append(mse)
+            result_image.append(imagename)
+
+            # There are "plateau" MSE region that corresponds to empty image
+            # due to too large L1 constraint. To avoid redundant estimation
+            # on the plateau, return value is scaled with L1 value, which
+            # virtually produces slope on the plateau.
+            data_storage = self.getimage(imagename)
+            data = data_storage.data
+            if np.all(data == 0):
+                factor = 1 + max(2, math.log10(L1)) / 10
+                mse *= factor
+
+            return mse
+
+        bounds = [
+            {'name': 'var_1', 'type': 'discrete', 'domain': l1_list},
+            {'name': 'var_2', 'type': 'discrete', 'domain': ltsv_list},
+        ]
+
+        problem = GPyOpt.methods.BayesianOptimization(__objective_function, bounds)
+        problem.run_optimization(bayesopt_maxiter)
+        # for debugging
+        # problem.save_evaluations('cv_eval.txt')
+        # problem.save_models('cv_model.txt')
+        # problem.save_report('cv_report.txt')
+
+        return self.CrossValidationResult(
+            mse=result_mse, image=result_image,
+            L1=result_L1, Ltsv=result_Ltsv
+        )
+
+
+    def _plot_cv_result(self, l1_list, ltsv_list, result, best_solution, figfile=None, optimizer='classical'):
+        plotter_cls = None
+        if optimizer == 'classical':
+            plotter_cls = CVPlotter
+        elif optimizer == 'bayesian':
+            plotter_cls = CVBayesPlotter
+
+        if not plotter_cls:
+            return
+
+        best_L1 = result.L1[best_solution]
+        best_Ltsv = result.Ltsv[best_solution]
+        best_mse = result.mse[best_solution]
+
+        num_l1 = len(l1_list)
+        num_ltsv = len(ltsv_list)
+
+        plotter = plotter_cls(num_l1, num_ltsv, l1_list, ltsv_list)
+
+        for mse, imagename, L1, Ltsv in zip(*result):
+            imagearray = self.getimage(imagename)
+            data = np.squeeze(imagearray.data)  # data will be 2D
+            plotter.plotimage(L1, Ltsv, data, mse)
+
+        if best_mse >= 0.0:
+            plotter.mark_bestimage(best_L1, best_Ltsv)
+
+        plotter.draw()
+        if figfile is not None:
+            plotter.savefig(figfile)
 
     def computemse(self, l1, ltsv, maxiter=50000, eps=1.0e-5, clean_box=None, nonnegative=True):
         """
@@ -545,8 +680,7 @@ class SparseModelingImager(object):
 #         acv = evaluator.evaluate(self.griddedvis)
 #         return 0.0
 
-
-class CVPlotter(object):
+class CVPlotOuterFrame:
     def __init__(self, nv, nh, L1_list, Ltsv_list):
         self.nh = nh
         self.nv = nv
@@ -561,13 +695,13 @@ class CVPlotter(object):
         dy = total_height / float(self.nv)
         self.dx = min(dx, dy)
         self.dy = self.dx
-        f = pl.figure(num='CVPlot', figsize=(8, 8))
-        pl.clf()
+        f = plt.figure(num='CVPlot', figsize=(8, 8))
+        plt.clf()
         left = self.left_margin
         bottom = self.bottom_margin
         height = self.dy * self.nv
         width = self.dx * self.nh
-        outer_frame = pl.axes([left, bottom, width, height])
+        outer_frame = plt.axes([left, bottom, width, height])
         outer_frame.set_xlim(-0.5, self.nh - 0.5)
         outer_frame.set_ylim(-0.5, self.nv - 0.5)
         outer_frame.set_xlabel('log10(Ltsv)')
@@ -578,19 +712,36 @@ class CVPlotter(object):
         outer_frame.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda x, pos: format_tick(x, Ltsv_list)))
         outer_frame.yaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda x, pos: format_tick(x, L1_list)))
 
+        self.axes = outer_frame
+        self.figure = plt.gcf()
+
+
+class CVPlotterBase:
+    def __init__(self, nv, nh, L1_list, Ltsv_list):
+        self.outer_frame = CVPlotOuterFrame(nv, nh, L1_list, Ltsv_list)
+
         self.L1_list = L1_list
         self.Ltsv_list = Ltsv_list
 
+        self.image_height = self.outer_frame.dy
+        self.image_width = self.outer_frame.dx
+
         self.axes_list = collections.defaultdict(dict)
 
-    def plotimage(self, row, column, data, mse):
-        left = self.left_margin + column * self.dx
-        bottom = self.bottom_margin + row * self.dy
-        height = self.dx
-        width = self.dy
-        #print 'pl.axes([{0}, {1}, {2}, {3}])'.format(left, bottom, width, height)
+    def plotimage(self, L1, Ltsv, data, mse):
+        assert L1 in self.L1_list
+        assert Ltsv in self.Ltsv_list
+        row = np.where(self.L1_list == L1)[0][0]
+        column = np.where(self.Ltsv_list == Ltsv)[0][0]
+
+        column = np.where(self.Ltsv_list == Ltsv)[0][0]
+        cx = self.outer_frame.left_margin + (column + 0.5) * self.outer_frame.dx
+        cy = self.outer_frame.bottom_margin + (row + 0.5) * self.outer_frame.dy
+        left = cx - self.image_width / 2
+        bottom = cy - self.image_height / 2
+        #print 'plt.axes([{0}, {1}, {2}, {3}])'.format(left, bottom, width, height)
         nx, ny = data.shape
-        a = pl.axes([left, bottom, width, height])
+        a = plt.axes([left, bottom, self.image_width, self.image_height])
         a.imshow(np.flipud(data.transpose()))
         if mse >= 0.0:
             a.text(nx - 2, 5, '{:.5g}'.format(mse), ha='right', va='top', fontdict={'size': 'small', 'color': 'white'})
@@ -598,38 +749,49 @@ class CVPlotter(object):
         a.yaxis.set_major_locator(matplotlib.ticker.NullLocator())
         self.axes_list[row][column] = a
 
-    def mark_bestimage(self, row, column):
+    def mark_bestimage(self, L1, Ltsv):
+        assert L1 in self.L1_list
+        assert Ltsv in self.Ltsv_list
+        row = np.where(self.L1_list == L1)[0][0]
+        column = np.where(self.Ltsv_list == Ltsv)[0][0]
         best_axes = self.axes_list[row][column]
         bbox = best_axes.get_position()
         if int(matplotlib.__version__.split('.')[0]) > 1:
-            best_frame = pl.axes(bbox, facecolor='none')
+            best_frame = plt.axes(bbox, facecolor='none')
         else:
-            best_frame = pl.axes(bbox, axisbg='none')
+            best_frame = plt.axes(bbox, axisbg='none')
         best_frame.xaxis.set_major_locator(matplotlib.ticker.NullLocator())
         best_frame.yaxis.set_major_locator(matplotlib.ticker.NullLocator())
         for loc, spine in best_frame.spines.items():
             spine.set_color('red')
             spine.set_linewidth(3)
 
+        axes_list = map(lambda x: x.values(), self.axes_list.values())
+        max_zorder = max(map(lambda x: x.get_zorder(), itertools.chain(*axes_list)))
+        best_axes.set_zorder(max_zorder + 1)
+        plt.draw()
+
     def draw(self):
-        pl.draw()
+        plt.sca(self.outer_frame.axes)
+        plt.draw()
 
     def savefig(self, figfile):
-        pl.savefig(figfile)
+        plt.sca(self.outer_frame.axes)
+        plt.savefig(figfile)
 
 
-class NullPlotter(object):
-    def __init__(self, *args, **kwargs):
-        pass
+class CVPlotter(CVPlotterBase):
+    pass
 
-    def plotimage(self, *args, **kwargs):
-        pass
 
-    def mark_bestimage(self, *args, **kwargs):
-        pass
+class CVBayesPlotter(CVPlotterBase):
+    def __init__(self, nv, nh, L1_list, Ltsv_list):
+        super().__init__(nv, nh, L1_list, Ltsv_list)
 
-    def draw(self, *args, **kwargs):
-        pass
-
-    def savefig(self, *args, **kwargs):
-        pass
+        n = max(self.outer_frame.nh, self.outer_frame.nv)
+        if n > 9:
+            self.image_height *= 2
+            self.image_width *= 2
+        elif n > 4:
+            self.image_height *= 1.5
+            self.image_width *= 1.5
