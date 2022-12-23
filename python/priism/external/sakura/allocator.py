@@ -16,24 +16,24 @@
 # along with PRIISM.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import absolute_import
 
-import numpy
+import numpy as np
 from . import libsakurapy
 
 
 def sakura_typemap(dtype):
-    if dtype in (numpy.float64, numpy.double,):
+    if dtype in (np.float64, np.double,):
         return libsakurapy.TYPE_DOUBLE
-    elif dtype in (numpy.float32, float,):
+    elif dtype in (np.float32, float,):
         return libsakurapy.TYPE_FLOAT
-    elif dtype in (numpy.bool, bool,):
+    elif dtype in (bool,):
         return libsakurapy.TYPE_BOOL
-    elif dtype in (numpy.int32, numpy.int, int,):
+    elif dtype in (np.int32, int,):
         return libsakurapy.TYPE_INT32
-    elif dtype in (numpy.uint32, numpy.uint,):
+    elif dtype in (np.uint32, np.uint,):
         return libsakurapy.TYPE_UINT32
-    elif dtype in (numpy.int8,):
+    elif dtype in (np.int8,):
         return libsakurapy.TYPE_INT8
-    elif dtype in (numpy.uint8,):
+    elif dtype in (np.uint8,):
         return libsakurapy.TYPE_UINT8
     else:
         raise NotImplementedError('data type {0} is not supported by sakura allocation function'.format(dtype))
@@ -41,7 +41,7 @@ def sakura_typemap(dtype):
 
 def empty_aligned(shape, dtype=float, order='C', alignment=None):
     """
-    Equivalent to numpy.empty. Array data is assured to be aligned
+    Equivalent to np.empty. Array data is assured to be aligned
     to byte boundary specified by alignment. Default alignment is
     the one required by sakura.
 
@@ -56,6 +56,6 @@ def empty_aligned(shape, dtype=float, order='C', alignment=None):
 
 
 def empty_like_aligned(array, alignment=None):
-    order = 'F' if numpy.isfortran(array) else 'C'
+    order = 'F' if np.isfortran(array) else 'C'
     return empty_aligned(shape=array.shape, dtype=array.dtype,
                          order=order, alignment=alignment)

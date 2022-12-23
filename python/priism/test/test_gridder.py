@@ -16,7 +16,7 @@
 # along with PRIISM.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import absolute_import
 
-import numpy
+import numpy as np
 
 #import prism..core as core
 import priism.alma.paramcontainer as paramcontainer
@@ -69,14 +69,14 @@ class GridderTest(utils.TestBase):
         del self.standard_gridparam
 
     def _generate_ws_template(self, nrow=1, nchan=1, npol=1):
-        u = sakura.empty_aligned((nrow,), dtype=numpy.float64)
+        u = sakura.empty_aligned((nrow,), dtype=np.float64)
         v = sakura.empty_like_aligned(u)
-        rdata = sakura.empty_aligned((nrow, npol, nchan,), dtype=numpy.float32)
+        rdata = sakura.empty_aligned((nrow, npol, nchan,), dtype=np.float32)
         idata = sakura.empty_like_aligned(rdata)
-        flag = sakura.empty_aligned(rdata.shape, dtype=numpy.bool)
-        weight = sakura.empty_aligned((nrow, nchan,), dtype=numpy.float32)
-        row_flag = sakura.empty_aligned(u.shape, dtype=numpy.bool)
-        channel_map = sakura.empty_aligned((nchan,), dtype=numpy.int32)
+        flag = sakura.empty_aligned(rdata.shape, dtype=bool)
+        weight = sakura.empty_aligned((nrow, nchan,), dtype=np.float32)
+        row_flag = sakura.empty_aligned(u.shape, dtype=bool)
+        channel_map = sakura.empty_aligned((nchan,), dtype=np.int32)
         ws = almagridder.GridderWorkingSet(data_id=0,
                                            u=u,
                                            v=v,
@@ -185,10 +185,10 @@ class GridderTest(utils.TestBase):
         self.assertEqual(result.imag.shape, expected_shape)
 
     def _verify_nonzero(self, data, index_list):
-        #nonzero_pixels = numpy.where(data != 0.0)
+        #nonzero_pixels = np.where(data != 0.0)
         eps = 1.0e-7
-        nonzero_pixels = numpy.where(abs(data) >= eps)
-        ndx = numpy.lexsort(numpy.asarray(nonzero_pixels))
+        nonzero_pixels = np.where(abs(data) >= eps)
+        ndx = np.lexsort(np.asarray(nonzero_pixels))
         nonzero_pixels = (nonzero_pixels[0][ndx],
                           nonzero_pixels[1][ndx],
                           nonzero_pixels[2][ndx],
@@ -218,8 +218,8 @@ class GridderTest(utils.TestBase):
             return
 
         eps = 1.0e-7
-        sorted_result = numpy.sort(result)
-        sorted_ref = numpy.sort(ref)
+        sorted_result = np.sort(result)
+        sorted_ref = np.sort(ref)
         self.assertMaxDiffLess(sorted_ref, sorted_result, eps)
 
     def _grid_and_verify(self, gridder, ws, loc_real, loc_imag, ref_real, ref_imag):
@@ -249,19 +249,19 @@ class GridderTest(utils.TestBase):
         self._verify_shape(gridder, result)
 
         # check nonzero pixel
-        ndx_real = numpy.lexsort(numpy.asarray(loc_real))
+        ndx_real = np.lexsort(np.asarray(loc_real))
         #print 'ndx_real', ndx_real
-        loc_real = (numpy.asarray(loc_real[0])[ndx_real],
-                    numpy.asarray(loc_real[1])[ndx_real],
-                    numpy.asarray(loc_real[2])[ndx_real],
-                    numpy.asarray(loc_real[3])[ndx_real],)
-        ndx_imag = numpy.lexsort(numpy.asarray(loc_imag))
+        loc_real = (np.asarray(loc_real[0])[ndx_real],
+                    np.asarray(loc_real[1])[ndx_real],
+                    np.asarray(loc_real[2])[ndx_real],
+                    np.asarray(loc_real[3])[ndx_real],)
+        ndx_imag = np.lexsort(np.asarray(loc_imag))
         #print 'ndx_imag', ndx_imag
         if len(ndx_imag) > 0:
-            loc_imag = (numpy.asarray(loc_imag[0])[ndx_imag],
-                        numpy.asarray(loc_imag[1])[ndx_imag],
-                        numpy.asarray(loc_imag[2])[ndx_imag],
-                        numpy.asarray(loc_imag[3])[ndx_imag],)
+            loc_imag = (np.asarray(loc_imag[0])[ndx_imag],
+                        np.asarray(loc_imag[1])[ndx_imag],
+                        np.asarray(loc_imag[2])[ndx_imag],
+                        np.asarray(loc_imag[3])[ndx_imag],)
         nonzero_pixels_real = self._verify_nonzero(result.real, loc_real)
         nonzero_pixels_imag = self._verify_nonzero(result.imag, loc_imag)
         #self.assertIndexListEqual(nonzero_pixels_real, nonzero_pixels_imag)
@@ -306,9 +306,9 @@ class GridderTest(utils.TestBase):
         ws = self._generate_ws_template(1, 1, 1)
         self._configure_data(ws, [1.0], [0.1])
         self._configure_uv(gridder, ws, 0, loc=location_mode)
-        rdata = numpy.asarray([ws.rdata[0, 0, 0]])
-        idata = numpy.asarray([ws.idata[0, 0, 0]])
-        weight = numpy.asarray([ws.weight[0, 0]])
+        rdata = np.asarray([ws.rdata[0, 0, 0]])
+        idata = np.asarray([ws.idata[0, 0, 0]])
+        weight = np.asarray([ws.weight[0, 0]])
 
         # perform gridding and verification
         ref_real = rdata * weight / weight
@@ -324,8 +324,8 @@ class GridderTest(utils.TestBase):
                         [a[0], cen[0] + (cen[0] - a[0])],
                         [c[0], c[0]], [d[0], d[0]],)
             loc_imag = loc_real
-            ref_real = numpy.asarray([ref_real[0], ref_real[0]])
-            ref_imag = numpy.asarray([ref_imag[0], -ref_imag[0]])
+            ref_real = np.asarray([ref_real[0], ref_real[0]])
+            ref_imag = np.asarray([ref_imag[0], -ref_imag[0]])
 
         self._grid_and_verify(gridder, ws, loc_real, loc_imag, ref_real, ref_imag)
 
@@ -372,9 +372,9 @@ class GridderTest(utils.TestBase):
         ws = self._generate_ws_template(nrow=nrow, npol=1, nchan=nchan)
 
         # expected data
-        rdata = numpy.asarray([1.0, 2.0, 10.0, 20.0, 10.0, 20.0])
-        idata = numpy.asarray([0.1, 0.2, 0.01, 0.02, -0.01, -0.02])
-        weight = numpy.asarray([1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
+        rdata = np.asarray([1.0, 2.0, 10.0, 20.0, 10.0, 20.0])
+        idata = np.asarray([0.1, 0.2, 0.01, 0.02, -0.01, -0.02])
+        weight = np.asarray([1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
 
         # configure ws
         self._configure_uv(gridder, ws, 0, loc='center')
@@ -402,9 +402,9 @@ class GridderTest(utils.TestBase):
         ws = self._generate_ws_template(nrow=nrow, npol=npol, nchan=nchan)
 
         # expected data
-        rdata = numpy.asarray([1.0, 2.0, 10.0, 20.0, 10.0, 20.0])
-        idata = numpy.asarray([0.1, 0.2, 0.01, 0.02, -0.01, -0.02])
-        weight = numpy.asarray([1.0, 1.0, 1.0])
+        rdata = np.asarray([1.0, 2.0, 10.0, 20.0, 10.0, 20.0])
+        idata = np.asarray([0.1, 0.2, 0.01, 0.02, -0.01, -0.02])
+        weight = np.asarray([1.0, 1.0, 1.0])
 
         # configure ws
         self._configure_uv(gridder, ws, 0, loc='center')
@@ -417,14 +417,14 @@ class GridderTest(utils.TestBase):
         # perform gridding and verification
         loc_real = ([3, 6, 0], [2, 4, 0], [0, 0, 0], [0, 0, 0])
         loc_imag = ([6, 0], [4, 0], [0, 0], [0, 0])
-        ref_real = numpy.zeros(len(loc_real[0]), dtype=numpy.float32)
-        ref_imag = numpy.zeros_like(ref_real)
-        ones = numpy.ones(npol, dtype=numpy.float32)
-        ref_real[0] = numpy.sum(ws.rdata[0] * ws.weight[0, 0]) / numpy.sum(ones * ws.weight[0, 0])
-        ref_real[1] = numpy.sum(ws.rdata[1] * ws.weight[1, 0]) / numpy.sum(ones * ws.weight[1, 0])
+        ref_real = np.zeros(len(loc_real[0]), dtype=np.float32)
+        ref_imag = np.zeros_like(ref_real)
+        ones = np.ones(npol, dtype=np.float32)
+        ref_real[0] = np.sum(ws.rdata[0] * ws.weight[0, 0]) / np.sum(ones * ws.weight[0, 0])
+        ref_real[1] = np.sum(ws.rdata[1] * ws.weight[1, 0]) / np.sum(ones * ws.weight[1, 0])
         ref_real[2] = ref_real[1]
-        ref_imag[0] = numpy.sum(ws.idata[0] * ws.weight[0, 0]) / numpy.sum(ones * ws.weight[0, 0])
-        ref_imag[1] = numpy.sum(ws.idata[1] * ws.weight[1, 0]) / numpy.sum(ones * ws.weight[1, 0])
+        ref_imag[0] = np.sum(ws.idata[0] * ws.weight[0, 0]) / np.sum(ones * ws.weight[0, 0])
+        ref_imag[1] = np.sum(ws.idata[1] * ws.weight[1, 0]) / np.sum(ones * ws.weight[1, 0])
         ref_imag[2] = -ref_imag[1]
         self._grid_and_verify(gridder, ws, loc_real, loc_imag, ref_real, ref_imag[1:])
 
@@ -444,9 +444,9 @@ class GridderTest(utils.TestBase):
         ws.channel_map[:] = 0
 
         # expected data
-        rdata = numpy.asarray([1.0, 2.0, 10.0, 20.0, 10.0, 20.0])
-        idata = numpy.asarray([0.1, 0.2, 0.01, 0.02, -0.01, -0.02])
-        weight = numpy.asarray([1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
+        rdata = np.asarray([1.0, 2.0, 10.0, 20.0, 10.0, 20.0])
+        idata = np.asarray([0.1, 0.2, 0.01, 0.02, -0.01, -0.02])
+        weight = np.asarray([1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
 
         # configure ws
         self._configure_uv(gridder, ws, 0, loc='center')
@@ -456,13 +456,13 @@ class GridderTest(utils.TestBase):
         # perform gridding and verification
         loc_real = ([3, 6, 0], [2, 4, 0], [0, 0, 0], [0, 0, 0])
         loc_imag = ([6, 0], [4, 0], [0, 0], [0, 0])
-        ref_real = numpy.zeros(len(loc_real[0]), dtype=numpy.float32)
-        ref_imag = numpy.zeros_like(ref_real)
-        ref_real[0] = numpy.sum(ws.rdata[0] * ws.weight[0]) / numpy.sum(ws.weight[0])
-        ref_real[1] = numpy.sum(ws.rdata[1] * ws.weight[1]) / numpy.sum(ws.weight[1])
+        ref_real = np.zeros(len(loc_real[0]), dtype=np.float32)
+        ref_imag = np.zeros_like(ref_real)
+        ref_real[0] = np.sum(ws.rdata[0] * ws.weight[0]) / np.sum(ws.weight[0])
+        ref_real[1] = np.sum(ws.rdata[1] * ws.weight[1]) / np.sum(ws.weight[1])
         ref_real[2] = ref_real[1]
-        ref_imag[0] = numpy.sum(ws.idata[0] * ws.weight[0]) / numpy.sum(ws.weight[0])
-        ref_imag[1] = numpy.sum(ws.idata[1] * ws.weight[1]) / numpy.sum(ws.weight[0])
+        ref_imag[0] = np.sum(ws.idata[0] * ws.weight[0]) / np.sum(ws.weight[0])
+        ref_imag[1] = np.sum(ws.idata[1] * ws.weight[1]) / np.sum(ws.weight[0])
         ref_imag[2] = -ref_imag[1]
         self._grid_and_verify(gridder, ws, loc_real, loc_imag, ref_real, ref_imag[1:])
 
@@ -479,9 +479,9 @@ class GridderTest(utils.TestBase):
         ws = self._generate_ws_template(nrow=nrow, npol=1, nchan=nchan)
 
         # expected data
-        rdata = numpy.asarray([1.0, 2.0, 10.0, 20.0, 10.0, 20.0])
-        idata = numpy.asarray([0.1, 0.2, 0.01, 0.02, -0.01, -0.02])
-        weight = numpy.asarray([1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
+        rdata = np.asarray([1.0, 2.0, 10.0, 20.0, 10.0, 20.0])
+        idata = np.asarray([0.1, 0.2, 0.01, 0.02, -0.01, -0.02])
+        weight = np.asarray([1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
 
         # configure ws
         self._configure_uv(gridder, ws, 0, loc='center')
@@ -509,9 +509,9 @@ class GridderTest(utils.TestBase):
         ws = self._generate_ws_template(nrow=nrow, npol=1, nchan=nchan)
 
         # expected data
-        rdata = numpy.asarray([1.0, 2.0, 10.0, 20.0, 10.0, 20.0])
-        idata = numpy.asarray([0.1, 0.2, 0.01, 0.02, -0.01, -0.02])
-        weight = numpy.asarray([1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
+        rdata = np.asarray([1.0, 2.0, 10.0, 20.0, 10.0, 20.0])
+        idata = np.asarray([0.1, 0.2, 0.01, 0.02, -0.01, -0.02])
+        weight = np.asarray([1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
 
         # configure ws
         self._configure_uv(gridder, ws, 0, loc='center')
@@ -539,9 +539,9 @@ class GridderTest(utils.TestBase):
         ws = self._generate_ws_template(nrow=nrow, npol=1, nchan=nchan)
 
         # expected data
-        rdata = numpy.asarray([1.0, 2.0, 10.0, 20.0, 10.0, 20.0])
-        idata = numpy.asarray([0.1, 0.2, 0.01, 0.02, -0.01, -0.02])
-        weight = numpy.asarray([1.0, 0.0, 0.0, 1.0, 0.0, 1.0])
+        rdata = np.asarray([1.0, 2.0, 10.0, 20.0, 10.0, 20.0])
+        idata = np.asarray([0.1, 0.2, 0.01, 0.02, -0.01, -0.02])
+        weight = np.asarray([1.0, 0.0, 0.0, 1.0, 0.0, 1.0])
 
         # configure ws
         self._configure_uv(gridder, ws, 0, loc='center')
@@ -570,9 +570,9 @@ class GridderTest(utils.TestBase):
         ws = self._generate_ws_template(nrow=nrow, npol=npol, nchan=nchan)
 
         # expected data
-        rdata = numpy.asarray([1.0, 2.0, 10.0, 20.0, 10.0, 20.0])
-        idata = numpy.asarray([0.1, 0.2, 0.01, 0.02, -0.01, -0.02])
-        weight = numpy.asarray([1.0, 0.0, 0.0])
+        rdata = np.asarray([1.0, 2.0, 10.0, 20.0, 10.0, 20.0])
+        idata = np.asarray([0.1, 0.2, 0.01, 0.02, -0.01, -0.02])
+        weight = np.asarray([1.0, 0.0, 0.0])
 
         # configure ws
         self._configure_uv(gridder, ws, 0, loc='center')
@@ -585,10 +585,10 @@ class GridderTest(utils.TestBase):
         # perform gridding and verification
         loc_real = ([3], [2], [0], [0])
         loc_imag = ([], [], [], [])
-        ref_real = numpy.zeros(len(loc_real[0]), dtype=numpy.float32)
+        ref_real = np.zeros(len(loc_real[0]), dtype=np.float32)
         ref_imag = []
-        ones = numpy.ones(npol, dtype=numpy.float32)
-        ref_real[0] = numpy.sum(ws.rdata[0] * ws.weight[0, 0]) / numpy.sum(ones * ws.weight[0, 0])
+        ones = np.ones(npol, dtype=np.float32)
+        ref_real[0] = np.sum(ws.rdata[0] * ws.weight[0, 0]) / np.sum(ones * ws.weight[0, 0])
         self._grid_and_verify(gridder, ws, loc_real, loc_imag, ref_real, ref_imag)
 
     def test_multi_ws(self):
@@ -606,11 +606,11 @@ class GridderTest(utils.TestBase):
         ws2 = self._generate_ws_template(nrow=nrow, npol=1, nchan=nchan)
 
         # expected data
-        rdata1 = numpy.asarray([1.0, 2.0, 10.0, 20.0, 10.0, 20.0])
+        rdata1 = np.asarray([1.0, 2.0, 10.0, 20.0, 10.0, 20.0])
         rdata2 = rdata1 * 0.25
-        idata1 = numpy.asarray([0.1, 0.2, 0.01, 0.02, -0.01, -0.02])
+        idata1 = np.asarray([0.1, 0.2, 0.01, 0.02, -0.01, -0.02])
         idata2 = idata1 * 5.0
-        weight1 = numpy.asarray([1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
+        weight1 = np.asarray([1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
         weight2 = weight1 * 0.5
 
         # configure ws1
@@ -656,9 +656,9 @@ class GridderTest(utils.TestBase):
         ws = self._generate_ws_template(nrow=nrow, npol=1, nchan=nchan)
 
         # expected data
-        rdata = numpy.asarray([1.0, 2.0, 10.0, 20.0])
-        idata = numpy.asarray([0.1, 0.2, 0.01, 0.02])
-        weight = numpy.asarray([1.0, 1.0, 1.0, 1.0])
+        rdata = np.asarray([1.0, 2.0, 10.0, 20.0])
+        idata = np.asarray([0.1, 0.2, 0.01, 0.02])
+        weight = np.asarray([1.0, 1.0, 1.0, 1.0])
 
         # configure ws
         self._configure_uv(gridder, ws, 0, loc='center')
@@ -694,13 +694,13 @@ class GridderTest(utils.TestBase):
         lc = [0] * (len(lv) // 2) + [1] * (len(lv) // 2)
         #print 'lu, lv, lp, lc=', lu, lv, lp, lc
         loc_real = (lv, lu, lp, lc)
-        ref_real = numpy.zeros(len(loc_real[0]), dtype=numpy.float32)
-        ref_imag = numpy.zeros_like(ref_real)
-        w_real = numpy.zeros_like(ref_real)
-        w_imag = numpy.zeros_like(ref_real)
+        ref_real = np.zeros(len(loc_real[0]), dtype=np.float32)
+        ref_imag = np.zeros_like(ref_real)
+        w_real = np.zeros_like(ref_real)
+        w_imag = np.zeros_like(ref_real)
 
         def _get_kernel_index(du, dv, sampling):
-            dist = numpy.sqrt(du * du + dv * dv) * numpy.float64(sampling)
+            dist = np.sqrt(du * du + dv * dv) * np.float64(sampling)
             idist = int(dist)
             if dist - idist >= 1.0 - 1e-10:
                 print('Increment idist since dist-int(dist) > 1')
@@ -781,16 +781,16 @@ class GridderTest(utils.TestBase):
             if abs(ref_real[i]) != 0.0:
                 ndx_real.append(i)
         print('ndx_real', ndx_real)
-        loc_real = (numpy.asarray(lv)[ndx_real], numpy.asarray(lu)[ndx_real],
-                    numpy.asarray(lp)[ndx_real], numpy.asarray(lc)[ndx_real])
+        loc_real = (np.asarray(lv)[ndx_real], np.asarray(lu)[ndx_real],
+                    np.asarray(lp)[ndx_real], np.asarray(lc)[ndx_real])
         ref_real = ref_real[ndx_real]
         ndx_imag = []
         for i in range(len(ref_imag)):
             if abs(ref_imag[i]) >= eps:
                 ndx_imag.append(i)
         print('ndx_imag', ndx_imag)
-        loc_imag = (numpy.asarray(lv)[ndx_imag], numpy.asarray(lu)[ndx_imag],
-                    numpy.asarray(lp)[ndx_imag], numpy.asarray(lc)[ndx_imag])
+        loc_imag = (np.asarray(lv)[ndx_imag], np.asarray(lu)[ndx_imag],
+                    np.asarray(lp)[ndx_imag], np.asarray(lc)[ndx_imag])
         ref_imag = ref_imag[ndx_imag]
         self._grid_and_verify(gridder, ws, loc_real, loc_imag, ref_real, ref_imag)
 

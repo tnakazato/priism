@@ -16,7 +16,7 @@
 # along with PRIISM.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import absolute_import
 
-import numpy
+import numpy as np
 import os
 
 import priism.external.casa as casa
@@ -110,7 +110,7 @@ class ImageWriter(object):
         start = qa.convert(self.imageparam.start, 'Hz')
         width = qa.convert(self.imageparam.width, 'Hz')
         nchan = self.imageparam.nchan
-        f = numpy.fromiter((start['value'] + i * width['value'] for i in range(nchan)), dtype=numpy.float64)
+        f = np.fromiter((start['value'] + i * width['value'] for i in range(nchan)), dtype=np.float64)
         print('f = {0}'.format(f))
         frequencies = qa.quantity(f, 'Hz')
         veldef = 'radio'

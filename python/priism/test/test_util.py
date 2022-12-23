@@ -17,7 +17,7 @@
 from __future__ import absolute_import
 
 import unittest
-import numpy
+import numpy as np
 
 import priism.alma.util as util
 from . import utils as testutils
@@ -69,8 +69,8 @@ class RandomIndexGeneratorTest(unittest.TestCase):
         # global consistency check
         random_index = generator.random_index
         self.assertEqual(num_ws, len(random_index))
-        index_flag = numpy.zeros(num_ws, dtype=numpy.bool)
-        self.assertTrue(numpy.all(index_flag == False))
+        index_flag = np.zeros(num_ws, dtype=bool)
+        self.assertTrue(np.all(index_flag == False))
         delta_list = []
 
         # per subset check
@@ -89,7 +89,7 @@ class RandomIndexGeneratorTest(unittest.TestCase):
             # check if subset index is sorted in ascending order
             if num_index > 1:
                 delta = subset_index[1:] - subset_index[:-1]
-                self.assertTrue(numpy.all(delta > 0))
+                self.assertTrue(np.all(delta > 0))
 
             # check if subset index is random (not regularly spaced)
             if num_index > 1:
@@ -104,14 +104,14 @@ class RandomIndexGeneratorTest(unittest.TestCase):
             index_flag[subset_index] = True
 
         # check if all index are included in any of subset
-        self.assertTrue(numpy.all(index_flag == True))
+        self.assertTrue(np.all(index_flag == True))
 
         # check if index spacing is not unique
         print(delta_list)
         flattened = []
         for delta in delta_list:
             flattened.extend(delta)
-        self.assertFalse(numpy.all(flattened == flattened[0]))
+        self.assertFalse(np.all(flattened == flattened[0]))
 
     def test_random_index(self):
         """test_random_index: test random index for subset"""

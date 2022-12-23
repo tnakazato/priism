@@ -16,7 +16,7 @@
 # along with PRIISM.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import absolute_import
 
-import numpy
+import numpy as np
 import scipy.interpolate
 import contextlib
 
@@ -89,7 +89,7 @@ class VisibilitySubsetHandler(object):
 
             # mask array for active visibility
             num_vis = len(self.visibility)
-            mask = numpy.zeros(num_vis, dtype=numpy.bool)
+            mask = np.zeros(num_vis, dtype=bool)
             mask[:] = True
             mask[random_index] = False
 
@@ -163,7 +163,7 @@ class GriddedVisibilitySubsetGenerator(object):
             # amplitude should be nonzero in active pixels
             grid_real = griddedvis.real
             grid_imag = griddedvis.imag
-            self.active_index = numpy.where(numpy.logical_or(grid_real != 0, grid_imag != 0))
+            self.active_index = np.where(np.logical_or(grid_real != 0, grid_imag != 0))
             self.num_active = len(self.active_index[0])
             print('num_active={0}'.format(self.num_active))
 
@@ -206,7 +206,7 @@ class GriddedVisibilitySubsetHandler(object):
         grid_imag = self.visibility.imag
 
         # amplitude should be nonzero in active pixels
-        #self.active_index = numpy.where(numpy.logical_and(grid_real != 0, grid_imag != 0))
+        #self.active_index = np.where(np.logical_and(grid_real != 0, grid_imag != 0))
         num_active = len(self.active_index[0])
         print('num_active={0}'.format(num_active))
 
@@ -239,7 +239,7 @@ class GriddedVisibilitySubsetHandler(object):
         # | 3| 4| 5|
         # | 0| 1| 2|
         num_subvis = len(random_index)
-        u = sakura.empty_aligned((num_subvis,), dtype=numpy.float64)
+        u = sakura.empty_aligned((num_subvis,), dtype=np.float64)
         v = sakura.empty_like_aligned(u)
         uid = self.active_index[1][random_index]
         vid = self.active_index[0][random_index]
@@ -260,7 +260,7 @@ class GriddedVisibilitySubsetHandler(object):
         assert len(gdata_shape) == 4
         assert gdata_shape[2] == 1  # npol should be 1
         assert gdata_shape[3] == 1  # nchan should be 1
-        real = sakura.empty_aligned((num_subvis,), dtype=numpy.float32)
+        real = sakura.empty_aligned((num_subvis,), dtype=np.float32)
         imag = sakura.empty_like_aligned(real)
         wreal = sakura.empty_like_aligned(real)
 
@@ -301,7 +301,7 @@ class GriddedVisibilitySubsetHandler(object):
 
 class MeanSquareErrorEvaluator(object):
     def __init__(self):
-        self.mse_storage = numpy.empty(100, dtype=numpy.float64)
+        self.mse_storage = np.empty(100, dtype=np.float64)
         self.num_mse = 0
 
     def _evaluate_mse(self, visibility_cache, image):
@@ -309,9 +309,9 @@ class MeanSquareErrorEvaluator(object):
         start_time = time.time()
 
         # Obtain visibility from image array
-        shifted_image = numpy.fft.fftshift(image[:, :, 0, 0])
-        shifted_imagefft = numpy.fft.fft2(shifted_image)
-        imagefft = numpy.fft.ifftshift(shifted_imagefft)
+        shifted_image = np.fft.fftshift(image[:, :, 0, 0])
+        shifted_imagefft = np.fft.fft2(shifted_image)
+        imagefft = np.fft.ifftshift(shifted_imagefft)
         imagefft_transpose = imagefft.transpose()
         rmodel = imagefft_transpose.real
         imodel = imagefft_transpose.imag
@@ -321,8 +321,8 @@ class MeanSquareErrorEvaluator(object):
         # Compute MSE
         mse = 0.0
         wsum = 0
-        rinterp = scipy.interpolate.RectBivariateSpline(numpy.arange(nx), numpy.arange(ny), rmodel)
-        iinterp = scipy.interpolate.RectBivariateSpline(numpy.arange(nx), numpy.arange(ny), imodel)
+        rinterp = scipy.interpolate.RectBivariateSpline(np.arange(nx), np.arange(ny), rmodel)
+        iinterp = scipy.interpolate.RectBivariateSpline(np.arange(nx), np.arange(ny), imodel)
         for ws in visibility_cache:
             pu = ws.u
             pv = ws.v
@@ -331,8 +331,8 @@ class MeanSquareErrorEvaluator(object):
             wdata = ws.weight
             adx = rdata - rinterp(pv, pu, grid=False)
             ady = idata - iinterp(pv, pu, grid=False)
-            mse += numpy.sum(wdata * numpy.square(adx)) + numpy.sum(wdata * numpy.square(ady))
-            wsum += numpy.sum(wdata)
+            mse += np.sum(wdata * np.square(adx)) + np.sum(wdata * np.square(ady))
+            wsum += np.sum(wdata)
         mse /= wsum
         end_time = time.time()
         print('Evaluate MSE: Elapsed {} sec'.format(end_time - start_time))
@@ -348,7 +348,7 @@ class MeanSquareErrorEvaluator(object):
 
         # register it
         if self.num_mse >= len(self.mse_storage):
-            self.mse_storage = numpy.resize(self.mse_storage, len(self.mse_storage) + 100)
+            self.mse_storage = np.resize(self.mse_storage, len(self.mse_storage) + 100)
         self.mse_storage[self.num_mse] = mse
         self.num_mse += 1
 

@@ -17,7 +17,7 @@
 from __future__ import absolute_import
 
 import os
-import numpy
+import numpy as np
 import scipy.interpolate as interpolate
 import re
 
@@ -91,7 +91,7 @@ class VisibilityConverter(object):
         assert npol == 2
 
         # data
-        mask = numpy.where(flag_in == False, 0.5, 0.0)
+        mask = np.where(flag_in == False, 0.5, 0.0)
         data_out = (data_in * mask).sum(axis=0)
         real_out[:, 0, :] = data_out.real.transpose((1, 0))
         imag_out[:, 0, :] = data_out.imag.transpose((1, 0))
@@ -101,7 +101,7 @@ class VisibilityConverter(object):
         # flag
         flag_out[:] = True
         for ipol in range(npol):
-            flag_out[:] = numpy.logical_and(flag_out,
+            flag_out[:] = np.logical_and(flag_out,
                                             flag_in[ipol:ipol + 1, :, :].transpose((2, 0, 1)))
 
         # weight
@@ -152,7 +152,7 @@ class VisibilityConverter(object):
             for irow in range(tb.nrows()):
                 self.field_dir[irow] = tb.getcell('PHASE_DIR', irow)
 
-            all_fields = numpy.arange(tb.nrows(), dtype=numpy.int)
+            all_fields = np.arange(tb.nrows(), dtype=np.int64)
 
         # nominal image LSRK frequency (will be used for channel selection)
         # calculate based on
@@ -174,10 +174,10 @@ class VisibilityConverter(object):
                 field_ids = all_fields
             #nominal_field_id = field_ids[0]
         # data description id
-        data_desc_ids = numpy.arange(len(self.dd_spw_map))
-        _times = numpy.empty(len(data_desc_ids), dtype=numpy.float64)
+        data_desc_ids = np.arange(len(self.dd_spw_map))
+        _times = np.empty(len(data_desc_ids), dtype=np.float64)
         _times[:] = obs_start_time
-        _field_ids = numpy.empty_like(data_desc_ids)
+        _field_ids = np.empty_like(data_desc_ids)
         self.nominal_lsr_frequency = {}
         for field_id in field_ids:
             _field_ids[:] = field_id
@@ -189,11 +189,11 @@ class VisibilityConverter(object):
     def get_lsr_frequency(self, chunk):
         # sanity check
         # - all chunk entry should have same timestamp (mitigate in future?)
-        assert numpy.all(chunk['time'] == chunk['time'][0])
+        assert np.all(chunk['time'] == chunk['time'][0])
         # - all chunk entry should have same spw (mitigate in future?)
-        assert numpy.all(chunk['data_desc_id'] == chunk['data_desc_id'][0])
+        assert np.all(chunk['data_desc_id'] == chunk['data_desc_id'][0])
         # - all chunk entry should have same field (mitigate in fugure?)
-        assert numpy.all(chunk['field_id'] == chunk['field_id'][0])
+        assert np.all(chunk['field_id'] == chunk['field_id'][0])
 
         # TODO: rewrite _get_lsr_frequency with the assumption that
         #       time and data_desc_id is constant over the chunk
@@ -227,7 +227,7 @@ class VisibilityConverter(object):
             chan_freq = self.chan_freq[spwid]
             chan_width = self.chan_width[spwid]
             nchan = len(chan_freq)
-            lsr_freq_edge = numpy.empty(nchan + 1, dtype=numpy.float64)
+            lsr_freq_edge = np.empty(nchan + 1, dtype=np.float64)
             lsr_freq_edge[:nchan] = chan_freq - chan_width / 2.0
             lsr_freq_edge[nchan] = chan_freq[-1] + chan_width[-1] / 2.0
             if freq_ref == 'LSRK':
@@ -289,7 +289,7 @@ class VisibilityConverter(object):
         match_with = lambda pattern: pattern.match(start_unit) is not None and \
                                         pattern.match(width_unit) is not None
 
-        image_freq = numpy.empty(nchan, dtype=numpy.float64)
+        image_freq = np.empty(nchan, dtype=np.float64)
         image_width = 0.0
 
         # get image LSRK frequency
@@ -357,13 +357,13 @@ class VisibilityConverter(object):
             # TODO: array shape (order) should be compatible with sakura gridding function
             ws_shape = (nrow, 1, nchan,)
             ws_shape2 = (nrow, nchan,)
-            real = sakura.empty_aligned(ws_shape, dtype=numpy.float32)
-            imag = sakura.empty_aligned(ws_shape, dtype=numpy.float32)
-            flag = sakura.empty_aligned(ws_shape, dtype=numpy.bool)
-            weight = sakura.empty_aligned(ws_shape2, dtype=numpy.float32)
-            row_flag = sakura.empty_aligned((nrow,), dtype=numpy.bool)
-            channel_map = sakura.empty_aligned((nchan,), dtype=numpy.int32)
-            channel_map[:] = numpy.arange(nchan, dtype=numpy.int32)
+            real = sakura.empty_aligned(ws_shape, dtype=np.float32)
+            imag = sakura.empty_aligned(ws_shape, dtype=np.float32)
+            flag = sakura.empty_aligned(ws_shape, dtype=bool)
+            weight = sakura.empty_aligned(ws_shape2, dtype=np.float32)
+            row_flag = sakura.empty_aligned((nrow,), dtype=bool)
+            channel_map = sakura.empty_aligned((nchan,), dtype=np.int32)
+            channel_map[:] = np.arange(nchan, dtype=np.int32)
 
             # real, image: linear interpolation
             #print 'LOG: lsr_frequency length {0} real.shape {1}'.format(
@@ -389,13 +389,13 @@ class VisibilityConverter(object):
             # channel mapping
             # if chunk frequency for i goes into image frequency cell for k,
             # i maps into k
-            image_freq_boundary = numpy.empty(nchan + 1, dtype=numpy.float64)
+            image_freq_boundary = np.empty(nchan + 1, dtype=np.float64)
             image_freq_boundary[:-1] = image_freq - 0.5 * image_width
             image_freq_boundary[-1] = image_freq[-1] + 0.5 * image_width
             image_freq_min = image_freq_boundary.min()
             image_freq_max = image_freq_boundary.max()
-            in_range = numpy.where(
-                numpy.logical_and(
+            in_range = np.where(
+                np.logical_and(
                     image_freq_min <= lsr_frequency,
                     lsr_frequency <= image_freq_max))[0]
             nvischan = len(in_range)
@@ -404,12 +404,12 @@ class VisibilityConverter(object):
             # TODO: array shape (order) should be compatible with sakura gridding function
             ws_shape = (nrow, 1, nvischan,)
             ws_shape2 = (nrow, nvischan,)
-            real = sakura.empty_aligned(ws_shape, dtype=numpy.float32)
-            imag = sakura.empty_aligned(ws_shape, dtype=numpy.float32)
-            flag = sakura.empty_aligned(ws_shape, dtype=numpy.bool)
-            weight = sakura.empty_aligned(ws_shape2, dtype=numpy.float32)
-            row_flag = sakura.empty_aligned((nrow,), dtype=numpy.bool)
-            channel_map = sakura.empty_aligned((nvischan,), dtype=numpy.int32)
+            real = sakura.empty_aligned(ws_shape, dtype=np.float32)
+            imag = sakura.empty_aligned(ws_shape, dtype=np.float32)
+            flag = sakura.empty_aligned(ws_shape, dtype=bool)
+            weight = sakura.empty_aligned(ws_shape2, dtype=np.float32)
+            row_flag = sakura.empty_aligned((nrow,), dtype=bool)
+            channel_map = sakura.empty_aligned((nvischan,), dtype=np.int32)
             for ichan, chan_chunk in enumerate(in_range):
                 # fill in channel_map
                 f = lsr_frequency[chan_chunk]
@@ -433,7 +433,7 @@ class VisibilityConverter(object):
                                  flag[:, :, ichan:ichan + 1], weight[:, ichan:ichan + 1])
 
         # row_flag
-        row_flag[:] = numpy.all(flag == True, axis=(1, 2,))
+        row_flag[:] = np.all(flag == True, axis=(1, 2,))
 
         # invert flag
         # reader definition:
@@ -442,8 +442,8 @@ class VisibilityConverter(object):
         # working set definition:
         #     True: *VALID*
         #     False: INVALID
-        numpy.logical_not(row_flag, row_flag)
-        numpy.logical_not(flag, flag)
+        np.logical_not(row_flag, row_flag)
+        np.logical_not(flag, flag)
 
         ws.rdata = real
         ws.idata = imag
@@ -503,7 +503,7 @@ class VisibilityConverter(object):
         # UVW conversion
         u = sakura.empty_aligned((nrow, nchan), dtype=uvw.dtype)
         v = sakura.empty_like_aligned(u)
-        center_freq = numpy.asfarray([numpy.mean(lsr_edge_frequency[i:i+2]) for i in range(nchan)])
+        center_freq = np.asfarray([np.mean(lsr_edge_frequency[i:i+2]) for i in range(nchan)])
         for irow in range(nrow):
             # TODO: phase rotation if image phasecenter is different from
             #       the reference direction of the observation
@@ -521,7 +521,7 @@ class VisibilityConverter(object):
             #freq_start = lsr_edge_frequency[0]
             #freq_end = lsr_edge_frequency[-1]
             #center_freq = (freq_start + freq_end) / 2
-            #center_freq = numpy.frombuffer(numpy.mean([(lsr_edge_frequency[i:i+2]) for i in range(nchan)]), dtype=numpy.float64)
+            #center_freq = np.frombuffer(np.mean([(lsr_edge_frequency[i:i+2]) for i in range(nchan)]), dtype=np.float64)
 
             # u[irow] = u0 * center_freq / c  # divided by wavelength
             # v[irow] = v0 * center_freq / c  # divided by wavelength
@@ -568,10 +568,10 @@ class VisibilityConverter(object):
         """
         nchan = working_set.nchan
         nrow_ws = working_set.nrow
-        chan_image = numpy.unique(working_set.channel_map)
+        chan_image = np.unique(working_set.channel_map)
         num_ws = len(chan_image)
         for imchan in chan_image:
-            vischans = numpy.where(working_set.channel_map == imchan)[0]
+            vischans = np.where(working_set.channel_map == imchan)[0]
             nchan = len(vischans)
             nrow = nrow_ws * nchan
             ws_shape = (nrow, 1, 1,)
@@ -629,9 +629,9 @@ class VisibilityConverter(object):
             else:
                 assert column in chunk
         # - all chunk entry should have same timestamp (mitigate in future?)
-        assert numpy.all(chunk['time'] == chunk['time'][0])
+        assert np.all(chunk['time'] == chunk['time'][0])
         # - all chunk entry should have same spw (mitigate in future?)
-        assert numpy.all(chunk['data_desc_id'] == chunk['data_desc_id'][0])
+        assert np.all(chunk['data_desc_id'] == chunk['data_desc_id'][0])
 
         #print 'Chunk ID {0} is valid'.format(chunk['chunk_id'])
 

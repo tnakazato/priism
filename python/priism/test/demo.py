@@ -18,7 +18,7 @@ from __future__ import absolute_import
 
 import almasparsemodeling
 
-import numpy
+import numpy as np
 
 
 def demo():
@@ -49,7 +49,7 @@ def demo():
 
     # export image as FITS
     imagename = 'result.fits'
-    arr = numpy.zeros((100, 100, 1, 1), dtype=numpy.float32)
+    arr = np.zeros((100, 100, 1, 1), dtype=np.float32)
     worker.imagearray = arr
     worker.exportimage(imagename=imagename, overwrite=True)
 
