@@ -89,7 +89,7 @@ class VisibilitySubsetHandler(object):
 
             # mask array for active visibility
             num_vis = len(self.visibility)
-            mask = numpy.zeros(num_vis, dtype=numpy.bool)
+            mask = numpy.zeros(num_vis, dtype=bool)
             mask[:] = True
             mask[random_index] = False
 

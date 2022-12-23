@@ -69,7 +69,7 @@ class RandomIndexGeneratorTest(unittest.TestCase):
         # global consistency check
         random_index = generator.random_index
         self.assertEqual(num_ws, len(random_index))
-        index_flag = numpy.zeros(num_ws, dtype=numpy.bool)
+        index_flag = numpy.zeros(num_ws, dtype=bool)
         self.assertTrue(numpy.all(index_flag == False))
         delta_list = []
 

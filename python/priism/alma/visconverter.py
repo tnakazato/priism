@@ -152,7 +152,7 @@ class VisibilityConverter(object):
             for irow in range(tb.nrows()):
                 self.field_dir[irow] = tb.getcell('PHASE_DIR', irow)
 
-            all_fields = numpy.arange(tb.nrows(), dtype=numpy.int)
+            all_fields = numpy.arange(tb.nrows(), dtype=numpy.int64)
 
         # nominal image LSRK frequency (will be used for channel selection)
         # calculate based on
@@ -359,9 +359,9 @@ class VisibilityConverter(object):
             ws_shape2 = (nrow, nchan,)
             real = sakura.empty_aligned(ws_shape, dtype=numpy.float32)
             imag = sakura.empty_aligned(ws_shape, dtype=numpy.float32)
-            flag = sakura.empty_aligned(ws_shape, dtype=numpy.bool)
+            flag = sakura.empty_aligned(ws_shape, dtype=bool)
             weight = sakura.empty_aligned(ws_shape2, dtype=numpy.float32)
-            row_flag = sakura.empty_aligned((nrow,), dtype=numpy.bool)
+            row_flag = sakura.empty_aligned((nrow,), dtype=bool)
             channel_map = sakura.empty_aligned((nchan,), dtype=numpy.int32)
             channel_map[:] = numpy.arange(nchan, dtype=numpy.int32)
 
@@ -406,9 +406,9 @@ class VisibilityConverter(object):
             ws_shape2 = (nrow, nvischan,)
             real = sakura.empty_aligned(ws_shape, dtype=numpy.float32)
             imag = sakura.empty_aligned(ws_shape, dtype=numpy.float32)
-            flag = sakura.empty_aligned(ws_shape, dtype=numpy.bool)
+            flag = sakura.empty_aligned(ws_shape, dtype=bool)
             weight = sakura.empty_aligned(ws_shape2, dtype=numpy.float32)
-            row_flag = sakura.empty_aligned((nrow,), dtype=numpy.bool)
+            row_flag = sakura.empty_aligned((nrow,), dtype=bool)
             channel_map = sakura.empty_aligned((nvischan,), dtype=numpy.int32)
             for ichan, chan_chunk in enumerate(in_range):
                 # fill in channel_map

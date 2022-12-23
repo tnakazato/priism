@@ -25,9 +25,9 @@ def sakura_typemap(dtype):
         return libsakurapy.TYPE_DOUBLE
     elif dtype in (numpy.float32, float,):
         return libsakurapy.TYPE_FLOAT
-    elif dtype in (numpy.bool, bool,):
+    elif dtype in (bool,):
         return libsakurapy.TYPE_BOOL
-    elif dtype in (numpy.int32, numpy.int, int,):
+    elif dtype in (numpy.int32, int,):
         return libsakurapy.TYPE_INT32
     elif dtype in (numpy.uint32, numpy.uint,):
         return libsakurapy.TYPE_UINT32

@@ -73,9 +73,9 @@ class GridderTest(utils.TestBase):
         v = sakura.empty_like_aligned(u)
         rdata = sakura.empty_aligned((nrow, npol, nchan,), dtype=numpy.float32)
         idata = sakura.empty_like_aligned(rdata)
-        flag = sakura.empty_aligned(rdata.shape, dtype=numpy.bool)
+        flag = sakura.empty_aligned(rdata.shape, dtype=bool)
         weight = sakura.empty_aligned((nrow, nchan,), dtype=numpy.float32)
-        row_flag = sakura.empty_aligned(u.shape, dtype=numpy.bool)
+        row_flag = sakura.empty_aligned(u.shape, dtype=bool)
         channel_map = sakura.empty_aligned((nchan,), dtype=numpy.int32)
         ws = almagridder.GridderWorkingSet(data_id=0,
                                            u=u,

@@ -347,7 +347,7 @@ def paraMap(numThreads, func, dataSource):
 #     npol = len(in_data)
 #     nchan = len(in_data[0])
 #     out_data = numpy.ndarray([npol, nchan], dtype=numpy.float)
-#     out_mask = numpy.ndarray([npol, nchan], dtype=numpy.bool)
+#     out_mask = numpy.ndarray([npol, nchan], dtype=bool)
 #
 #     datatime = _casasakura.tosakura_double(numpy.array([in_time]))[0][0]
 #     ctxcal, ctxbl, ctxsm, ctxmc, chan_selection, pol_selection = in_context

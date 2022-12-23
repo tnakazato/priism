@@ -142,7 +142,7 @@ class VisibilityConverterTest(utils.TestBase):
         start = image_start
         end = image_start + image_nchan * image_width
         expected_data = numpy.zeros(expected_shape, dtype=numpy.complex)
-        expected_flag = numpy.ones(expected_shape, dtype=numpy.bool)
+        expected_flag = numpy.ones(expected_shape, dtype=bool)
         for ipol in range(npol):
             expected_data += (chunk['data'][ipol:ipol + 1, start:end, :] \
                 * numpy.where(chunk['flag'][ipol:ipol + 1, start:end, :] == False, 0.5, 0.0)).transpose((2, 0, 1))
@@ -277,7 +277,7 @@ class VisibilityConverterTest(utils.TestBase):
         f1 = chunk['flag'][:, 0, 0]
         base_flag = f0
         expected_data = numpy.zeros(expected_shape, dtype=numpy.complex)
-        expected_flag = numpy.ones(expected_shape, dtype=numpy.bool)
+        expected_flag = numpy.ones(expected_shape, dtype=bool)
         eps = 1e-5
         for ipol in range(npol):
             if base_flag[ipol] == False:
@@ -346,7 +346,7 @@ class VisibilityConverterTest(utils.TestBase):
         start = 0
         end = start + image_nchan * 10
         expected_data = numpy.zeros(expected_shape, dtype=numpy.complex)
-        expected_flag = numpy.ones(expected_shape, dtype=numpy.bool)
+        expected_flag = numpy.ones(expected_shape, dtype=bool)
         for ipol in range(npol):
             expected_data += (chunk['data'][ipol:ipol + 1, start:end, :] \
                 * numpy.where(chunk['flag'][ipol:ipol + 1, start:end, :] == False, 0.5, 0.0)).transpose((2, 0, 1))
