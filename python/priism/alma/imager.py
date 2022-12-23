@@ -16,7 +16,7 @@
 # along with PRIISM.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import absolute_import
 
-import numpy
+import numpy as np
 
 from . import paramcontainer
 from . import gridder
@@ -190,7 +190,7 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
                     ws_list = converter.generate_working_set(chunk)
                     for ws in ws_list:
                         flag = ws.flag
-                        valid = numpy.where(flag == True)
+                        valid = np.where(flag == True)
                         u.extend(ws.u[valid[0]])
                         v.extend(ws.v[valid[0]])
                         real.extend(ws.rdata[valid])
@@ -198,11 +198,11 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
                         weight.extend(ws.weight[(valid[0], valid[2])])
 
         self.working_set = datacontainer.VisibilityWorkingSet(data_id=0,
-                                                              u=numpy.asarray(u),
-                                                              v=numpy.asarray(v),
-                                                              rdata=numpy.asarray(real, dtype=numpy.float64),
-                                                              idata=numpy.asarray(imag, dtype=numpy.float64),
-                                                              weight=numpy.asarray(weight, dtype=numpy.float64))
+                                                              u=np.asarray(u),
+                                                              v=np.asarray(v),
+                                                              rdata=np.asarray(real, dtype=np.float64),
+                                                              idata=np.asarray(imag, dtype=np.float64),
+                                                              weight=np.asarray(weight, dtype=np.float64))
 
     def exportimage(self, imagename, overwrite=False):
         """

@@ -16,7 +16,7 @@
 # along with PRIISM.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import absolute_import
 
-import numpy
+import numpy as np
 
 from . import sparseimagingfft
 from . import sparseimagingnufft
@@ -154,7 +154,7 @@ class SakuraSolver(MfistaSolverBase):
         """
         import priism.external.sakura as sakura
         image_shape = grid_data.shape
-        image_data = sakura.empty_aligned(image_shape, dtype=numpy.float64)
+        image_data = sakura.empty_aligned(image_shape, dtype=np.float64)
         sakura.solvemfista(self.l1, self.ltsqv, grid_data, image_data)
 
 
@@ -184,7 +184,7 @@ class MfistaSolverFFT(MfistaSolverTemplate):
         """
         nx = image_data.nx
         ny = image_data.ny
-        factor = 1.0 / numpy.sqrt(nx * ny)
+        factor = 1.0 / np.sqrt(nx * ny)
         print('Normalization factor is {}'.format(factor))
         image_data.xout *= factor
 

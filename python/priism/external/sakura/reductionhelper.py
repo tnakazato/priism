@@ -25,7 +25,7 @@ except ImportError:
 from threading import *
 import time
 import re
-import numpy
+import numpy as np
 
 #import libsakurapy
 #import _casasakura
@@ -346,10 +346,10 @@ def paraMap(numThreads, func, dataSource):
 #
 #     npol = len(in_data)
 #     nchan = len(in_data[0])
-#     out_data = numpy.ndarray([npol, nchan], dtype=numpy.float)
-#     out_mask = numpy.ndarray([npol, nchan], dtype=bool)
+#     out_data = np.ndarray([npol, nchan], dtype=np.float)
+#     out_mask = np.ndarray([npol, nchan], dtype=bool)
 #
-#     datatime = _casasakura.tosakura_double(numpy.array([in_time]))[0][0]
+#     datatime = _casasakura.tosakura_double(np.array([in_time]))[0][0]
 #     ctxcal, ctxbl, ctxsm, ctxmc, chan_selection, pol_selection = in_context
 #
 #     #####<temporary start>--------
@@ -587,7 +587,7 @@ def data_desc_id_map(vis):
 #         else:
 #             idx = ms.msseltoindex(vis=vis,spw='%s:%s'%(spwid,blmask))
 #         blmask_range = idx['channel'][:,1:3]
-#         mask_bl_ = numpy.zeros(nchan, dtype=bool)
+#         mask_bl_ = np.zeros(nchan, dtype=bool)
 #         for r0, r1 in blmask_range:
 #             mask_bl_[r0:r1+1] = True
 # #         mask_bl = libsakurapy.new_aligned_buffer(libsakurapy.TYPE_BOOL, mask_bl_.tolist())
@@ -632,18 +632,18 @@ def data_desc_id_map(vis):
 #                         if timestamp is None:
 #                             timestamp = tsel.getcol('TIME')
 #                         else:
-#                             timestamp = numpy.concatenate([timestamp, tsel.getcol('TIME')], axis=0)
+#                             timestamp = np.concatenate([timestamp, tsel.getcol('TIME')], axis=0)
 #                         if data is None:
 #                             data = tsel.getcol(datacol)
 #                         else:
-#                             data = numpy.concatenate([data, tsel.getcol(datacol)], axis=1)
+#                             data = np.concatenate([data, tsel.getcol(datacol)], axis=1)
 #                     tsel.close()
 #
 #         if timestamp is None or data is None:
 #             raise RuntimeError('Empty sky data for antenna %s spw %s. Cannot proceed.'%(antennaid, spwid))
 #
 #         # sort by time
-#         sorted_time, sort_index = numpy.unique(timestamp, return_index=True)
+#         sorted_time, sort_index = np.unique(timestamp, return_index=True)
 #         #print 'sort_index', sort_index
 #         #print 'data.shape', data.shape
 #         sorted_data = data.take(sort_index, axis=2)
@@ -673,18 +673,18 @@ def data_desc_id_map(vis):
 #                     if timestamp is None:
 #                         timestamp = tsel.getcol('TIME')
 #                     else:
-#                         timestamp = numpy.concatenate([timestamp, tsel.getcol('TIME')], axis=0)
+#                         timestamp = np.concatenate([timestamp, tsel.getcol('TIME')], axis=0)
 #                     if data is None:
 #                         data = tsel.getcol(datacol)
 #                     else:
-#                         data = numpy.concatenate([data, tsel.getcol(datacol)], axis=1)
+#                         data = np.concatenate([data, tsel.getcol(datacol)], axis=1)
 #                 tsel.close()
 #
 #         if timestamp is None or data is None:
 #             raise RuntimeError('Empty Tsys data for antenna %s spw %s. Cannot proceed.'%(antennaid, spwid))
 #
 #         # sort by time
-#         sorted_time, sort_index = numpy.unique(timestamp, return_index=True)
+#         sorted_time, sort_index = np.unique(timestamp, return_index=True)
 #         sorted_data = data.take(sort_index, axis=2)
 #
 #         # interpolate along spectral axis

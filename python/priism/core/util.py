@@ -16,7 +16,7 @@
 # along with PRIISM.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import absolute_import
 
-import numpy
+import numpy as np
 
 
 class RandomIndexGenerator(object):
@@ -25,10 +25,10 @@ class RandomIndexGenerator(object):
         self.num_fold = num_fold
         assert self.num_fold <= self.num_ws
 
-        self.random_index = numpy.arange(self.num_ws, dtype=numpy.int64)
-        numpy.random.shuffle(self.random_index)
+        self.random_index = np.arange(self.num_ws, dtype=np.int64)
+        np.random.shuffle(self.random_index)
 
-        self.num_subws = numpy.zeros(self.num_fold, dtype=numpy.int64)
+        self.num_subws = np.zeros(self.num_fold, dtype=np.int64)
         ndiv = self.num_ws // self.num_fold
         nmod = self.num_ws % self.num_fold
         self.num_subws[:] = ndiv
@@ -47,7 +47,7 @@ class RandomIndexGenerator(object):
         assert subset_id < self.num_fold
 
         num_subws = self.num_subws[subset_id]
-        index_start = numpy.sum(self.num_subws[:subset_id])
+        index_start = np.sum(self.num_subws[:subset_id])
         index_end = index_start + num_subws
         random_index = self.random_index[index_start:index_end]
 

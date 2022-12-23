@@ -16,7 +16,7 @@
 # along with PRIISM.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import absolute_import
 
-import numpy
+import numpy as np
 import os
 import shutil
 
@@ -143,7 +143,7 @@ class VisibilityReaderTest(utils.TestBase):
 
             self.assertTrue('data_desc_id' in chunk)
             dd = chunk['data_desc_id']
-            self.assertTrue(numpy.all(dd == 1))
+            self.assertTrue(np.all(dd == 1))
 
         nrow_total_expected = self._expected_nrows('DATA_DESC_ID==1')
 
@@ -201,7 +201,7 @@ class VisibilityReaderTest(utils.TestBase):
             nrow_total += nrow
 
             antenna = chunk['antenna1']
-            self.assertTrue(numpy.all(antenna == antenna[0]))
+            self.assertTrue(np.all(antenna == antenna[0]))
 
             self.assertFalse(antenna[0] in antenna_list)
 

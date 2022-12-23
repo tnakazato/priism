@@ -18,7 +18,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 import math
-import numpy
+import numpy as np
 
 import priism.external.sakura as sakura
 from . import paramcontainer
@@ -58,22 +58,22 @@ class GriddedVisibilityStorage(object):
 
             # read input data
             grid_shape = (NY, NX, 1, 1,)
-            yreal = numpy.zeros(grid_shape, dtype=numpy.float64)
-            yimag = numpy.zeros_like(yreal)
-            weight = numpy.zeros_like(yreal)
-            #u = numpy.empty(M, dtype=numpy.int32)
-            #v = numpy.empty_like(u)
-            #yreal = numpy.empty(M, dtype=numpy.double)
-            #yimag = numpy.empty_like(yreal)
-            #noise = numpy.empty_like(yreal)
+            yreal = np.zeros(grid_shape, dtype=np.float64)
+            yimag = np.zeros_like(yreal)
+            weight = np.zeros_like(yreal)
+            #u = np.empty(M, dtype=np.int32)
+            #v = np.empty_like(u)
+            #yreal = np.empty(M, dtype=np.double)
+            #yimag = np.empty_like(yreal)
+            #noise = np.empty_like(yreal)
             for i in range(M):
                 line = f.readline()
                 values = line.split(',')
-                u = numpy.int32(values[0].strip())
-                v = numpy.int32(values[1].strip())
-                yreal[v, u, 0, 0] = numpy.double(values[2].strip())
-                yimag[v, u, 0, 0] = numpy.double(values[3].strip())
-                noise = numpy.double(values[4].strip())
+                u = np.int32(values[0].strip())
+                v = np.int32(values[1].strip())
+                yreal[v, u, 0, 0] = np.double(values[2].strip())
+                yimag[v, u, 0, 0] = np.double(values[3].strip())
+                noise = np.double(values[4].strip())
                 weight[v, u, 0, 0] = 1 / (noise * noise)
                 #print '{0} {1} {2} {3}'.format(u[i], v[i], yreal[i], yimag[i], noise[i])
 
@@ -94,7 +94,7 @@ class GriddedVisibilityStorage(object):
         self.num_ws = num_ws if num_ws is not None else 0
 
     def exportdata(self, filename):
-        nonzeros = numpy.where(self.wreal != 0.0)
+        nonzeros = np.where(self.wreal != 0.0)
         m = len(nonzeros[0])
         nx = self.shape[1]
         ny = self.shape[0]
@@ -220,17 +220,17 @@ def grid2ws(grid_real, grid_imag, wgrid_real, wgrid_imag):
     """convert gridder result into workingset instance
 
     Arguments:
-        grid_real {numpy.ndarray} -- real part of the visibility
-        grid_imag {numpy.ndarray} -- imaginary part of the visibility
-        wgrid_real {numpy.ndarray} -- weight of the visibility
-        wgrid_imag {numpy.ndarray} -- weight of the visibility
+        grid_real {np.ndarray} -- real part of the visibility
+        grid_imag {np.ndarray} -- imaginary part of the visibility
+        wgrid_real {np.ndarray} -- weight of the visibility
+        wgrid_imag {np.ndarray} -- weight of the visibility
 
     Returns:
         VisibilityWorkingSet -- visibility working set
     """
     gridshape = grid_real.shape
-    nonzero_real = numpy.where(wgrid_real != 0.0)
-    nonzero_imag = numpy.where(wgrid_imag != 0.0)
+    nonzero_real = np.where(wgrid_real != 0.0)
+    nonzero_imag = np.where(wgrid_imag != 0.0)
     # uv location
     # assumption here is that the first index corresponds to v while
     # the second one corresponds u so that [i,j] represents
@@ -246,17 +246,17 @@ def grid2ws(grid_real, grid_imag, wgrid_real, wgrid_imag):
     nchan = gridshape[3]
     data_id = 0
     num_vis = len(nonzero_real[0])
-    u = sakura.empty_aligned((num_vis,), dtype=numpy.int32)
+    u = sakura.empty_aligned((num_vis,), dtype=np.int32)
     v = sakura.empty_like_aligned(u)
-    rdata = sakura.empty_aligned((num_vis,), dtype=numpy.float64)
+    rdata = sakura.empty_aligned((num_vis,), dtype=np.float64)
     idata = sakura.empty_like_aligned(rdata)
     wdata = sakura.empty_like_aligned(rdata)
     xpos = 0
     for ipol in range(npol):
         for ichan in range(nchan):
-            ir = numpy.where(numpy.logical_and(nonzero_real[2] == ipol,
+            ir = np.where(np.logical_and(nonzero_real[2] == ipol,
                                                nonzero_real[3] == ichan))
-            #ii = numpy.where(numpy.logical_and(nonzero_imag[2] == ipol,
+            #ii = np.where(np.logical_and(nonzero_imag[2] == ipol,
             #                                   nonzero_imag[3] == ichan))
             xlen = len(v)
             nextpos = xpos + xlen

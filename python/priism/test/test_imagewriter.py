@@ -16,7 +16,7 @@
 # along with PRIISM.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import absolute_import
 
-import numpy
+import numpy as np
 import os
 
 import priism.alma.paramcontainer as paramcontainer
@@ -91,7 +91,7 @@ class ImageWriterTest(utils.TestBase):
                               imageparam.imsize[1],
                               imageparam.nchan,
                               1)
-            self.assertTrue(numpy.all(expected_shape == ia.shape()))
+            self.assertTrue(np.all(expected_shape == ia.shape()))
             csys = ia.coordsys()
 
             # direction coordinate
@@ -154,7 +154,7 @@ class ImageWriterTest(utils.TestBase):
 
             shaped_chunk = chunk[:, :, :, 0]
             print(shaped_chunk.shape, arr.shape)
-            self.assertTrue(numpy.allclose(arr, shaped_chunk),
+            self.assertTrue(np.allclose(arr, shaped_chunk),
                             msg='expected {0} actual {1} (maxdiff {2})'.format(arr,
                                                                                shaped_chunk,
                                                                                abs(arr - shaped_chunk).max()))
@@ -191,9 +191,9 @@ class ImageWriterTest(utils.TestBase):
 
         vstart = 1.0
         vstep = 0.01
-        vend = vstart + numpy.prod(imageshape) * vstep
-        arr = numpy.arange(vstart, vend, vstep, dtype=numpy.float32)
-        #print len(arr), imageshape, numpy.prod(imageshape)
+        vend = vstart + np.prod(imageshape) * vstep
+        arr = np.arange(vstart, vend, vstep, dtype=np.float32)
+        #print len(arr), imageshape, np.prod(imageshape)
         arr = arr.reshape(imageshape)
 
         return arr
@@ -245,7 +245,7 @@ class ImageWriterTest(utils.TestBase):
 
         imshape = (imparam.imsize[0], imparam.imsize[1],
                    imparam.nchan, 1,)
-        imarray = numpy.zeros(imshape, dtype=numpy.float32)
+        imarray = np.zeros(imshape, dtype=np.float32)
 
         writer = imagewriter.ImageWriter(imageparam=imparam, imagearray=imarray)
         csys = writer._setup_coordsys()

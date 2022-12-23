@@ -16,7 +16,7 @@
 # along with PRIISM.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import absolute_import
 
-import numpy
+import numpy as np
 
 import priism.core.util as util
 import priism.core.datacontainer as datacontainer
@@ -56,14 +56,14 @@ class GridderWorkingSet(datacontainer.VisibilityWorkingSet):
         if hasattr(self, '_pol_map'):
             return self._pol_map
         else:
-            self._pol_map = sakura.empty_aligned((self.npol,), dtype=numpy.int32)
-            self._pol_map[:] = numpy.arange(self.npol)
+            self._pol_map = sakura.empty_aligned((self.npol,), dtype=np.int32)
+            self._pol_map[:] = np.arange(self.npol)
             return self._pol_map
 
     @pol_map.setter
     def pol_map(self, value):
         if value is None:
-            #self._pol_map = sakura.empty_aligned((self.npol,), dtype=numpy.int32)
+            #self._pol_map = sakura.empty_aligned((self.npol,), dtype=np.int32)
             #self._pol_map[:] = range(self.npol)
             pass
         else:
@@ -80,7 +80,7 @@ class GridFunctionUtil(object):
     @staticmethod
     def allocate(convsupport, convsampling, init=False):
         n = (convsupport + 1) * convsampling * 2
-        gf = sakura.empty_aligned((n,), dtype=numpy.float32)
+        gf = sakura.empty_aligned((n,), dtype=np.float32)
         if init:
             gf[:] = 0.0
         return gf
@@ -110,11 +110,11 @@ class GridFunctionUtil(object):
         """
         gf = GridFunctionUtil.allocate(convsupport, convsampling)
         gf[:] = 0.0
-        sigma = float(hwhm) / numpy.sqrt(2.0 * numpy.log(2.0))
+        sigma = float(hwhm) / np.sqrt(2.0 * np.log(2.0))
         m = convsupport * convsampling
         for i in range(m):
             x = float(i) / float(convsampling)
-            gf[i] = numpy.exp(-(x * x) / (2.0 * sigma * sigma))
+            gf[i] = np.exp(-(x * x) / (2.0 * sigma * sigma))
         return gf
 
     @staticmethod
@@ -267,12 +267,12 @@ class VisibilityGridder(object):
         #  with casa.OpenTableForRead(os.path.join(self.visparam.vis,
         #                                          'DATA_DESCRIPTION')) as tb:
         #      tsel = tb.selectrows(poldd)
-        #      polids = numpy.unique(tsel.getcol('POLARIZATION_ID'))
+        #      polids = np.unique(tsel.getcol('POLARIZATION_ID'))
         #      tsel.close()
         #  with casa.OpenTableForRead(os.path.join(self.visparam.vis,
         #                                          'POLARIZATION')) as tb:
         #      tsel = tb.selectrows(polids)
-        #      num_corrs = numpy.unique(tsel.getcol('NUM_CORR'))
+        #      num_corrs = np.unique(tsel.getcol('NUM_CORR'))
         #      tsel.close()
 
         #  assert len(num_corrs) == 1
@@ -294,15 +294,15 @@ class VisibilityGridder(object):
         # sakura gridding function ignore convsupport-pixels
         # from spatial edges
         wsshape = (self.npol, self.nchan)
-        self.wsum_real = sakura.empty_aligned(wsshape, dtype=numpy.float64)
-        self.wsum_imag = sakura.empty_aligned(wsshape, dtype=numpy.float64)
+        self.wsum_real = sakura.empty_aligned(wsshape, dtype=np.float64)
+        self.wsum_imag = sakura.empty_aligned(wsshape, dtype=np.float64)
         gridshape = (self.nv + 2 * self.convsupport,
                      self.nu + 2 * self.convsupport,
                      self.npol, self.nchan)
-        self.grid_real = sakura.empty_aligned(gridshape, dtype=numpy.float32)
-        self.grid_imag = sakura.empty_aligned(gridshape, dtype=numpy.float32)
-        self.wgrid_real = sakura.empty_aligned(gridshape, dtype=numpy.float32)
-        self.wgrid_imag = sakura.empty_aligned(gridshape, dtype=numpy.float32)
+        self.grid_real = sakura.empty_aligned(gridshape, dtype=np.float32)
+        self.grid_imag = sakura.empty_aligned(gridshape, dtype=np.float32)
+        self.wgrid_real = sakura.empty_aligned(gridshape, dtype=np.float32)
+        self.wgrid_imag = sakura.empty_aligned(gridshape, dtype=np.float32)
 
         # zero clear
         self._clear_grid()
@@ -380,16 +380,16 @@ class VisibilityGridder(object):
         assert wgrid_real.shape == outgrid_shape
         assert wgrid_imag.shape == outgrid_shape
 
-        nonzero_real = numpy.where(wgrid_real != 0.0)
-        nonzero_imag = numpy.where(wgrid_imag != 0.0)
-        uvgrid_real = sakura.empty_aligned(outgrid_shape, dtype=numpy.float64)
-        uvgrid_imag = sakura.empty_aligned(outgrid_shape, dtype=numpy.float64)
-        uvgrid_wreal = sakura.empty_aligned(outgrid_shape, dtype=numpy.float64)
+        nonzero_real = np.where(wgrid_real != 0.0)
+        nonzero_imag = np.where(wgrid_imag != 0.0)
+        uvgrid_real = sakura.empty_aligned(outgrid_shape, dtype=np.float64)
+        uvgrid_imag = sakura.empty_aligned(outgrid_shape, dtype=np.float64)
+        uvgrid_wreal = sakura.empty_aligned(outgrid_shape, dtype=np.float64)
         uvgrid_wreal[:] = wgrid_real
-        if numpy.all(wgrid_real == wgrid_imag):
+        if np.all(wgrid_real == wgrid_imag):
             uvgrid_wimag = None
         else:
-            uvgrid_wimag = sakura.empty_aligned(outgrid_shape, dtype=numpy.float64)
+            uvgrid_wimag = sakura.empty_aligned(outgrid_shape, dtype=np.float64)
             uvgrid_wimag[:] = wgrid_imag
         uvgrid_real[:] = 0.0
         uvgrid_imag[:] = 0.0

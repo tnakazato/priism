@@ -17,7 +17,7 @@
 from __future__ import absolute_import
 
 import os
-import numpy
+import numpy as np
 
 import priism.external.casa as casa
 import priism.core.util as core_util
@@ -121,12 +121,12 @@ class ImageConfigurationHelper(object):
             umax = max(umax, u)
             vmax = max(vmax, v)
 
-        rad2arcsec = 180.0 / numpy.pi * 3600.0
+        rad2arcsec = 180.0 / np.pi * 3600.0
         dl = 1.0 / (2 * umax) * rad2arcsec  # rad -> arcsec
         dm = 1.0 / (2 * vmax) * rad2arcsec  # rad -> arcsec
 
-        M = int(numpy.ceil(primary_beam / dl)) + 12
-        N = int(numpy.ceil(primary_beam / dm)) + 12
+        M = int(np.ceil(primary_beam / dl)) + 12
+        N = int(np.ceil(primary_beam / dm)) + 12
 
         suggested = {'cell': ['{}arcsec'.format(dl), '{}arcsec'.format(dm)],
                      'imsize': [M, N]}
