@@ -212,7 +212,7 @@ class ImageParamContainer(base_container.ParamContainer):
 
 class ImageMetaInfoContainer(base_container.ParamContainer):
     @staticmethod
-    def fromvis(vis):
+    def fromvis(vis, field=None, spw=None):
         """
         Construct ImageMetaInfoContainer instance from visibility data (MS).
         """
@@ -221,11 +221,26 @@ class ImageMetaInfoContainer(base_container.ParamContainer):
             observatories = msmd.observatorynames()
             observingdate = msmd.timerangeforobs(0)
             position = msmd.observatoryposition(0)
-            restfreqs = msmd.restfreqs()
+            if field is None:
+                field_id = msmd.fieldsforintent('OBSERVE_TARGET#ON_SOURCE')[0]
+            else:
+                field_id = field
+            source_id = msmd.sourceidforfield(field_id)
+            if spw is None:
+                spw_field = msmd.spwsforfield(field_id)
+                spw_intent = msmd.spwsforintent('OBSERVE_TARGET#ON_SOURCE')
+                spw_science = list(set(spw_field).intersection(spw_intent))
+                spw_science.sort()
+                spw_id = spw_science[0]
+            else:
+                spw_id = spw
+            restfreqs = msmd.restfreqs(source_id, spw_id)
+            rest_frequency = '' if not restfreqs else restfreqs[0]['m0']
         return ImageMetaInfoContainer(observer=observers[0],
                                       telescope=observatories[0],
                                       telescope_position=position,
-                                      observing_date=observingdate['begin'])
+                                      observing_date=observingdate['begin'],
+                                      rest_frequency=rest_frequency)
 
     def __init__(self, observer='', observing_date='', telescope='ALMA', telescope_position=None,
                  rest_frequency=''):
@@ -282,7 +297,7 @@ class ImageMetaInfoContainer(base_container.ParamContainer):
             if len(value) > 0:
                 self._rest_frequency = qa.quantity(value)
             else:
-                self._rest_frequency = qa.quantity(1.0e9, 'Hz')
+                self._rest_frequency = None
         elif isinstance(value, dict):
             self._rest_frequency = value
         else:
