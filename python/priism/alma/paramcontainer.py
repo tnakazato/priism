@@ -235,7 +235,7 @@ class ImageMetaInfoContainer(base_container.ParamContainer):
             else:
                 spw_id = spw
             restfreqs = msmd.restfreqs(source_id, spw_id)
-            rest_frequency = '' if not restfreqs else restfreqs[0]['m0']
+            rest_frequency = '' if not restfreqs else restfreqs['0']['m0']
         return ImageMetaInfoContainer(observer=observers[0],
                                       telescope=observatories[0],
                                       telescope_position=position,
