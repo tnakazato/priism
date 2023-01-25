@@ -212,7 +212,7 @@ class ImageParamContainer(base_container.ParamContainer):
 
 class ImageMetaInfoContainer(base_container.ParamContainer):
     @staticmethod
-    def fromvis(vis, field=None, spw=None):
+    def fromvis(vis, field=None, spw_selected=None):
         """
         Construct ImageMetaInfoContainer instance from visibility data (MS).
         """
@@ -226,14 +226,14 @@ class ImageMetaInfoContainer(base_container.ParamContainer):
             else:
                 field_id = field
             source_id = msmd.sourceidforfield(field_id)
-            if spw is None:
+            spw_intent = msmd.spwsforintent('OBSERVE_TARGET#ON_SOURCE')
+            if spw_selected is None or len(spw_selected) == 0:
                 spw_field = msmd.spwsforfield(field_id)
-                spw_intent = msmd.spwsforintent('OBSERVE_TARGET#ON_SOURCE')
                 spw_science = list(set(spw_field).intersection(spw_intent))
-                spw_science.sort()
-                spw_id = spw_science[0]
             else:
-                spw_id = spw
+                spw_science = list(set(spw_selected).intersection(spw_intent))
+            spw_science.sort()
+            spw_id = spw_science[0]
             restfreqs = msmd.restfreqs(source_id, spw_id)
             rest_frequency = '' if not restfreqs else restfreqs['0']['m0']
         return ImageMetaInfoContainer(observer=observers[0],
