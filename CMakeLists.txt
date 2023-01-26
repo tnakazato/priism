@@ -97,7 +97,6 @@ add_custom_target(sparseimaging make clean
                   WORKING_DIRECTORY ${SPARSEIMAGING_BUILD_DIR})
 
 # add priism module
-add_subdirectory(python)
 add_custom_target(priism ALL echo ""
                   DEPENDS sakurapy sparseimaging)
 
