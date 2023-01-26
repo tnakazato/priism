@@ -35,7 +35,7 @@ jobs:
 
     - name: Install FFTW3 (Ubuntu)
       if: ${{ matrix.os == 'ubuntu-latest' }}
-      run: sudo apt-get install -y libfftw3-bin libfftw3-dev
+      run: sudo apt install -y libfftw3-bin libfftw3-dev
 
     - name: Install FFTW3 (macOS)
       if: ${{ startsWith(matrix.os, 'macos-') }}
