@@ -143,7 +143,7 @@ class ImageWriter(object):
         c.settelescope(self.imagemeta.telescope)
         c.setepoch(self.imagemeta.observing_date)
         rest_frequency = self.imagemeta.rest_frequency
-        if isinstance(rest_frequency, str) and len(rest_frequency) == 0:
+        if rest_frequency is None or isinstance(rest_frequency, str) and len(rest_frequency) == 0:
             f = frequencies['value']
             nchan = len(f)
             if nchan % 2 == 0:

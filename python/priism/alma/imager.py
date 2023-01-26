@@ -239,7 +239,10 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
                                                                      chan=start)
             self.imparam.start = cf
             self.imparam.width = cw
-        imagemeta = paramcontainer.ImageMetaInfoContainer.fromvis(vis)
+        mssel_index = self.visparams[0].as_msindex()
+        field = None if len(mssel_index['field']) == 0 else mssel_index['field'][0]
+        spw_selected = None if len(mssel_index['spw']) == 0 else mssel_index['spw']
+        imagemeta = paramcontainer.ImageMetaInfoContainer.fromvis(vis, field, spw_selected)
         writer = imagewriter.ImageWriter(self.imparam, self.imagearray.data,
                                          imagemeta)
         writer.write(overwrite=overwrite)
