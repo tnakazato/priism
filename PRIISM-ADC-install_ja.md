@@ -35,6 +35,16 @@ export PATH=$PWD/casa-6.5.2-26-py3.8/bin:$PATH
 python3 -m pip install --upgrade pip wheel
 ```
 
+## インテルコンパイラのための設定
+
+2023年1月以降、ADCでインテルコンパイラを使うためには`LD_LIBRARY_PATH`の設定が必要になりました。詳しくは[ADCのFAQ](https://www.adc.nao.ac.jp/cgi-bin/cfw/wiki.cgi/FAQ/FAQJ?page=Intel+C%2B%2B+Compiler+%27icc%27+%A4%CE%BB%C8%CD%D1%A4%CB%A4%C4%A4%A4%A4%C6+%282023%C7%AF1%B7%EE20%B0%CA%B9%DF%29)を参照してください。
+以下はbashの場合の設定例です。
+
+```
+# bash系の場合
+export LD_LIBRARY_PATH=/usr/local/gcc/12.2/lib64:$LD_LIBRARY_PATH
+```
+
 ## PRIISMのクローン
 
 もしまだクローンしていない場合はクローンしてください。すでにクローン済みの場合はスキップして構いません。
