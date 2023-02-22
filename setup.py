@@ -30,6 +30,8 @@ from distutils.command.config import config
 from distutils.sysconfig import get_python_inc, get_python_version
 from setuptools import setup, find_packages, Command
 
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
 
 def _get_version():
     cwd = os.path.dirname(__file__)
@@ -44,10 +46,11 @@ def _get_version():
         version = '0.0.0'
     return version
 
-
-PRIISM_VERSION = _get_version()
-print('PRIISM Version = {}'.format(PRIISM_VERSION))
-
+def _requires_from_file(filename):
+    cmd_pymod = "python3 -m pip install Cython"
+    run_cmd   = subprocess.call(cmd_pymod.split())
+    print(run_cmd)
+    return open(filename).read().splitlines()
 
 class PriismDependencyError(FileNotFoundError):
     def __init__(self, msg, *args, **kwargs):
@@ -295,7 +298,7 @@ class download_sakura(config):
 
         package = 'sakura'
         target = 'libsakura'
-        version = 'libsakura-5.1.6'
+        version = 'libsakura-5.1.5'
         zipname = f'{version}.zip'
         base_url = 'https://github.com/tnakazato/sakura'
         if IS_GIT_OK:
@@ -358,7 +361,7 @@ class configure_ext(Command):
         initialize_attr_for_user_options(self)
 
     def finalize_options(self):
-        import numpy as np
+        import numpy
 
         self.set_undefined_options(
             'build',
@@ -377,7 +380,7 @@ class configure_ext(Command):
             self.python_root_dir = root_dir
 
         if self.numpy_include_dir is None:
-            self.numpy_include_dir = np.get_include()
+            self.numpy_include_dir = numpy.get_include()
 
         if self.python_include_dir is None:
             self.python_include_dir = get_python_inc()
@@ -411,6 +414,15 @@ class configure_ext(Command):
         if self.cxx_compiler is not None:
             cmd += ' -DCMAKE_CXX_COMPILER={}'.format(self.cxx_compiler)
 
+
+        try:
+            if os.environ['USE_INTEL_COMPILER'] in ('true', 'yes', 'on'):
+                self.use_intel_compiler = True
+            else:
+                self.use_intel_compiler = False
+        except:
+            self.use_intel_compiler = False
+
         if self.use_intel_compiler is True:
             cmd += ' -DUSE_INTEL_COMPILER=ON'
 
@@ -432,14 +444,12 @@ class configure_ext(Command):
 
     sub_commands = build_ext.sub_commands + [('download_sakura', None), ('download_smili', None), ('download_eigen', None)]
 
-
 setup(
-    name='priism',
-    version=PRIISM_VERSION,
-    packages=find_packages('python', exclude=['priism.test']),
-    package_dir={'': 'python'},
-    install_requires=['numpy'],
-    setup_requires=['numpy'],
+    name             = 'priism',
+    version          = _get_version(),
+    packages         = find_packages('python', exclude=['priism.test']),
+    package_dir      = {'': 'python'},
+    install_requires = _requires_from_file('requirements.txt'),
     cmdclass={
         'build': priism_build,
         'build_ext': priism_build_ext,
@@ -449,5 +459,5 @@ setup(
         'configure_ext': configure_ext,
     },
     # to disable egg compression
-    zip_safe=False
+    zip_safe = False
 )
