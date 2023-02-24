@@ -47,7 +47,7 @@ def _get_version():
     return version
 
 def _requires_from_file(filename):
-    cmd_pymod = "python3 -m pip install Cython"
+    cmd_pymod = "python3 -m pip install Cython numpy"
     run_cmd   = subprocess.call(cmd_pymod.split())
     print(run_cmd)
     return open(filename).read().splitlines()
