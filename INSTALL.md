@@ -17,7 +17,7 @@ $ python3 -m pip install .
   - [Importing module](#importing-module)
   - [Template scripts](#template-scripts)
   - [Notebook Tutorial](#notebook-tutorial)
-  - [Install for NAOJ/ADC/MDAS System](#install-for-naoj-adcmdassystem)
+  - [Install for NAOJ / ADC / MDAS System](#install-for-naoj-adc-mdas-system)
 - [License](#license)
 - [Developer](#developer)
 - [Contact](#contact)
@@ -150,9 +150,9 @@ CASA> import priism
 ```
 Please replace the PATH(`${CASA_DIR}, ${PRIISM_DIR}`) as your environment. 
 
-### Install for NAOJ/ADC/MDAS System
+### Install for NAOJ / ADC / MDAS System
 
-PRIISM nodule can be used in [NAOJ / ADC / MDAS (National Astronomical Observatory of Japan / Astronomy Data Center / Multi-wavelength Data Analysis System)](https://www.adc.nao.ac.jp/MDAS/mdas_e.html). 
+PRIISM nodule can be used in [NAOJ / ADC / MDAS](https://www.adc.nao.ac.jp/MDAS/mdas_e.html) (National Astronomical Observatory of Japan / Astronomy Data Center / Multi-wavelength Data Analysis System). 
 See the document "PRIISM-ADC-install_ja.md" for Japanese. 
 
 It is recommended to use Intel compiler with setting `LD_LIBRARY_PATH`. 
@@ -187,17 +187,17 @@ $ python setup.py build --use-intel-compiler=yes
 
 ### Importing module
 Then, launch python or CASA and import appropriate module. For `priism.core`,
-
+```
 >>> import priism.core as priism
-
+```
 or simply,
-
+```
 >>> import priism
-
+```
 will work. For `priism.alma`, you need to launch CASA or python with casa tools.
-
+```
 >>> import priism.alma
-
+```
 will enable you to use API for ALMA data.
 
 ### Template scripts
