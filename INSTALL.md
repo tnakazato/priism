@@ -67,6 +67,7 @@ prerequisites for both `priism` and CASA.
 * CentOS 7 with CASA 6.5.3 modular release
 * Ubuntu 18.04 with CASA 6.5.3 modular release
 * Ubuntu 20.04 with CASA 6.5.3 modular release
+* macOS 10.15.7 with CASA 6.5.1 modular release
 * macOS 12.6.3 with CASA 6.5.3 modular release
 
 
@@ -75,7 +76,7 @@ prerequisites for both `priism` and CASA.
 Prerequisites for an installation with CASA 6 modular release (recommended) is as follows:
 
 * Python 3.8
-* gcc/g++ 4.8 or higher or clang/clang++ 3.5 or higher\\
+* gcc/g++ 4.8 or higher or clang/clang++ 3.5 or higher<br>
   (necessary to use higher version installed in default for RHEL 7, CentOS 7)
 * FFTW3
 * git (optional but highly desirable)
@@ -108,7 +109,7 @@ During installation of CASA 6, `numpy` will be installed by dependency. It is re
 
 ### Intel Compiler Support
 
-Intel compiler support (Intel OneAPI) is available. Currently only classic C++ compiler (`icpc`) is supported. After configuring the compiler, the following build option will compile performance critical C++ code with Intel compiler.
+Intel compiler support (Intel OneAPI) is available. Currently only classic C++ compiler (`icpc`) is supported. After configuring the compiler, the following build option will compile performance critical C++ code with Intel compiler. 
 
 ```
 $ export USE_INTEL_COMPILER=yes
@@ -116,7 +117,7 @@ $ export LD_LIBRARY_PATH=....
 $ python -m pip install .
 ```
 
-Note that, due to the incompatibility of Python version, `setvars.sh` should not be used to configure the compiler. Please update `PATH` environment variable manually or use `oneapi/compiler/latest/env/vas.sh` instead.
+Note that, due to the incompatibility of Python version, `setvars.sh` should not be used to configure the compiler. Please update `PATH` environment variable manually or use `oneapi/compiler/latest/env/vas.sh` instead. 
 
 At runtime, you might need to add `oneapi/intelpython/python3.9/lib` to `LD_LIBRARY_PATH`. For the NAOJ/ADC/MDAS system, you have to add `/usr/local/gcc/12.2/lib64` to `LD_LIBRARY_PATH`. 
 
@@ -132,7 +133,7 @@ $ tar -xvf casa-6.5.3-28-py3.8.tar.xz
 $ export PATH=${CASA_DIR}/casa-6.5.3-28-py3.8/bin/:${PATH}
 ```
 
-Install PRIISM package. 
+Install PRIISM package. You might have to use `--user` option with `pip` command if you have no priviledge for su/sudo. 
 ```
 $ cd ${PRIISM_DIR}
 $ git clone https://github.com/tnakazato/priism.git
@@ -141,19 +142,19 @@ $ python3.8 -m pip install --upgrade pip
 $ python3.8 -m pip install .
 ```
 
-Use PRIISM module as following. You might specify the PATH for the PRIISM module, depending the your installation. Deoending the your environment (no priviledge for su/sudo), it might have to use ```--user``` option with ```pip``` command
+Use PRIISM module as following. It is necessary to specify the PATH for the PRIISM module before importing, depending the your installation procedure / environment. 
 ```
 $ casa --nologger --nogui
 CASA> import sys
 CASA> sys.path.append('${HOME}/.local/lib/python3.8/site-packages')
 CASA> import priism
 ```
-Please replace the PATH(`${CASA_DIR}, ${PRIISM_DIR}, ${HOME}`) as your environment. 
+Please replace the PATH(`${CASA_DIR}, ${PRIISM_DIR}`) as your environment. 
 
 ### Install for NAOJ/ADC/MDAS System
 
-PRIISM nodule can be used in NAOJ (National Astronomical Observatory of Japan) / ADC (Astronomy Data Center) / MDAS (Multi-wavelength Data Analysis System). 
-See the document "PRIISM-ADC-install_ja.md", for Japanese.
+PRIISM nodule can be used in NAOJ / ADC / MDAS (National Astronomical Observatory of Japan / Astronomy Data Center / Multi-wavelength Data Analysis System). 
+See the document "PRIISM-ADC-install_ja.md" for Japanese. 
 
 It is recommended to use Intel compiler with setting `LD_LIBRARY_PATH`. 
 ```
@@ -217,7 +218,7 @@ template scripts for each solver. Name of the scripts are as follows:
 The following Jupyter Notebook tutorial/demo is available.
 
  * [Notebook Tutorial (TW Hya)](./tutorial_twhya.ipynb)
- * [Notebook Demo (HL Tau)](./tutorial_hltau.ipynb)
+ * [Notebook Tutorial (HL Tau)](./tutorial_hltau.ipynb)
 
 ## License
 
