@@ -103,8 +103,7 @@ $ cd priism/
 $ python -m pip install pip --upgrade
 $ python -m pip install .
 ```
-
-During installation of CASA 6, `numpy` will be installed by dependency. It is recommended to use that version when you install PRIISM. 
+Installed `numpy` is not latest one, due to the dependency of CASA 6. It is recommended to use that version when you install PRIISM. 
 
 
 ### Intel Compiler Support
@@ -113,7 +112,7 @@ Intel compiler support (Intel OneAPI) is available. Currently only classic C++ c
 
 ```
 $ export USE_INTEL_COMPILER=yes
-$ export LD_LIBRARY_PATH=....
+$ export LD_LIBRARY_PATH=(PATH in your environment)
 $ python -m pip install .
 ```
 
@@ -138,11 +137,11 @@ Install PRIISM package. You might have to use `--user` option with `pip` command
 $ cd ${PRIISM_DIR}
 $ git clone https://github.com/tnakazato/priism.git
 $ cd priism/
-$ python3.8 -m pip install --upgrade pip
-$ python3.8 -m pip install .
+$ python3.8 -m pip install --user --upgrade pip
+$ python3.8 -m pip install --user .
 ```
 
-Use PRIISM module as following. It is necessary to specify the PATH for the PRIISM module before importing, depending the your installation procedure / environment. 
+Use PRIISM module as following. It might be necessary to specify the PATH for the PRIISM module before importing, for the case of using `--user` or `--prefix` option of `pip` command. 
 ```
 $ casa --nologger --nogui
 CASA> import sys
@@ -153,7 +152,7 @@ Please replace the PATH(`${CASA_DIR}, ${PRIISM_DIR}`) as your environment.
 
 ### Install for NAOJ/ADC/MDAS System
 
-PRIISM nodule can be used in NAOJ / ADC / MDAS (National Astronomical Observatory of Japan / Astronomy Data Center / Multi-wavelength Data Analysis System). 
+PRIISM nodule can be used in [NAOJ / ADC / MDAS (National Astronomical Observatory of Japan / Astronomy Data Center / Multi-wavelength Data Analysis System)](https://www.adc.nao.ac.jp/MDAS/mdas_e.html). 
 See the document "PRIISM-ADC-install_ja.md" for Japanese. 
 
 It is recommended to use Intel compiler with setting `LD_LIBRARY_PATH`. 
