@@ -13,6 +13,11 @@ $ python3 -m pip install .
   - [Tested Platform](#tested-platform)
 - [Prerequisites](#prerequisites)
 - [Installation Procedure in Detail](#installation-procedure-in-detail)
+  - [Install PRIISM module with CASA 6 modular release](#install-priism-module-with-casa-6-modular-release)
+  - [Intel Compiler Support](#intel-compiler-support)
+  - [Install PRIISM for CASA environment](#install-priism-for-casa-environment)
+  - [Install with setup.py with options](#install-with-setuppy-with-options)
+  - [Install for NAOJ / ADC / MDAS System](#install-for-naoj--adc--mdas-system)
 - [Using PRIISM](#using-priism)
   - [Importing module](#importing-module)
   - [Template scripts](#template-scripts)
@@ -164,20 +169,18 @@ $ python -m pip install .
 
 ### Install with setup.py with options (old install procedure)
 
+This is old procedure. 
 ```
 $ python3 -m pip install pip --upgrade
 $ python3 -m pip install -r requirements.txt
 $ python3 setup.py build
 $ python3 setup.py install
 ```
-
 There are options for those commands similar to `cmake` build. Please see the help for detail.
-
 ```
 $ python setup.py build --help
 $ python setup.py install --help
 ```
-
 If you want to use Intel compiler, run with option. 
 ```
 $ python setup.py build --use-intel-compiler=yes
