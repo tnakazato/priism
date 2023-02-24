@@ -22,7 +22,7 @@ $ python3 -m pip install .
   - [Importing module](#importing-module)
   - [Template scripts](#template-scripts)
   - [Notebook Tutorial](#notebook-tutorial)
-  - [Install for NAOJ / ADC / MDAS System](#install-for-naoj--adc--mdas-system)
+  - [Batch Processing](#batch-processing)
 - [License](#license)
 - [Developer](#developer)
 - [Contact](#contact)
@@ -214,7 +214,7 @@ template scripts for each solver. Name of the scripts are as follows:
 * `priism.alma` (mfista_fft): `cvrun_fft.py`
 * `priism.alma` (mfista_nufft): `cvrun_nufft.py`
 
-### Batch Script
+### Batch Processing
 `runner` module is prepared for batch processing using PRIISM module. 
 Following commands obtain image for the specified MS (measurement set) data (visibility data). Input parameter is (field, SPW, channel) for input MS data and image/pixel size for output image. Parameters are set typical values as default. 
 
