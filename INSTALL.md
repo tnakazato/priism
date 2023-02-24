@@ -10,13 +10,14 @@ $ python3 -m pip install .
 
 - [Overview](#overview)
 - [Supported Platform](#supported-platform)
-- [Tested Platform](#tested-platform)
+  - [Tested Platform](#tested-platform)
 - [Prerequisites](#prerequisites)
 - [Installation Procedure in Detail](#installation-procedure-in-detail)
 - [Using PRIISM](#using-priism)
   - [Importing module](#importing-module)
   - [Template scripts](#template-scripts)
   - [Notebook Tutorial](#notebook-tutorial)
+  - [Install for NAOJ/ADC/MDAS System](#install-for-naoj-adcmdassystem)
 - [License](#license)
 - [Developer](#developer)
 - [Contact](#contact)
@@ -74,16 +75,16 @@ prerequisites for both `priism` and CASA.
 Prerequisites for an installation with CASA 6 modular release (recommended) is as follows:
 
 * Python 3.8
-* gcc/g++ 4.8 or higher or clang/clang++ 3.5 or higher
+* gcc/g++ 4.8 or higher or clang/clang++ 3.5 or higher\\
   (necessary to use higher version installed in default for RHEL 7, CentOS 7)
 * FFTW3
 * git (optional but highly desirable)
 
-# Installation Procedure in Detail
+## Installation Procedure in Detail
 
 Recommended way to install PRIISM is the use of Python pip with CASA 6 modular release. Installation with monolithic CASA 6 releases is technically possible but is not explained here.
 
-## Install PRIISM module with CASA 6 modular release
+### Install PRIISM module with CASA 6 modular release
 
 Create and Activate Virtual Environment
 ```
@@ -117,10 +118,10 @@ $ python -m pip install .
 
 Note that, due to the incompatibility of Python version, `setvars.sh` should not be used to configure the compiler. Please update `PATH` environment variable manually or use `oneapi/compiler/latest/env/vas.sh` instead.
 
-At runtime, you might need to add `oneapi/intelpython/python3.9/lib` to `LD_LIBRARY_PATH`. For the NAOJ/ADC/MDAS system, you have to add `/usr/local/gcc/12.2/lib64`. 
+At runtime, you might need to add `oneapi/intelpython/python3.9/lib` to `LD_LIBRARY_PATH`. For the NAOJ/ADC/MDAS system, you have to add `/usr/local/gcc/12.2/lib64` to `LD_LIBRARY_PATH`. 
 
 
-## Install PRIISM for CASA environment	
+### Install PRIISM for CASA environment
 
 Download and install CASA. 
 ```
@@ -140,7 +141,7 @@ $ python3.8 -m pip install --upgrade pip
 $ python3.8 -m pip install .
 ```
 
-Use PRIISM module as following. You might specify the PATH for the PRIISM module, depending the your installation, 
+Use PRIISM module as following. You might specify the PATH for the PRIISM module, depending the your installation. Deoending the your environment (no priviledge for su/sudo), it might have to use ```--user``` option with ```pip``` command
 ```
 $ casa --nologger --nogui
 CASA> import sys
@@ -149,17 +150,19 @@ CASA> import priism
 ```
 Please replace the PATH(`${CASA_DIR}, ${PRIISM_DIR}, ${HOME}`) as your environment. 
 
-### Install PRIISM for NAOJ/ADC/MDAS System
+### Install for NAOJ/ADC/MDAS System
 
-It is better to use Intel compiler. 
+PRIISM nodule can be used in NAOJ (National Astronomical Observatory of Japan) / ADC (Astronomy Data Center) / MDAS (Multi-wavelength Data Analysis System). 
+See the document "PRIISM-ADC-install_ja.md", for Japanese.
+
+It is recommended to use Intel compiler with setting `LD_LIBRARY_PATH`. 
 ```
 $ export USE_INTEL_COMPILER=yes
 $ export LD_LIBRARY_PATH=/usr/local/gcc/12.2/lib64:${LD_LIBRARY_PATH}
 $ python -m pip install .
 ```
-If using Intel compiler, it is necessary to set `LD_LIBRARY_PATH`
 
-## Install with setup.py with options (old version)
+### Install with setup.py with options (old install procedure)
 
 ```
 $ python3 -m pip install pip --upgrade

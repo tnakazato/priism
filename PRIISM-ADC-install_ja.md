@@ -24,12 +24,12 @@ python3 -m pip install --upgrade pip
 仮想環境を新規に作成する代わりに、CASAを仮想環境とみなしてPRIISMをCASAに直接インストールすることもできます。
 
 ```
-# ADCの共有エリアからCASAを丸ごとコピー（この例では CASA 6.5.2）
-cp -r /usr/local/casa/casa-6.5.2-26-py3.8 .
+# ADCの共有エリアからCASAを丸ごとコピー（この例では CASA 6.5.3）
+cp -r /usr/local/casa/casa-6.5.3-28-py3.8 .
 
 # パスを通す
 # which python3などとしてCASAにパスが通っていることを確認してください。
-export PATH=$PWD/casa-6.5.2-26-py3.8/bin:$PATH
+export PATH=$PWD/casa-6.5.3-28-py3.8/bin:$PATH
 
 # pipをアップグレードしておきます。またwheelもインストールしておきます。
 python3 -m pip install --upgrade pip wheel
@@ -58,29 +58,21 @@ git clone https://github.com/tnakazato/priism.git
 ```
 # クローンしたPRIISMのディレクトリに移動
 cd path/to/priism
-
 git pull
 ```
 
 ## PRIISMのインストール
 
 ```
-# 依存パッケージのインストール
-python3 -m pip install -r requirements.txt
-
-# ビルド
-python3 setup.py build --use-intel-compiler=yes
-
-# インストール
-python3 setup.py install
+python3 -m pip install .
 ```
 
 ## PRIISMの動作確認
 
-下記のどちらかのJupyter Notebookを実行します。
+下記のどちらかのJupyter Notebookを実行します。PRIISMリポジトリに同梱さています。
 
-* TWHya imaging tutorial: PRIISM同梱 `priism/cvrun.ipynb`
-* HL Tau imaging demo (Gist): https://gist.github.com/tnakazato/be0888d153eef2a76a3c260d794bf052
+* TW Hya imaging tutorial: `priism/tutorial_twhya.ipynb`
+* HL Tau imaging tutorial: `priism/tutorial_hltau.ipynb`
 
 ```
 # PRIISM仮想環境にJupyter Notebookをインストール
@@ -92,10 +84,6 @@ python3 -m pip install astropy
 # 作業ディレクトリを作成（パスは適宜読み替えてください）
 mkdir ~/work/HLTau-notebook
 cd ~/work/HLTau-notebook
-
-# 上記ノートブックのいずれかをダウンロード
-# ここではHL Tau Imaging demoを使います
-wget https://gist.githubusercontent.com/tnakazato/be0888d153eef2a76a3c260d794bf052/raw/ab4f72efa0026f85caaaafdc0939a4ea6602cc1f/HLTau_demo.ipynb
 
 # Jupyterを起動
 # 以後はJupyter Notebook上でセルを実行していただきます
