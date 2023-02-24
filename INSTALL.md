@@ -167,7 +167,7 @@ $ export LD_LIBRARY_PATH=/usr/local/gcc/12.2/lib64:${LD_LIBRARY_PATH}
 $ python -m pip install .
 ```
 
-### Install with setup.py with options (old install procedure)
+### Install with setup.py with options
 
 This is old procedure. 
 ```
@@ -214,10 +214,25 @@ template scripts for each solver. Name of the scripts are as follows:
 * `priism.alma` (mfista_fft): `cvrun_fft.py`
 * `priism.alma` (mfista_nufft): `cvrun_nufft.py`
 
+### Batch Script
+`runner` module is prepared for batch processing using PRIISM module. 
+Following commands obtain image for the specified MS (measurement set) data (visibility data). Input parameter is (field, SPW, channel) for input MS data and image/pixel size for output image. Parameters are set typical values as default. 
+
+```
+>>> from priism.runner import runner
+>>> vis = 'twhya_smoothed.ms'
+>>> imname = 'twhya_smoothed.fits'
+>>> h =runner.Session(vis)
+>>> h.setDataParam(field=0, spw=0, ch=24)
+>>> h.setImageParam(imname=imname, imsize=[256,256], cell=['0.08arcsec'])
+>>> h.saveParam('test.param')
+>>> h.run()
+>>> h.crossValidation()
+```
 
 ### Notebook Tutorial
 
-The following Jupyter Notebook tutorial/demo is available. Notebook for TW Hya is recommended to run as demo, since it takes a long time to run for HL Tau. 
+The following Jupyter Notebook tutorial/demo is available. The tutorial for TW Hya is recommended to run as demo, since it takes a long time to run for HL Tau. 
 
  * [Notebook Tutorial (TW Hya)](./tutorial_twhya.ipynb)
  * [Notebook Tutorial (HL Tau)](./tutorial_hltau.ipynb)
