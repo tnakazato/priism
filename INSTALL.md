@@ -214,7 +214,7 @@ template scripts for each solver. Name of the scripts are as follows:
 
 ### Notebook Tutorial
 
-The following Jupyter Notebook tutorial/demo is available.
+The following Jupyter Notebook tutorial/demo is available. Notebook for TW Hya is recommended to run as demo, since it takes a long time to run for HL Tau. 
 
  * [Notebook Tutorial (TW Hya)](./tutorial_twhya.ipynb)
  * [Notebook Tutorial (HL Tau)](./tutorial_hltau.ipynb)
