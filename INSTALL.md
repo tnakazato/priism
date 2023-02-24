@@ -17,7 +17,7 @@ $ python3 -m pip install .
   - [Importing module](#importing-module)
   - [Template scripts](#template-scripts)
   - [Notebook Tutorial](#notebook-tutorial)
-  - [Install for NAOJ / ADC / MDAS System](#install-for-naoj-adc-mdas-system)
+  - [Install for NAOJ / ADC / MDAS System](#install-for-naoj--adc--mdas-system)
 - [License](#license)
 - [Developer](#developer)
 - [Contact](#contact)
