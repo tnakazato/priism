@@ -16,7 +16,7 @@
 # along with PRIISM.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import absolute_import
 
-version = '2023-2-17'
+version = '2023-2-27'
 
 import os
 import sys
@@ -146,7 +146,13 @@ class Session:
 
         p = {}
         for ptxt in ptxts:
-            if not ptxt.strip()[0] == '#': # skip comment
+            isNull = not ptxt.strip() # Null lines
+            isComment = False 
+            if not isNull:
+               if ptxt.strip()[0] == '#': # skip comment
+                   isComment = True 
+
+            if not isNull and not isComment:
                 # To remove line feed, tab and space
                 table = str.maketrans({'\n': '','\t': '', ' ': '',})
                 a  = ptxt.translate(table).split(':')
