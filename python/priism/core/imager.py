@@ -393,8 +393,6 @@ class SparseModelingImager(object):
         if str(np_ltsv_list.dtype) == 'object':
             raise ArgumentError('ltsv_list contains invalid value')
 
-        num_L1 = len(np_l1_list)
-        num_Ltsv = len(np_ltsv_list)
         L1_sort_index = np.argsort(np_l1_list)
         Ltsv_sort_index = np.argsort(np_ltsv_list)
 
