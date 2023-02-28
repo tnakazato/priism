@@ -82,7 +82,6 @@ Prerequisites for an installation with CASA 6 modular release (recommended) is a
 
 * Python 3.8
 * gcc/g++ 4.8 or higher or clang/clang++ 3.5 or higher<br>
-  (necessary to use higher version installed in default for RHEL 7, CentOS 7)
 * FFTW3
 * git (optional but highly desirable)
 
