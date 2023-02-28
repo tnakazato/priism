@@ -738,8 +738,6 @@ class CVPlotterBase:
         assert Ltsv in self.Ltsv_list
         row = np.where(self.L1_list == L1)[0][0]
         column = np.where(self.Ltsv_list == Ltsv)[0][0]
-
-        column = np.where(self.Ltsv_list == Ltsv)[0][0]
         cx = self.outer_frame.left_margin + (column + 0.5) * self.outer_frame.dx
         cy = self.outer_frame.bottom_margin + (row + 0.5) * self.outer_frame.dy
         left = cx - self.image_width / 2
