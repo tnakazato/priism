@@ -81,7 +81,7 @@ prerequisites for both `priism` and CASA.
 Prerequisites for an installation with CASA 6 modular release (recommended) is as follows:
 
 * Python 3.8
-* gcc/g++ 4.8 or higher or clang/clang++ 3.5 or higher<br>
+* gcc/g++ 4.8 or higher or clang/clang++ 3.5 or higher
 * FFTW3
 * git (optional but highly desirable)
 
