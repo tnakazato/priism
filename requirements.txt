@@ -4,4 +4,4 @@ Cython
 casatasks
 casatools
 casadata
-GPyOpt
+scikit-optimize

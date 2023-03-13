@@ -27,7 +27,7 @@ import pickle
 import shutil
 import time
 
-import GPyOpt
+import skopt
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
@@ -393,8 +393,6 @@ class SparseModelingImager(object):
         if str(np_ltsv_list.dtype) == 'object':
             raise ArgumentError('ltsv_list contains invalid value')
 
-        num_L1 = len(np_l1_list)
-        num_Ltsv = len(np_ltsv_list)
         L1_sort_index = np.argsort(np_l1_list)
         Ltsv_sort_index = np.argsort(np_ltsv_list)
 
@@ -560,8 +558,8 @@ class SparseModelingImager(object):
         result_image = []
 
         def __objective_function(x):
-            L1 = x[0][0]
-            Ltsv = x[0][1]
+            L1 = 10.0**x[0]
+            Ltsv = 10.0**x[1]
 
             mse, imagename = self._cv_exec(
                 L1, Ltsv, hp_scale, imageprefix, maxiter,
@@ -585,17 +583,22 @@ class SparseModelingImager(object):
 
             return mse
 
+        def list2bound(param_list):
+            pmin = int(round(math.log10(min(param_list))))
+            pmax = int(round(math.log10(max(param_list))))
+            bound = skopt.space.space.Integer(pmin, pmax, prior='uniform', base=10)
+            return bound
+
         bounds = [
-            {'name': 'var_1', 'type': 'discrete', 'domain': l1_list},
-            {'name': 'var_2', 'type': 'discrete', 'domain': ltsv_list},
+            list2bound(l1_list),
+            list2bound(ltsv_list)
         ]
 
-        problem = GPyOpt.methods.BayesianOptimization(__objective_function, bounds)
-        problem.run_optimization(bayesopt_maxiter)
-        # for debugging
-        # problem.save_evaluations('cv_eval.txt')
-        # problem.save_models('cv_model.txt')
-        # problem.save_report('cv_report.txt')
+        self.cv_bayes_result = skopt.gp_minimize(
+            __objective_function,
+            bounds,
+            n_calls=bayesopt_maxiter,
+        )
 
         return self.CrossValidationResult(
             mse=result_mse, image=result_image,
@@ -732,8 +735,6 @@ class CVPlotterBase:
         assert L1 in self.L1_list
         assert Ltsv in self.Ltsv_list
         row = np.where(self.L1_list == L1)[0][0]
-        column = np.where(self.Ltsv_list == Ltsv)[0][0]
-
         column = np.where(self.Ltsv_list == Ltsv)[0][0]
         cx = self.outer_frame.left_margin + (column + 0.5) * self.outer_frame.dx
         cy = self.outer_frame.bottom_margin + (row + 0.5) * self.outer_frame.dy
