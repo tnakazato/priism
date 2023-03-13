@@ -422,5 +422,5 @@ if __name__ == '__main__':
     h.crossValidation()
 
     # Run using a parameter file
-    hh = runner.Session.loadParam('a.param')
+    hh = Session.loadParam('a.param')
     hh.crossValidation(overwrite=True)
