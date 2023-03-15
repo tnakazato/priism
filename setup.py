@@ -361,7 +361,7 @@ class configure_ext(Command):
         initialize_attr_for_user_options(self)
 
     def finalize_options(self):
-        import numpy
+        import numpy as np
 
         self.set_undefined_options(
             'build',
@@ -380,7 +380,7 @@ class configure_ext(Command):
             self.python_root_dir = root_dir
 
         if self.numpy_include_dir is None:
-            self.numpy_include_dir = numpy.get_include()
+            self.numpy_include_dir = np.get_include()
 
         if self.python_include_dir is None:
             self.python_include_dir = get_python_inc()
