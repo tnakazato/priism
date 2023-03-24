@@ -14,9 +14,11 @@
 # GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License
 # along with PRIISM.  If not, see <https://www.gnu.org/licenses/>.
+import certifi
 import io
 import os
 import shlex
+import ssl
 import subprocess
 import sys
 import sysconfig
@@ -76,7 +78,8 @@ def execute_command(cmdstring, cwd=None):
 
 
 def download_extract(url, filetype):
-    req = request.urlopen(url)
+    ssl_context = ssl.create_default_context(cafile=certifi.where())
+    req = request.urlopen(url, contet=ssl_context)
     bstream = io.BytesIO(req.read())
     if filetype == 'zip':
         with zipfile.ZipFile(bstream, mode='r') as zf:
