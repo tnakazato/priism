@@ -257,7 +257,7 @@ class download_smili(config):
         super(download_smili, self).initialize_options()
 
         package = 'sparseimaging'
-        commit = '4e28903c1fc0256cec5d4b8d5a6371718eff53b9'
+        commit = '46268c1c66be33a8b09c2ebe4f59a841e3d3b21e'
         zipname = f'{commit}.zip'
         base_url = f'https://github.com/ikeda46/{package}'
         if IS_GIT_OK:
