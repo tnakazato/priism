@@ -79,7 +79,7 @@ def execute_command(cmdstring, cwd=None):
 
 def download_extract(url, filetype):
     ssl_context = ssl.create_default_context(cafile=certifi.where())
-    req = request.urlopen(url, contet=ssl_context)
+    req = request.urlopen(url, context=ssl_context)
     bstream = io.BytesIO(req.read())
     if filetype == 'zip':
         with zipfile.ZipFile(bstream, mode='r') as zf:
