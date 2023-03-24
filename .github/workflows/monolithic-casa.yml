@@ -23,7 +23,7 @@ jobs:
     - name: Install Monolithic CASA
       run: |
         sudo apt install -y wget
-        wget https://casa.nrao.edu/download/distro/casa/release/rhel/casa-6.5.3-28-py3.8.tar.xz
+        wget -q https://casa.nrao.edu/download/distro/casa/release/rhel/casa-6.5.3-28-py3.8.tar.xz
         tar xf casa-6.5.3-28-py3.8.tar.xz
 
     - name: Install dependencies
