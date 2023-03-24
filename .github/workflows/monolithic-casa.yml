@@ -1,0 +1,56 @@
+name: Monolithic CASA
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+
+    strategy:
+      fail-fast: false
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install FFTW3 (Ubuntu)
+      run: sudo apt install -y libfftw3-bin libfftw3-dev
+
+    - name: Install Monolithic CASA
+      run: |
+        sudo apt install -y wget
+        wget https://casa.nrao.edu/download/distro/casa/release/rhel/casa-6.5.3-28-py3.8.tar.xz
+        tar xf casa-6.5.3-28-py3.8.tar.xz
+
+    - name: Install dependencies
+      run: |
+        ./casa-6.5.3-28-py3.8/bin/python3 -m pip install --upgrade pip wheel
+        ./casa-6.5.3-28-py3.8/bin/python3 -m pip install -r requirements.txt
+
+    - name: Lint with flake8
+      run: |
+        ./casa-6.5.3-28-py3.8/bin/python3 -m pip install flake8
+        # stop the build if there are Python syntax errors or undefined names
+        ./casa-6.5.3-28-py3.8/bin/python3 -m flake8 python --count --select=E9,F63,F7,F82 --show-source --statistics
+        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        ./casa-6.5.3-28-py3.8/bin/python3 -m flake8 python --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+    - name: Build PRIISM
+      run: ./casa-6.5.3-28-py3.8/bin/python3 setup.py build
+
+    - name: Install PRIISM
+      run: ./casa-6.5.3-28-py3.8/bin/python3 setup.py install
+
+    - name: Check if libmfista library is created
+      run: |
+        PRIISM_INSTALL_DIR=$(./casa-6.5.3-28-py3.8/bin/python3 -c 'import os, sys, priism; print(os.path.dirname(priism.__file__))' | grep -E "^/.*/python3.*/priism")
+        ls -l $PRIISM_INSTALL_DIR/core/libmfista_nufft.so
+
+    - name: Test with pytest
+      run: |
+        ./casa-6.5.3-28-py3.8/bin/python3 -m pip install pytest
+        #pytest
