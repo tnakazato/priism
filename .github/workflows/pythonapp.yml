@@ -77,4 +77,4 @@ jobs:
     - name: Test with pytest
       run: |
         pip install pytest
-        pytest python/tests/test_util.py
+        pytest tests/test_util.py
