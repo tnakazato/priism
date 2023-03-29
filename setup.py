@@ -352,11 +352,9 @@ class download_eigen(config):
             if os.path.exists(f'{self.PACKAGE_NAME}-{self.PACKAGE_COMMIT_HASH}'):
                 os.symlink(f'{self.PACKAGE_NAME}-{self.PACKAGE_COMMIT_HASH}', package_directory)
 
-        print(os.listdir('.'))
+        # abort if eigen directory doesn't exist
         if not os.path.exists(package_directory):
             raise FileNotFoundError(f'Failed to download/extract {package_directory}')
-
-        print(os.listdir(package_directory))
 
 
 class configure_ext(Command):
