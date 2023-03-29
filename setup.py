@@ -344,7 +344,7 @@ class download_eigen(config):
 
         package_directory = f'{self.PACKAGE_NAME}-{self.PACKAGE_VERSION}'
         if not os.path.exists(package_directory):
-            tgzname = f'{package_directory}.tar.bz2'
+            tgzname = f'{package_directory}.tar.gz'
             url = f'https://gitlab.com/libeigen/eigen/-/archive/{self.PACKAGE_VERSION}/{tgzname}'
             download_extract(url, filetype='tar')
 
@@ -354,7 +354,7 @@ class download_eigen(config):
 
         # abort if eigen directory doesn't exist
         if not os.path.exists(package_directory):
-            raise FileNotFoundError('Failed to download/extract Eigen')
+            raise FileNotFoundError(f'Failed to download/extract {package_directory}')
 
 
 class configure_ext(Command):
