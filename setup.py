@@ -335,6 +335,7 @@ class download_sakura(config):
 class download_eigen(config):
     PACKAGE_NAME = 'eigen'
     PACKAGE_VERSION = '3.3.7'
+    PACKAGE_COMMIT_HASH = '21ae2afd4edaa1b69782c67a54182d34efe43f9c'
 
     user_options = []
 
