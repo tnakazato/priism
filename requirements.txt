@@ -1,4 +1,5 @@
 casatasks
 casatools
 casadata
+certifi
 scikit-optimize
