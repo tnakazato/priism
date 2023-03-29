@@ -20,7 +20,6 @@ import unittest
 import numpy as np
 
 import priism.alma.util as util
-from . import utils as testutils
 
 
 class RandomIndexGeneratorTest(unittest.TestCase):
@@ -75,7 +74,7 @@ class RandomIndexGeneratorTest(unittest.TestCase):
 
         # per subset check
         nmod = num_ws % num_fold
-        ndiv = num_ws / num_fold
+        ndiv = num_ws // num_fold
         for subset_id in range(num_fold):
             subset_index = generator.get_subset_index(subset_id)
             print('subset {0}: index {1}'.format(subset_id, subset_index))
@@ -125,15 +124,3 @@ class RandomIndexGeneratorTest(unittest.TestCase):
         """test_default_fold: test default num_fold (should be 10)"""
         generator = self._init_generator(100)
         self.assertEqual(10, generator.num_fold)
-
-
-def suite():
-    test_items = ['test_too_few_ws',
-                  'test_negative_subset_id',
-                  'test_too_large_subset_id',
-                  'test_random_index',
-                  'test_random_index_with_mod',
-                  'test_default_fold']
-    test_suite = testutils.generate_suite(RandomIndexGeneratorTest,
-                                          test_items)
-    return test_suite
