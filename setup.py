@@ -87,6 +87,7 @@ def download_extract(url, filetype):
     elif filetype == 'tar':
         with tarfile.open(mode='r', fileobj=bstream) as tf:
             tf.extractall()
+    print(os.listdir('.'))
 
 
 def opt2attr(s):
@@ -343,7 +344,7 @@ class download_eigen(config):
 
         package_directory = f'{self.PACKAGE_NAME}-{self.PACKAGE_VERSION}'
         if not os.path.exists(package_directory):
-            tgzname = f'{package_directory}.tar.bz2'
+            tgzname = f'{package_directory}.tar.gz'
             url = f'https://gitlab.com/libeigen/eigen/-/archive/{self.PACKAGE_VERSION}/{tgzname}'
             download_extract(url, filetype='tar')
 
