@@ -347,6 +347,9 @@ class download_eigen(config):
             url = f'https://gitlab.com/libeigen/eigen/-/archive/{self.PACKAGE_VERSION}/{tgzname}'
             download_extract(url, filetype='tar')
 
+        if not os.path.exists(package_directory):
+            raise FileNotFoundError(f'Failed to download/extract {package_directory}')
+
 
 class configure_ext(Command):
     user_options = priism_build.user_options
