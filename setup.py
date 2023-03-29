@@ -347,6 +347,14 @@ class download_eigen(config):
             url = f'https://gitlab.com/libeigen/eigen/-/archive/{self.PACKAGE_VERSION}/{tgzname}'
             download_extract(url, filetype='tar')
 
+            # sometimes directory name is suffixed with commit hash
+            if os.path.exists(f'{self.PACKAGE_NAME}-{self.PACKAGE_COMMIT_HASH}'):
+                os.symlink(f'{self.PACKAGE_NAME}-{self.PACKAGE_COMMIT_HASH}', package_directory)
+
+        # abort if eigen directory doesn't exist
+        if not os.path.exists(package_directory):
+            raise FileNotFoundError('Failed to download/extract Eigen')
+
 
 class configure_ext(Command):
     user_options = priism_build.user_options
