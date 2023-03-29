@@ -350,7 +350,7 @@ class download_eigen(config):
 
             # sometimes directory name is suffixed with commit hash
             if os.path.exists(f'{self.PACKAGE_NAME}-{self.PACKAGE_COMMIT_HASH}'):
-                os.link(f'{self.PACKAGE_NAME}-{self.PACKAGE_COMMIT_HASH}', package_directory)
+                os.symlink(f'{self.PACKAGE_NAME}-{self.PACKAGE_COMMIT_HASH}', package_directory)
 
         print(os.listdir('.'))
         if not os.path.exists(package_directory):
