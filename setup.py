@@ -14,7 +14,6 @@
 # GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License
 # along with PRIISM.  If not, see <https://www.gnu.org/licenses/>.
-import certifi
 import io
 import os
 import shlex
@@ -32,8 +31,13 @@ from distutils.command.config import config
 from distutils.sysconfig import get_python_inc, get_python_version
 from setuptools import setup, find_packages, Command
 
-import ssl
-ssl._create_default_https_context = ssl._create_unverified_context
+
+def execute_command(cmdstring, cwd=None):
+    retcode = subprocess.call(shlex.split(cmdstring), cwd=cwd)
+    if retcode != 0:
+        print('WARNING: command "{}" failed to execute'.format(cmdstring))
+    return retcode
+
 
 def _get_version():
     cwd = os.path.dirname(__file__)
@@ -48,11 +52,25 @@ def _get_version():
         version = '0.0.0'
     return version
 
+
+def install_prior_requirements(requirements, to_install):
+    package_list = set()
+    for package in to_install:
+        package_list = package_list.union([r for r in requirements if r.startswith(package)])
+
+    package_list = ' '.join(package_list)
+    cmd_pymod = f'{sys.executable} -m pip install {package_list}'
+    run_cmd = execute_command(cmd_pymod)
+
+
 def _requires_from_file(filename):
-    cmd_pymod = "python3 -m pip install Cython numpy==1.23.5"
-    run_cmd   = subprocess.call(cmd_pymod.split())
-    print(run_cmd)
-    return open(filename).read().splitlines()
+    with open(filename, 'r') as f:
+        requirements = [line.rstrip('\n') for line in f.readlines()]
+
+    install_prior_requirements(requirements, to_install=['numpy', 'certifi'])
+
+    return requirements
+
 
 class PriismDependencyError(FileNotFoundError):
     def __init__(self, msg, *args, **kwargs):
@@ -73,14 +91,8 @@ def check_command_availability(cmd):
 IS_GIT_OK = check_command_availability('git')
 
 
-def execute_command(cmdstring, cwd=None):
-    retcode = subprocess.call(shlex.split(cmdstring), cwd=cwd)
-    if retcode != 0:
-        print('WARNING: command "{}" failed to execute'.format(cmdstring))
-    return retcode
-
-
 def download_extract(url, filetype):
+    import certifi
     ssl_context = ssl.create_default_context(cafile=certifi.where())
     req = request.urlopen(url, context=ssl_context)
     bstream = io.BytesIO(req.read())

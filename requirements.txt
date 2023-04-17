@@ -1,6 +1,5 @@
-numpy == 1.23.5
+numpy
 cmake
-Cython
 casatasks
 casatools
 casadata
