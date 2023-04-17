@@ -468,12 +468,13 @@ class configure_ext(Command):
 
     sub_commands = build_ext.sub_commands + [('download_sakura', None), ('download_smili', None), ('download_eigen', None)]
 
+
 setup(
-    name             = 'priism',
-    version          = _get_version(),
-    packages         = find_packages('python', exclude=['priism.test']),
-    package_dir      = {'': 'python'},
-    install_requires = _requires_from_file('requirements.txt'),
+    name='priism',
+    version=_get_version(),
+    packages=find_packages('python', exclude=['priism.test']),
+    package_dir={'': 'python'},
+    install_requires=_requires_from_file('requirements.txt'),
     cmdclass={
         'build': priism_build,
         'build_ext': priism_build_ext,
@@ -483,5 +484,5 @@ setup(
         'configure_ext': configure_ext,
     },
     # to disable egg compression
-    zip_safe = False
+    zip_safe=False
 )
