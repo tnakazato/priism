@@ -16,6 +16,9 @@
 # along with PRIISM.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import absolute_import
 
+import itertools
+import os
+
 import priism.external.casa as casa
 import priism.core.paramcontainer as base_container
 import priism.core.datacontainer as datacontainer
@@ -233,9 +236,16 @@ class ImageMetaInfoContainer(base_container.ParamContainer):
             else:
                 spw_science = list(set(spw_selected).intersection(spw_intent))
             spw_science.sort()
-            spw_id = spw_science[0]
-            restfreqs = msmd.restfreqs(source_id, spw_id)
-            rest_frequency = '' if not restfreqs else restfreqs['0']['m0']
+
+        source_table = os.path.join(vis, 'SOURCE')
+        taql = f'SOURCE_ID=={source_id} && SPECTRAL_WINDOW_ID IN {list(spw_science)}'
+        with casa.SelectTableForRead(source_table, taql) as tb:
+            restfreqs = [
+                tb.getcell('REST_FREQUENCY', i) for i in range(tb.nrows())
+                if tb.iscelldefined('REST_FREQUENCY', i)
+            ]
+            rest_frequency = next(itertools.chain(*restfreqs))
+
         return ImageMetaInfoContainer(observer=observers[0],
                                       telescope=observatories[0],
                                       telescope_position=position,

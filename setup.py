@@ -14,9 +14,11 @@
 # GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License
 # along with PRIISM.  If not, see <https://www.gnu.org/licenses/>.
+import certifi
 import io
 import os
 import shlex
+import ssl
 import subprocess
 import sys
 import sysconfig
@@ -79,7 +81,8 @@ def execute_command(cmdstring, cwd=None):
 
 
 def download_extract(url, filetype):
-    req = request.urlopen(url)
+    ssl_context = ssl.create_default_context(cafile=certifi.where())
+    req = request.urlopen(url, context=ssl_context)
     bstream = io.BytesIO(req.read())
     if filetype == 'zip':
         with zipfile.ZipFile(bstream, mode='r') as zf:
@@ -260,7 +263,7 @@ class download_smili(config):
         super(download_smili, self).initialize_options()
 
         package = 'sparseimaging'
-        commit = '4e28903c1fc0256cec5d4b8d5a6371718eff53b9'
+        commit = '46268c1c66be33a8b09c2ebe4f59a841e3d3b21e'
         zipname = f'{commit}.zip'
         base_url = f'https://github.com/ikeda46/{package}'
         if IS_GIT_OK:
@@ -335,6 +338,7 @@ class download_sakura(config):
 class download_eigen(config):
     PACKAGE_NAME = 'eigen'
     PACKAGE_VERSION = '3.3.7'
+    PACKAGE_COMMIT_HASH = '21ae2afd4edaa1b69782c67a54182d34efe43f9c'
 
     user_options = []
 
@@ -343,9 +347,17 @@ class download_eigen(config):
 
         package_directory = f'{self.PACKAGE_NAME}-{self.PACKAGE_VERSION}'
         if not os.path.exists(package_directory):
-            tgzname = f'{package_directory}.tar.bz2'
+            tgzname = f'{package_directory}.tar.gz'
             url = f'https://gitlab.com/libeigen/eigen/-/archive/{self.PACKAGE_VERSION}/{tgzname}'
             download_extract(url, filetype='tar')
+
+            # sometimes directory name is suffixed with commit hash
+            if os.path.exists(f'{self.PACKAGE_NAME}-{self.PACKAGE_COMMIT_HASH}'):
+                os.symlink(f'{self.PACKAGE_NAME}-{self.PACKAGE_COMMIT_HASH}', package_directory)
+
+        # abort if eigen directory doesn't exist
+        if not os.path.exists(package_directory):
+            raise FileNotFoundError(f'Failed to download/extract {package_directory}')
 
 
 class configure_ext(Command):
