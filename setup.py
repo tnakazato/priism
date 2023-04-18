@@ -439,13 +439,8 @@ class configure_ext(Command):
             cmd += ' -DCMAKE_CXX_COMPILER={}'.format(self.cxx_compiler)
 
 
-        try:
-            if os.environ['USE_INTEL_COMPILER'] in ('true', 'yes', 'on'):
-                self.use_intel_compiler = True
-            else:
-                self.use_intel_compiler = False
-        except:
-            self.use_intel_compiler = False
+        if os.environ.get('USE_INTEL_COMPILER', 'no') in ('true', 'yes', 'on'):
+            self.use_intel_compiler = True
 
         if self.use_intel_compiler is True:
             cmd += ' -DUSE_INTEL_COMPILER=ON'
