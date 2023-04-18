@@ -1,27 +1,23 @@
 # PRIISMインストール手順書 @ADC
 
-PRIISMのインストール手順をまとめます。下記の前提でインストールします。
+PRIISMのインストール手順をまとめます。Pythonのバージョンは3.8とします。コンパイラはインテルコンパイラ`icpc`か、または`/usr/local/gcc`以下にインストールされたバージョンの新しい`gcc`のいずれかが利用可能です。なお、`icpc`を使う場合でも、sparseimaging以外のc++コードは常にgccを使ってコンパイルします。
 
-* python3.8ベース
-* コアライブラリsparseimagingはインテルコンパイラ`icpc`でコンパイルする
-    * sparseimaging以外のc++コードは常にgccを使ってコンパイルします
-
-## 仮想環境の作成
+## PRIISM向け仮想環境の作成
 
 PRIISM専用の仮想環境を作ります。仮想環境のディレクトリは`~/pyenv/priism`としていますが、適宜読み替えてください。
 
 ```
 # PRIISM用の仮想環境を作ります
-/usr/local/python/3.8/bin/python3.8 -m venv ~/pyenv/priism
+python3.8 -m venv ~/pyenv/priism
 
 # 仮想環境を有効化
 source ~/pyenv/priism/bin/activate
 
-# pipをアップグレードしておきます。
-python3 -m pip install --upgrade pip
+# pipをアップグレードしておきます。またwheelもインストールしておきます。
+python3 -m pip install --upgrade pip wheel
 ```
 
-仮想環境を新規に作成する代わりに、CASAを仮想環境とみなしてPRIISMをCASAに直接インストールすることもできます。
+仮想環境を新規に作成する代わりに、CASAを仮想環境とみなしてPRIISMをCASAに直接インストールすることもできます。Python 3.8版のCASAを使うようにしてください。
 
 ```
 # ADCの共有エリアからCASAを丸ごとコピー（この例では CASA 6.5.2）
@@ -68,8 +64,11 @@ git pull
 # 依存パッケージのインストール
 python3 -m pip install -r requirements.txt
 
-# ビルド
+# ビルド: インテルコンパイラを使う場合はこちらを実行
 python3 setup.py build --use-intel-compiler=yes
+
+# ビルド: gccを使う場合はこちらを実行（gccのバージョンが変わっていたら適宜変更してください）
+PATH=/usr/local/gcc/12.2/bin:$PATH python3 setup.py build 
 
 # インストール
 python3 setup.py install
@@ -105,5 +104,3 @@ jupyter-notebook
 ## TODO
 
 この手順書の今後のアップデート項目です。もし要望があれば takeshi.nakazato@nao.ac.jp までお願いします。
-
-* gcc対応
