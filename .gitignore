@@ -6,3 +6,6 @@
 /sparseimaging*
 /eigen*
 /.vscode
+__pycache__
+*.egg-info
+
