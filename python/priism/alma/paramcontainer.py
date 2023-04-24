@@ -244,7 +244,7 @@ class ImageMetaInfoContainer(base_container.ParamContainer):
                 tb.getcell('REST_FREQUENCY', i) for i in range(tb.nrows())
                 if tb.iscelldefined('REST_FREQUENCY', i)
             ]
-            rest_frequency = next(itertools.chain(*restfreqs))
+            rest_frequency = next(itertools.chain(*restfreqs), None)
 
         return ImageMetaInfoContainer(observer=observers[0],
                                       telescope=observatories[0],
