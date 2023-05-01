@@ -67,7 +67,7 @@ def _requires_from_file(filename):
     with open(filename, 'r') as f:
         requirements = [line.rstrip('\n') for line in f.readlines()]
 
-    install_prior_requirements(requirements, to_install=['numpy', 'certifi'])
+    install_prior_requirements(requirements, to_install=['numpy', 'certifi', 'cmake'])
 
     return requirements
 
