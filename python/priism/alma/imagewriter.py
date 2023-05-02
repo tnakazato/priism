@@ -143,7 +143,7 @@ class ImageWriter(object):
         c.settelescope(self.imagemeta.telescope)
         c.setepoch(self.imagemeta.observing_date)
         rest_frequency = self.imagemeta.rest_frequency
-        if rest_frequency is None or isinstance(rest_frequency, str) and len(rest_frequency) == 0:
+        if rest_frequency is None or (isinstance(rest_frequency, str) and len(rest_frequency) == 0):
             f = frequencies['value']
             nchan = len(f)
             if nchan % 2 == 0:
@@ -155,7 +155,8 @@ class ImageWriter(object):
                 rest_frequency = qa.quantity(f[c1], frequencies['unit'])
 
         print('rest_frequency={0}'.format(rest_frequency))
-        c.setrestfrequency(rest_frequency)
+        if qa.checkfreq(rest_frequency) and qa.gt(rest_frequency, qa.quantity(0, 'Hz')):
+            c.setrestfrequency(rest_frequency)
 
         print(c.summary(list=False)[0])
 
