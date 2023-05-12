@@ -1,4 +1,4 @@
-numpy
+numpy<1.24.0
 cmake
 casatasks
 casatools

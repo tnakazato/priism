@@ -1,6 +1,6 @@
 # PRIISM: Python Module for Radio Interferometry Imaging with Sparse Modeling
 
-PRIISM is an imaging tool for radio interferometry based on the sparse modeling technique. Here, installation procedure and general description of PRIISM are provided. Please see [Notebook Tutorial](./tutorial_hltau.ipynb, 
+PRIISM is an imaging tool for radio interferometry based on the sparse modeling technique. Here, installation procedure and general description of PRIISM are provided. Please see [Notebook Tutorial](./tutorial_hltau.ipynb,
 tutorial_twhya.ipynb) on how to use PRIISM. Recommended way to install PRIISM is a combination with CASA 6 modular release. For quick start, please check [Prerequisites](#prerequisites) and then, run the command below. You might want to set up venv for priism.
 
 ```
@@ -10,19 +10,9 @@ $ python3 -m pip install .
 
 - [Overview](#overview)
 - [Supported Platform](#supported-platform)
-  - [Tested Platform](#tested-platform)
 - [Prerequisites](#prerequisites)
 - [Installation Procedure in Detail](#installation-procedure-in-detail)
-  - [Install PRIISM module with CASA 6 modular release](#install-priism-module-with-casa-6-modular-release)
-  - [Intel Compiler Support](#intel-compiler-support)
-  - [Install PRIISM for CASA environment](#install-priism-for-casa-environment)
-  - [Install with setup.py with options](#install-with-setuppy-with-options)
-  - [Install for NAOJ / ADC / MDAS System](#install-for-naoj--adc--mdas-system)
 - [Using PRIISM](#using-priism)
-  - [Importing module](#importing-module)
-  - [Template scripts](#template-scripts)
-  - [Notebook Tutorial](#notebook-tutorial)
-  - [Batch Processing](#batch-processing)
 - [License](#license)
 - [Developer](#developer)
 - [Contact](#contact)
@@ -104,30 +94,52 @@ After cloning PRIISM's repository, install procedure is as follows:
 $ git clone https://github.com/tnakazato/priism.git
   # or get zip file and extract
 $ cd priism/
-$ python -m pip install pip --upgrade
-$ python -m pip install .
+  # install doesn't work with the latest pip
+$ python3 -m pip install pip==22.0.4
+$ python3 -m pip install .
 ```
-Installed `numpy` is not latest one, due to the dependency of CASA 6. It is recommended to use that version when you install PRIISM. 
+Note that installed `numpy` is not latest one. It is recommended to use that version when you install PRIISM.
 
+Installation with `setup.py` should still work. So, please use the following procedure if installation with `pip` doesn't work.
+
+```
+$ python3 -m pip install -r requirements.txt
+$ python3 setup.py build
+$ python3 setup.py install
+```
+
+There are options for those commands. Please see the help for detail.
+
+```
+$ python3 setup.py build --help
+$ python3 setup.py install --help
+```
 
 ### Intel Compiler Support
 
-Intel compiler support (Intel OneAPI) is available. Currently only classic C++ compiler (`icpc`) is supported. After configuring the compiler, the following build option will compile performance critical C++ code with Intel compiler. 
+Intel compiler support (Intel OneAPI) is available. Currently only classic C++ compiler (`icpc`) is supported. After configuring the compiler, the following build option will compile performance critical C++ code with Intel compiler.
 
 ```
 $ export USE_INTEL_COMPILER=yes
 $ export LD_LIBRARY_PATH=(PATH in your environment)
-$ python -m pip install .
+$ python3 -m pip install .
+```
+or
+
+```
+$ python3 -m pip install -r requirements.txt
+$ python setup.py build --use-intel-compiler=yes
+$ python3 setup.py install
 ```
 
-Note that, due to the incompatibility of Python version, `setvars.sh` should not be used to configure the compiler. Please update `PATH` environment variable manually or use `oneapi/compiler/latest/env/vas.sh` instead. 
+Note that, due to the incompatibility of Python version, `setvars.sh` should not be used to configure the compiler. Please update `PATH` environment variable manually or use `oneapi/compiler/latest/env/vas.sh` instead.
 
-At runtime, you might need to add `oneapi/intelpython/python3.9/lib` to `LD_LIBRARY_PATH`. For the NAOJ/ADC/MDAS system, you have to add `/usr/local/gcc/12.2/lib64` to `LD_LIBRARY_PATH`. 
+At runtime, you might need to add `oneapi/intelpython/python3.9/lib` to `LD_LIBRARY_PATH`.
 
 
 ### Install PRIISM for CASA environment
 
-Download and install CASA. 
+Download and install CASA.
 ```
 $ mkdir ${CASA_DIR}
 $ cd ${CASA_DIR}/
@@ -136,54 +148,23 @@ $ tar -xvf casa-6.5.3-28-py3.8.tar.xz
 $ export PATH=${CASA_DIR}/casa-6.5.3-28-py3.8/bin/:${PATH}
 ```
 
-Install PRIISM package. You might have to use `--user` option with `pip` command if you have no priviledge for su/sudo. 
+Install PRIISM package. You can use CASA's python3 as if it is virtual environment. PRIISM will be installed into `site-packages` directory in CASA.
 ```
 $ cd ${PRIISM_DIR}
 $ git clone https://github.com/tnakazato/priism.git
 $ cd priism/
-$ python3.8 -m pip install --user --upgrade pip
-$ python3.8 -m pip install --user .
+$ python3.8 -m pip install --upgrade pip
+$ python3.8 -m pip install .
 ```
-
-Use PRIISM module as following. It might be necessary to specify the PATH for the PRIISM module before importing, for the case of using `--user` or `--prefix` option of `pip` command. 
+You can immediatelly import priism from CASA.
 ```
 $ casa --nologger --nogui
-CASA> import sys
-CASA> sys.path.append('${HOME}/.local/lib/python3.8/site-packages')
-CASA> import priism
+CASA<>: import priism
 ```
-Please replace the PATH(`${CASA_DIR}, ${PRIISM_DIR}`) as your environment. 
+### Install for MDAS System at NAOJ
 
-### Install for NAOJ / ADC / MDAS System
+PRIISM nodule can be used in [MDAS system at NAOJ](https://www.adc.nao.ac.jp/MDAS/mdas_e.html) (Multi-wavelength Data Analysis System at National Astronomical Observatory of Japan).See the document "PRIISM-ADC-install_ja.md" (in Japanese). English version is in preparation.
 
-PRIISM nodule can be used in [NAOJ / ADC / MDAS](https://www.adc.nao.ac.jp/MDAS/mdas_e.html) (National Astronomical Observatory of Japan / Astronomy Data Center / Multi-wavelength Data Analysis System). 
-See the document "PRIISM-ADC-install_ja.md" for Japanese. 
-
-It is recommended to use Intel compiler with setting `LD_LIBRARY_PATH`. 
-```
-$ export USE_INTEL_COMPILER=yes
-$ export LD_LIBRARY_PATH=/usr/local/gcc/12.2/lib64:${LD_LIBRARY_PATH}
-$ python -m pip install .
-```
-
-### Install with setup.py with options
-
-This is old procedure. 
-```
-$ python3 -m pip install pip --upgrade
-$ python3 -m pip install -r requirements.txt
-$ python3 setup.py build
-$ python3 setup.py install
-```
-There are options for those commands similar to `cmake` build. Please see the help for detail.
-```
-$ python setup.py build --help
-$ python setup.py install --help
-```
-If you want to use Intel compiler, run with option. 
-```
-$ python setup.py build --use-intel-compiler=yes
-```
 
 ## Using PRIISM
 
@@ -214,8 +195,8 @@ template scripts for each solver. Name of the scripts are as follows:
 * `priism.alma` (mfista_nufft): `cvrun_nufft.py`
 
 ### Batch Processing
-`runner` module is prepared for batch processing using PRIISM module. 
-Following commands obtain image for the specified MS (measurement set) data (visibility data). Input parameter is (field, SPW, channel) for input MS data and image/pixel size for output image. Parameters are set typical values as default. 
+`runner` module is prepared for batch processing using PRIISM module.
+Following commands obtain image for the specified MS (measurement set) data (visibility data). Input parameter is (field, SPW, channel) for input MS data and image/pixel size for output image. Parameters are set typical values as default.
 
 ```
 >>> from priism.runner import runner
@@ -231,7 +212,7 @@ Following commands obtain image for the specified MS (measurement set) data (vis
 
 ### Notebook Tutorial
 
-The following Jupyter Notebook tutorial/demo is available. The tutorial for TW Hya is recommended to run as demo, since it takes a long time to run for HL Tau. 
+The following Jupyter Notebook tutorial/demo is available. The tutorial for TW Hya is recommended to run as demo, since it takes a long time to run for HL Tau.
 
  * [Jupyter Notebook Tutorial (TW Hya)](./tutorial_twhya.ipynb)
  * [Jupyter Notebook Tutorial (HL Tau)](./tutorial_hltau.ipynb)
