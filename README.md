@@ -163,7 +163,7 @@ CASA<>: import priism
 ```
 ### Install for MDAS System at NAOJ
 
-PRIISM nodule can be used in [MDAS system at NAOJ](https://www.adc.nao.ac.jp/MDAS/mdas_e.html) (Multi-wavelength Data Analysis System at National Astronomical Observatory of Japan). See the document "PRIISM-ADC-install_ja.md" (in Japanese) which is part of PRIISM source code. English version is in preparation.
+PRIISM nodule can be used in [MDAS system at NAOJ](https://www.adc.nao.ac.jp/MDAS/mdas_e.html) (Multi-wavelength Data Analysis System at National Astronomical Observatory of Japan). See the document [PRIISM-ADC-install_ja.md](./PRIISM-ADC-install_ja.md) (in Japanese) which is part of PRIISM source code. English version is in preparation.
 
 
 ## Using PRIISM
@@ -212,7 +212,7 @@ Following commands obtain image for the specified MS (measurement set) data (vis
 
 ### Notebook Tutorial
 
-The following Jupyter Notebook tutorial/demo is available. The tutorial for TW Hya is recommended to run as demo, since it takes a long time to run for HL Tau.
+The following Jupyter Notebook tutorial/demo is available. TW Hya notebook explains how to run PRIISM interactively while HL Tau notebook is a demo for batch mode.
 
  * [Jupyter Notebook Tutorial (TW Hya)](./tutorial_twhya.ipynb)
  * [Jupyter Notebook Tutorial (HL Tau)](./tutorial_hltau.ipynb)
