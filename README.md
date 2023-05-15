@@ -1,19 +1,15 @@
 # PRIISM: Python Module for Radio Interferometry Imaging with Sparse Modeling
 
-PRIISM is an imaging tool for radio interferometry based on the sparse modeling technique. Here, installation procedure and general description of PRIISM are provided. Please see [Notebook Tutorial](./cvrun.ipynb) on how to use PRIISM. Recommended way to install PRIISM is a combination with CASA 6 modular release. For quick start, please check [Prerequisites](#prerequisites-for-recommended-installation) and then, run the command below. You might want to set up venv for priism.
+PRIISM is an imaging tool for radio interferometry based on the sparse modeling technique. Here, installation procedure and general description of PRIISM are provided. Please see [Notebook Tutorial](./tutorial_hltau.ipynb,
+tutorial_twhya.ipynb) on how to use PRIISM. Recommended way to install PRIISM is a combination with CASA 6 modular release. For quick start, please check [Prerequisites](#prerequisites) and then, run the command below. You might want to set up venv for priism.
 
 ```
 # at top-level directory of priism
-$ python3 -m pip install -r requirements.txt
-$ python3 setup.py build
-$ python3 setup.py install
+$ python3 -m pip install .
 ```
-
-<!-- TOC -->
 
 - [Overview](#overview)
 - [Supported Platform](#supported-platform)
-- [Tested Platform](#tested-platform)
 - [Prerequisites](#prerequisites)
 - [Installation Procedure in Detail](#installation-procedure-in-detail)
 - [Using PRIISM](#using-priism)
@@ -23,7 +19,6 @@ $ python3 setup.py install
 - [Acknowledgement](#acknowledgement)
 - [Reference](#reference)
 
-<!-- /TOC -->
 
 ## Overview
 
@@ -46,6 +41,7 @@ PRIISM is simple to use, easy to install. Regarding the processing, there are tw
 
 It is our hope that PRIISM lower the barrier to entry in the new imaging technique based on the sparse modeling.
 
+
 ## Supported Platform
 
 ### `priism (priism.core)`
@@ -57,89 +53,134 @@ It is our hope that PRIISM lower the barrier to entry in the new imaging techniq
 Since `priism.alma` depends on CASA, it should work only on the platforms fulfilling the
 prerequisites for both `priism` and CASA.
 
-## Tested Platform
-
-### `priism.alma`
+### Tested Platform
 
 `priism.alma` has been tested on the plotforms listed below.
 
-* macOS 11.6.1 with CASA 6.4.0 modular release
-* macOS 10.15.7 with CASA 6.5.0 modular release
-* Red Hat Enterprise Linux 7 (RHEL7) with CASA 6.5.0 modular release
-* Ubuntu 18.04 with CASA 6.5.0 modular release
+* Red Hat Enterprise Linux 7 (RHEL7) with CASA 6.5.3 modular release
+* Red Hat Enterprise Linux 7 (RHEL7) with CASA 6.5.3 modular release in NAOJ/ADC/MDAS system
+* CentOS 7 with CASA 6.5.3 modular release
+* Ubuntu 18.04 with CASA 6.5.3 modular release
+* Ubuntu 20.04 with CASA 6.5.3 modular release
+* macOS 10.15.7 with CASA 6.5.1 modular release
+* macOS 12.6.3 with CASA 6.5.3 modular release
 
 
 ## Prerequisites
 
-Prerequisites for an installation wich CASA 6 modular release (recommended) is as follows:
+Prerequisites for an installation with CASA 6 modular release (recommended) is as follows:
 
-* cmake 2.8.12 or higher
-* Python 3.6 or 3.8
+* Python 3.8
 * gcc/g++ 4.8 or higher or clang/clang++ 3.5 or higher
 * FFTW3
-* OpenMP 4.0 or higher
 * git (optional but highly desirable)
 
 ## Installation Procedure in Detail
 
-Recommended way to install PRIISM is the use of Python `setuptools` combined with CASA 6 modular release. Installation with monolithic CASA 6 releases is technically possible but is not explained here.
+Recommended way to install PRIISM is the use of Python pip with CASA 6 modular release. Installation with monolithic CASA 6 releases is technically possible and is briefly explained below.
 
-### Create and Activate Virtual Environment
+### Install PRIISM module with CASA 6 modular release
 
+Create and Activate Virtual Environment
 ```
-$ python3 -m venv priism
-$ source priism/bin/activate
-```
-
-### Install CASA 6 Modular Release
-
-Please follow [the instruction](https://casadocs.readthedocs.io/en/stable/notebooks/introduction.html#Modular-Packages) provided by CASA team. You already have a virtual environment for PRIISM so you can use it for installation.
-
-### Install PRIISM
-
-After moving to the PRIISM's root directory, build and install procedure is as follows:
-
-```
-python setup.py build [any options]
-python setup.py install
+$ python3 -m venv pyenv/priism
+$ source pyenv/priism/bin/activate
 ```
 
-There are options for those commands similar to `cmake` build. Please see the help for detail.
+For the installation CASA 6 Modular Release, please follow [the instruction](https://casadocs.readthedocs.io/en/stable/notebooks/introduction.html#Modular-Packages) provided by CASA team. You already have a virtual environment for PRIISM so you can use it for installation.
+
+After cloning PRIISM's repository, install procedure is as follows:
+```
+$ git clone https://github.com/tnakazato/priism.git
+  # or get zip file and extract
+$ cd priism/
+  # install doesn't work with the latest pip
+$ python3 -m pip install pip==22.0.4
+$ python3 -m pip install .
+```
+Note that installed `numpy` is not latest one. It is recommended to use that version when you install PRIISM.
+
+Installation with `setup.py` should still work. So, please use the following procedure if installation with `pip` doesn't work.
 
 ```
-python setup.py build --help
-python setup.py install --help
+$ python3 -m pip install -r requirements.txt
+$ python3 setup.py build
+$ python3 setup.py install
 ```
 
-During installation of CASA 6, `numpy` will be installed by dependency. It is recommended to use that version when you install PRIISM.
+There are options for those commands. Please see the help for detail.
+
+```
+$ python3 setup.py build --help
+$ python3 setup.py install --help
+```
 
 ### Intel Compiler Support
 
 Intel compiler support (Intel OneAPI) is available. Currently only classic C++ compiler (`icpc`) is supported. After configuring the compiler, the following build option will compile performance critical C++ code with Intel compiler.
 
 ```
-python setup.py build --use-intel-compiler=yes
+$ export USE_INTEL_COMPILER=yes
+$ export LD_LIBRARY_PATH=(PATH in your environment)
+$ python3 -m pip install .
+```
+or
+
+```
+$ python3 -m pip install -r requirements.txt
+$ python setup.py build --use-intel-compiler=yes
+$ python3 setup.py install
 ```
 
 Note that, due to the incompatibility of Python version, `setvars.sh` should not be used to configure the compiler. Please update `PATH` environment variable manually or use `oneapi/compiler/latest/env/vas.sh` instead.
 
-At runtime, you might need to add `oneapi/intelpython/python3.7/lib` to `LD_LIBRARY_PATH`.
+At runtime, you might need to add `oneapi/intelpython/python3.9/lib` to `LD_LIBRARY_PATH`.
+
+
+### Install PRIISM for CASA environment
+
+Download and install CASA.
+```
+$ mkdir ${CASA_DIR}
+$ cd ${CASA_DIR}/
+$ wget https://casa.nrao.edu/download/distro/casa/release/rhel/casa-6.5.3-28-py3.8.tar.xz --no-check-certificate
+$ tar -xvf casa-6.5.3-28-py3.8.tar.xz
+$ export PATH=${CASA_DIR}/casa-6.5.3-28-py3.8/bin/:${PATH}
+```
+
+Install PRIISM package. You can use CASA's python3 as if it is virtual environment. PRIISM will be installed into `site-packages` directory in CASA.
+```
+$ cd ${PRIISM_DIR}
+$ git clone https://github.com/tnakazato/priism.git
+$ cd priism/
+$ python3.8 -m pip install --upgrade pip
+$ python3.8 -m pip install .
+```
+You can immediatelly import `priism` from CASA.
+```
+$ casa --nologger --nogui
+CASA<>: import priism
+```
+### Install for MDAS System at NAOJ
+
+PRIISM nodule can be used in [MDAS system at NAOJ](https://www.adc.nao.ac.jp/MDAS/mdas_e.html) (Multi-wavelength Data Analysis System at National Astronomical Observatory of Japan). See the document [PRIISM-ADC-install_ja.md](./PRIISM-ADC-install_ja.md) (in Japanese) which is part of PRIISM source code. English version is in preparation.
+
 
 ## Using PRIISM
 
 ### Importing module
 Then, launch python or CASA and import appropriate module. For `priism.core`,
-
-    import priism.core as priism
-
+```
+>>> import priism.core as priism
+```
 or simply,
-
-    import priism
-
+```
+>>> import priism
+```
 will work. For `priism.alma`, you need to launch CASA or python with casa tools.
-
-    import priism.alma
-
+```
+>>> import priism.alma
+```
 will enable you to use API for ALMA data.
 
 ### Template scripts
@@ -153,13 +194,28 @@ template scripts for each solver. Name of the scripts are as follows:
 * `priism.alma` (mfista_fft): `cvrun_fft.py`
 * `priism.alma` (mfista_nufft): `cvrun_nufft.py`
 
+### Batch Processing
+`runner` module is prepared for batch processing using PRIISM module.
+Following commands obtain image for the specified MS (measurement set) data (visibility data). Input parameter is (field, SPW, channel) for input MS data and image/pixel size for output image. Parameters are set typical values as default.
 
- ### Notebook Tutorial/Demo
+```
+>>> from priism.runner import runner
+>>> vis = 'twhya_smoothed.ms'
+>>> imname = 'twhya_smoothed.fits'
+>>> h =runner.Session(vis)
+>>> h.setDataParam(field=0, spw=0, ch=24)
+>>> h.setImageParam(imname=imname, imsize=[256,256], cell=['0.08arcsec'])
+>>> h.saveParam('test.param')
+>>> h.run()
+>>> h.crossValidation()
+```
 
-The following Jupyter Notebook tutorial/demo is available.
+### Notebook Tutorial
 
- * [Notebook Tutorial (TW Hya)](./cvrun.ipynb)
- * [Notebook Demo (HL Tau)](https://gist.github.com/tnakazato/be0888d153eef2a76a3c260d794bf052)
+The following Jupyter Notebook tutorial/demo is available. TW Hya notebook explains how to run PRIISM interactively while HL Tau notebook is a demo for batch mode.
+
+ * [Jupyter Notebook Tutorial (TW Hya)](./tutorial_twhya.ipynb)
+ * [Jupyter Notebook Tutorial (HL Tau)](./tutorial_hltau.ipynb)
 
 ## License
 
@@ -182,3 +238,5 @@ We thank T. Tsukagoshi, M. Yamaguchi, K. Akiyama, and Y. Tamura among many other
 
 * [Nakazato, T., Ikeda, S., Akiyama, K., Kosugi, G., Yamaguchi, M., and Honma, M., 2019, Astronomical Data Analysis Software and Systems XXVIII. ASP Conference Series, Vol. 523, p. 143](http://aspbooks.org/custom/publications/paper/523-0143.html)
 * [Nakazato, T. and Ikeda, S., 2020, Astrophysics Source Code Library, record ascl:2006.002](https://ui.adsabs.harvard.edu/abs/2020ascl.soft06002N/abstract)
+
+EOF

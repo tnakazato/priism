@@ -14,7 +14,6 @@
 # GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License
 # along with PRIISM.  If not, see <https://www.gnu.org/licenses/>.
-import certifi
 import io
 import os
 import shlex
@@ -33,6 +32,13 @@ from distutils.sysconfig import get_python_inc, get_python_version
 from setuptools import setup, find_packages, Command
 
 
+def execute_command(cmdstring, cwd=None):
+    retcode = subprocess.call(shlex.split(cmdstring), cwd=cwd)
+    if retcode != 0:
+        print('WARNING: command "{}" failed to execute'.format(cmdstring))
+    return retcode
+
+
 def _get_version():
     cwd = os.path.dirname(__file__)
     cwd = cwd if len(cwd) > 0 else '.'
@@ -47,8 +53,23 @@ def _get_version():
     return version
 
 
-PRIISM_VERSION = _get_version()
-print('PRIISM Version = {}'.format(PRIISM_VERSION))
+def install_prior_requirements(requirements, to_install):
+    package_list = set()
+    for package in to_install:
+        package_list = package_list.union([r for r in requirements if r.startswith(package)])
+
+    package_list = ' '.join(package_list)
+    cmd_pymod = f'{sys.executable} -m pip install {package_list}'
+    run_cmd = execute_command(cmd_pymod)
+
+
+def _requires_from_file(filename):
+    with open(filename, 'r') as f:
+        requirements = [line.rstrip('\n') for line in f.readlines()]
+
+    install_prior_requirements(requirements, to_install=['numpy', 'certifi', 'cmake'])
+
+    return requirements
 
 
 class PriismDependencyError(FileNotFoundError):
@@ -70,14 +91,8 @@ def check_command_availability(cmd):
 IS_GIT_OK = check_command_availability('git')
 
 
-def execute_command(cmdstring, cwd=None):
-    retcode = subprocess.call(shlex.split(cmdstring), cwd=cwd)
-    if retcode != 0:
-        print('WARNING: command "{}" failed to execute'.format(cmdstring))
-    return retcode
-
-
 def download_extract(url, filetype):
+    import certifi
     ssl_context = ssl.create_default_context(cafile=certifi.where())
     req = request.urlopen(url, context=ssl_context)
     bstream = io.BytesIO(req.read())
@@ -423,6 +438,10 @@ class configure_ext(Command):
         if self.cxx_compiler is not None:
             cmd += ' -DCMAKE_CXX_COMPILER={}'.format(self.cxx_compiler)
 
+
+        if os.environ.get('USE_INTEL_COMPILER', 'no') in ('true', 'yes', 'on'):
+            self.use_intel_compiler = True
+
         if self.use_intel_compiler is True:
             cmd += ' -DUSE_INTEL_COMPILER=ON'
 
@@ -447,11 +466,10 @@ class configure_ext(Command):
 
 setup(
     name='priism',
-    version=PRIISM_VERSION,
+    version=_get_version(),
     packages=find_packages('python', exclude=['priism.test']),
     package_dir={'': 'python'},
-    install_requires=['numpy'],
-    setup_requires=['numpy'],
+    install_requires=_requires_from_file('requirements.txt'),
     cmdclass={
         'build': priism_build,
         'build_ext': priism_build_ext,
