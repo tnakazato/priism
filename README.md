@@ -77,7 +77,7 @@ Prerequisites for an installation with CASA 6 modular release (recommended) is a
 
 ## Installation Procedure in Detail
 
-Recommended way to install PRIISM is the use of Python pip with CASA 6 modular release. Installation with monolithic CASA 6 releases is technically possible but is not explained here.
+Recommended way to install PRIISM is the use of Python pip with CASA 6 modular release. Installation with monolithic CASA 6 releases is technically possible and is briefly explained below.
 
 ### Install PRIISM module with CASA 6 modular release
 
@@ -156,14 +156,14 @@ $ cd priism/
 $ python3.8 -m pip install --upgrade pip
 $ python3.8 -m pip install .
 ```
-You can immediatelly import priism from CASA.
+You can immediatelly import `priism` from CASA.
 ```
 $ casa --nologger --nogui
 CASA<>: import priism
 ```
 ### Install for MDAS System at NAOJ
 
-PRIISM nodule can be used in [MDAS system at NAOJ](https://www.adc.nao.ac.jp/MDAS/mdas_e.html) (Multi-wavelength Data Analysis System at National Astronomical Observatory of Japan).See the document "PRIISM-ADC-install_ja.md" (in Japanese). English version is in preparation.
+PRIISM nodule can be used in [MDAS system at NAOJ](https://www.adc.nao.ac.jp/MDAS/mdas_e.html) (Multi-wavelength Data Analysis System at National Astronomical Observatory of Japan). See the document "PRIISM-ADC-install_ja.md" (in Japanese) which is part of PRIISM source code. English version is in preparation.
 
 
 ## Using PRIISM
