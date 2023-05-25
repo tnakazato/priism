@@ -68,7 +68,7 @@ message(STATUS "FFTW3_LIBRARY_DIR is ${FFTW3_LIBRARY_DIR}")
 if(USE_INTEL_COMPILER)
   execute_process(COMMAND sed -e "s:^CFLAGS=.*$:CFLAGS=-O3 -ipo -qopenmp -xHost -I${FFTW3_INCLUDE_DIR}:g" makefile
                   COMMAND sed -e "s:-O2 -Wall:-Wall:g"
-                  COMMAND sed -e "s:^CXX=.*:CXX=icpc:g"
+                  COMMAND sed -e "s:^CXX=.*:CXX=icpx:g"
                   OUTPUT_FILE ${SPARSEIMAGING_MAKEFILE}
                   WORKING_DIRECTORY ${SPARSEIMAGING_BUILD_DIR})
 else()
