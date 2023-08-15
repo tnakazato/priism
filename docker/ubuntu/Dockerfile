@@ -1,6 +1,7 @@
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 
 # install required packages
+ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get install -y \
     bzip2 \
@@ -10,7 +11,6 @@ RUN apt-get update && \
     g++ \
     libfftw3-bin \
     libfftw3-dev \
-    libgfortran3 \
     make \
     python3 \
     python3-dev \
