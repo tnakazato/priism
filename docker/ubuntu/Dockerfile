@@ -44,5 +44,8 @@ RUN python3 -m pip install --user --no-cache-dir --no-warn-script-location -r re
 # build & install PRIISM
 RUN python3 setup.py build && python3 setup.py install --user
 
+# install Jupyter
+RUN python3 -m pip install --user --no-cache-dir --no-warn-script-location jupyter
+
 # go back to home directory
 WORKDIR ${HOME}
