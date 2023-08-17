@@ -6,7 +6,7 @@ RUN apt-get update && \
     apt-get install -y \
     bzip2 \
     cmake \
-    curl \
+    wget \
     git \
     g++ \
     libfftw3-bin \
@@ -44,8 +44,8 @@ RUN python3 -m pip install --user --no-cache-dir --no-warn-script-location -r re
 # build & install PRIISM
 RUN python3 setup.py build && python3 setup.py install --user
 
-# install Jupyter
-RUN python3 -m pip install --user --no-cache-dir --no-warn-script-location jupyter
+# install Jupyter and astropy
+RUN python3 -m pip install --user --no-cache-dir --no-warn-script-location jupyter astropy
 ENV PATH ${HOME}/.local/bin:${PATH}
 
 # go back to home directory
