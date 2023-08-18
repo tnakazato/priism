@@ -1,0 +1,8 @@
+services:
+  priism:
+    build: .
+    ports:
+      - "8888:8888"
+    command: sh -c "jupyter-notebook --no-browser --ip=*"
+    volumes:
+      - ${HOME}/work:/home/anonymous/work:rw
