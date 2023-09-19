@@ -6,8 +6,6 @@ RUN apt-get update && \
     apt-get install -y \
     bzip2 \
     cmake \
-    wget \
-    git \
     g++ \
     libfftw3-bin \
     libfftw3-dev \
@@ -32,8 +30,9 @@ WORKDIR ${HOME}
 # upgrade pip
 RUN python3 -m pip install --user --upgrade --no-cache-dir pip
 
-# clone PRIISM
-RUN git clone https://github.com/tnakazato/priism.git
+# download priism
+RUN python3 -c "import io, urllib.request as request, zipfile ; req = request.urlopen('https://github.com/tnakazato/priism/archive/refs/heads/main.zip') ; f=io.BytesIO(req.read()) ; zf = zipfile.ZipFile(f, mode='r') ; zf.extractall() ; zf.close()" \
+    && mv priism-main priism
 
 # change directory
 WORKDIR ${HOME}/priism
