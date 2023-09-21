@@ -8,6 +8,13 @@ tutorial_twhya.ipynb) on how to use PRIISM. Recommended way to install PRIISM is
 $ python3 -m pip install .
 ```
 
+Alternatively, self-contained Docker environment is available. The following example launches Jupyter Notebook with PRIISM. In the notebook, `$HOME/work` will be a top-level directory. Access to CLI is also possible. Please see [Installation Procedure in Detail](#installation-procedure-in-detail) section for detail.
+
+```
+# at top-level directory of priism
+$ docker compose -f docker/ubuntu/docker-compose.yml up
+```
+
 - [Overview](#overview)
 - [Supported Platform](#supported-platform)
 - [Prerequisites](#prerequisites)
@@ -165,6 +172,55 @@ CASA<>: import priism
 
 PRIISM nodule can be used in [MDAS system at NAOJ](https://www.adc.nao.ac.jp/MDAS/mdas_e.html) (Multi-wavelength Data Analysis System at National Astronomical Observatory of Japan). See the document [PRIISM-ADC-install_ja.md](./PRIISM-ADC-install_ja.md) (in Japanese) which is part of PRIISM source code. English version is in preparation.
 
+### Docker Environment
+
+As explained above, you can launch Jupyter Notebook with PRIISM using the following command.
+
+```
+$ docker compose -f docker/ubuntu/docker-compose.yml up
+```
+
+By default, `$HOME/work` will be used for the top-level directory of Jupyter Notebook. If you want to use another directory, you should edit `docker-compose.yml` accordingly.
+
+You may want to enter the container and do something interactively. In that case, you should use other docker commands. If you open another terminal and run `docker ps`, you will see the container named `ubuntu-priism-1` or something similar.
+
+```
+$ docker ps
+CONTAINER ID   IMAGE           COMMAND                  CREATED         STATUS          PORTS                    NAMES
+48c94ed59565   ubuntu-priism   "sh -c 'cd /home/ano…"   9 minutes ago   Up 21 seconds   0.0.0.0:8888->8888/tcp   ubuntu-priism-1
+```
+
+When you shut down Jupyter Notebook, underlying container is stopped as well. Output of `docker ps` may be empty or may not contain the container for PRIISM. In that case, you need to run container manually through `docker start`.
+
+```
+$ docker start ubuntu-priism-1
+ubuntu-priism-1
+```
+
+If you have running container, you can enter the container with `docker exec`. Below is an example to run `bash` shell inside `ubuntu-priism-1`.
+
+```
+$ docker exec -it ubuntu-priism-1 bash
+anonymous@48c94ed59565:~$
+```
+
+You are also able to build Docker image and run it manually with `docker build` and `docker run`.
+
+```
+# build image
+$ docker build docker/ubuntu -t priism-ubuntu
+
+# run container
+$ docker run -it -v $HOME/work:/home/anonymous/work priism-ubuntu
+
+# launch ipython inside container
+anonymous@bde5fd3774fc:~$ ipython
+
+# import PRIISM
+In [1]: import priism
+```
+
+That will build docker image named `ubuntu-priism`. You can
 
 ## Using PRIISM
 
