@@ -1,16 +1,13 @@
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 
 # install required packages
+ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get install -y \
-    bzip2 \
     cmake \
-    curl \
-    git \
     g++ \
     libfftw3-bin \
     libfftw3-dev \
-    libgfortran3 \
     make \
     python3 \
     python3-dev \
@@ -32,8 +29,9 @@ WORKDIR ${HOME}
 # upgrade pip
 RUN python3 -m pip install --user --upgrade --no-cache-dir pip
 
-# clone PRIISM
-RUN git clone https://github.com/tnakazato/priism.git
+# download priism
+RUN python3 -c "import io, urllib.request as request, zipfile ; req = request.urlopen('https://github.com/tnakazato/priism/archive/refs/heads/main.zip') ; f=io.BytesIO(req.read()) ; zf = zipfile.ZipFile(f, mode='r') ; zf.extractall() ; zf.close()" \
+    && mv priism-main priism
 
 # change directory
 WORKDIR ${HOME}/priism
@@ -43,6 +41,10 @@ RUN python3 -m pip install --user --no-cache-dir --no-warn-script-location -r re
 
 # build & install PRIISM
 RUN python3 setup.py build && python3 setup.py install --user
+
+# install Jupyter and astropy
+RUN python3 -m pip install --user --no-cache-dir --no-warn-script-location jupyter astropy
+ENV PATH ${HOME}/.local/bin:${PATH}
 
 # go back to home directory
 WORKDIR ${HOME}
