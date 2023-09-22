@@ -8,7 +8,7 @@ tutorial_twhya.ipynb) on how to use PRIISM. Recommended way to install PRIISM is
 $ python3 -m pip install .
 ```
 
-Alternatively, self-contained Docker environment is available. The following example launches Jupyter Notebook with PRIISM. In the notebook, `$HOME/work` will be a top-level directory. Access to CLI is also possible. Please see [Installation Procedure in Detail](#installation-procedure-in-detail) section for detail.
+Alternatively, self-contained Docker environment is available. The following example launches Jupyter Notebook with PRIISM. In the notebook, `$HOME/work` will be a top-level directory. Access to CLI is also possible. Please see [Docker Environment](#docker-environment) section for detail.
 
 ```
 # at top-level directory of priism
@@ -207,7 +207,7 @@ anonymous@48c94ed59565:~$
 You are also able to build Docker image and run it manually with `docker build` and `docker run`.
 
 ```
-# build image
+# build image named "priism-ubuntu"
 $ docker build docker/ubuntu -t priism-ubuntu
 
 # run container
@@ -220,7 +220,6 @@ anonymous@bde5fd3774fc:~$ ipython
 In [1]: import priism
 ```
 
-That will build docker image named `ubuntu-priism`. You can
 
 ## Using PRIISM
 
