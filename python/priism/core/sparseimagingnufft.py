@@ -105,7 +105,7 @@ class SparseImagingExecutor(object):
 
         # load library
         cdll = ctypes.cdll
-        _mfista_name = os.path.join(self.libpath, self.libname)
+        _mfista_name = sparseimagingbase.get_actual_library_name(self.libpath, self.libname)
         self._mfista = cdll.LoadLibrary(_mfista_name)
 
     def run(self, inputs, initialimage=None,

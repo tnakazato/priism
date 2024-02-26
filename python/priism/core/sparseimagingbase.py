@@ -17,6 +17,7 @@
 from __future__ import absolute_import
 from __future__ import print_function
 
+import glob
 import os
 import numpy as np
 import ctypes
@@ -27,6 +28,13 @@ class CTypesUtilMixIn(object):
     def as_carray(self, attr):
         array = getattr(self, attr)
         return np.ctypeslib.as_ctypes(array)
+
+
+def get_actual_library_name(library_dir, library_name):
+    library_prefix, library_suffix = library_name.split('.')
+    libraries = glob.glob(f'{library_prefix}*.{library_suffix}', root_dir=library_dir)
+    assert len(libraries) == 1
+    return os.path.join(library_dir, libraries[0])
 
 
 def exec_line(f, varname):
@@ -300,7 +308,7 @@ class SparseImagingExecutor(object):
 
         # load library
         cdll = ctypes.cdll
-        _mfista_name = os.path.join(self.libpath, self.libname)
+        _mfista_name = get_actual_library_name(self.libpath, self.libname)
         self._mfista = cdll.LoadLibrary(_mfista_name)
 
     def run(self, inputs, initialimage=None,
