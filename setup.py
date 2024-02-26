@@ -16,20 +16,36 @@
 # along with PRIISM.  If not, see <https://www.gnu.org/licenses/>.
 import io
 import os
+import re
 import shlex
 import ssl
 import subprocess
-import sys
-import sysconfig
 import tarfile
 import urllib.request as request
 import zipfile
 
-from distutils.command.build import build
 from distutils.command.build_ext import build_ext
 from distutils.command.config import config
-from distutils.sysconfig import get_python_inc, get_python_version
-from setuptools import setup, find_packages, Command
+from distutils.core import Extension
+from setuptools import setup, find_packages
+
+
+def require_from_file(requirement_file):
+    with open(requirement_file, 'r') as f:
+        requirements = map(
+            lambda x: x.rstrip('\n').strip(),
+            filter(
+                lambda x: len(x.strip()) > 0 and not x.strip().startswith('#'),
+                f
+            )
+        )
+        requirements = map(
+            lambda x: re.sub(r'^([^=<>]*)([<>=!][=]?)([\d.]*)', r'\1 (\2\3)', x),
+            requirements
+        )
+        requirements = list(requirements)
+        print(requirements)
+        return requirements
 
 
 def execute_command(cmdstring, cwd=None):
@@ -51,33 +67,6 @@ def _get_version():
     except StopIteration:
         version = '0.0.0'
     return version
-
-
-def install_prior_requirements(requirements, to_install):
-    package_list = set()
-    for package in to_install:
-        package_list = package_list.union([r for r in requirements if r.startswith(package)])
-
-    package_list = ' '.join(package_list)
-    cmd_pymod = f'{sys.executable} -m pip install {package_list}'
-    run_cmd = execute_command(cmd_pymod)
-
-
-def _requires_from_file(filename):
-    with open(filename, 'r') as f:
-        requirements = [line.rstrip('\n') for line in f.readlines()]
-
-    install_prior_requirements(requirements, to_install=['numpy', 'certifi', 'cmake'])
-
-    return requirements
-
-
-class PriismDependencyError(FileNotFoundError):
-    def __init__(self, msg, *args, **kwargs):
-        self.msg = msg
-
-    def __str__(self):
-        return '{}({})'.format(self.__class__.__name__, self.msg)
 
 
 def check_command_availability(cmd):
@@ -102,170 +91,6 @@ def download_extract(url, filetype):
     elif filetype == 'tar':
         with tarfile.open(mode='r', fileobj=bstream) as tf:
             tf.extractall()
-
-
-def opt2attr(s):
-    return s[0].strip('=').replace('-', '_')
-
-
-def opt2env(s):
-    return "PRIISM_" + opt2attr(s).upper()
-
-
-def debug_print_user_options(cmd):
-    print('Command: {}'.format(cmd.__class__.__name__))
-    print('User Options:')
-    for option in cmd.user_options:
-        attrname = opt2attr(option)
-        attrvalue = getattr(cmd, attrname)
-        print('  {}{}'.format(option[0], attrvalue))
-
-
-def arg_for_set_undefined_options(cmd):
-    return tuple((opt, opt) for opt in map(opt2attr, cmd.user_options))
-
-
-def initialize_attr_for_user_options(cmd):
-    for option in cmd.user_options:
-        attrname = opt2attr(option)
-        setattr(cmd, attrname, None)
-
-
-def overwrite_attr_for_user_options_by_environ(cmd):
-    for option in cmd.user_options:
-        attrname = opt2attr(option)
-        envname = opt2env(option)
-        setattr(cmd, attrname, os.environ.get(envname))
-
-
-def get_python_library(include_dir):
-    libnames = []
-    libname1 = sysconfig.get_config_var('PY3LIBRARY')
-    if libname1 is None or (isinstance(libname1, str) and len(libname1) == 0):
-        libprefix = '.'.join(sysconfig.get_config_var('LIBRARY').split('.')[:-1])
-        libname = '.'.join([libprefix, sysconfig.get_config_var('EXT_SUFFIX')])
-        libname = libname.replace('..', '.')
-        libnames.append(libname)
-        if sysconfig.get_config_var('EXT_SUFFIX').find('darwin') != -1:
-            libname = '.'.join([libprefix, 'dylib'])
-            libnames.append(libname)
-    else:
-        libnames.append(libname1)
-    libname2 = sysconfig.get_config_var('LDLIBRARY')
-    if isinstance(libname2, str) and len(libname2) > 0:
-        libnames.append(libname2)
-
-    libpath = sysconfig.get_config_var('LIBDIR')
-    for libname in libnames:
-        pylib = os.path.join(libpath, libname)
-        if os.path.exists(pylib):
-            return pylib
-
-    libpath2 = os.path.join(libpath, sysconfig.get_config_var('MULTIARCH'))
-    for libname in libnames:
-        pylib = os.path.join(libpath2, libname)
-        if os.path.exists(pylib):
-            return pylib
-
-    tail = ''
-    prefix = include_dir
-    while tail != 'include' and prefix != '/':
-        prefix, tail = os.path.split(prefix)
-    assert prefix != '/'
-
-    for l in ['lib', 'lib64']:
-        libpath = os.path.join(prefix, l)
-        for libname in libnames:
-            pylib = os.path.join(libpath, libname)
-            if os.path.exists(pylib):
-                return pylib
-
-        libpath2 = os.path.join(libpath, sysconfig.get_config_var('MULTIARCH'))
-        for libname in libnames:
-            pylib = os.path.join(libpath2, libname)
-            if os.path.exists(pylib):
-                return pylib
-
-    assert False
-
-
-class priism_build(build):
-    user_options = [
-        ('cxx-compiler=', 'C', 'specify path to C++ compiler'),
-        ('python-root-dir=', 'P', 'specify root directory for Python'),
-        ('python-include-dir=', 'I', 'specify include directory for Python.h (take priority over python-root-dir)'),
-        ('python-library=', 'L', 'specify Python library (take priority over python-root-dir)'),
-        ('numpy-include-dir=', 'N', 'specify include directory for NumPy (take priority over python-root-dir)'),
-        ('use-intel-compiler=', 'X', 'use intel C++ compiler to build sparseimaging (yes|no)')
-    ]
-
-    def initialize_options(self):
-        super(priism_build, self).initialize_options()
-        self.fftw3_root_dir = None
-        initialize_attr_for_user_options(self)
-        overwrite_attr_for_user_options_by_environ(self)
-
-    def finalize_options(self):
-        super(priism_build, self).finalize_options()
-        if self.python_root_dir is None:
-            # assuming python executable path to PYTHON_ROOT_DIR/bin/python
-            executable_path = sys.executable
-            binary_dir, _ = os.path.split(executable_path)
-            root_dir, _ = os.path.split(binary_dir)
-            self.python_root_dir = root_dir
-        if isinstance(self.use_intel_compiler, str) and self.use_intel_compiler.lower() in ('true', 'yes', 'on'):
-            self.use_intel_compiler = True
-        else:
-            self.use_intel_compiler = False
-        debug_print_user_options(self)
-        print('fftw3-root-dir={}'.format(self.fftw3_root_dir))
-
-    def run(self):
-        super(priism_build, self).run()
-        for cmd in self.get_sub_commands():
-            self.run_command(cmd)
-
-    sub_commands = build.sub_commands + [('build_ext', None)]
-
-
-class priism_build_ext(build_ext):
-    user_options = priism_build.user_options
-
-    def initialize_options(self):
-        super(priism_build_ext, self).initialize_options()
-        self.fftw3_root_dir = None
-        self.priism_build_dir = 'build_ext'
-        initialize_attr_for_user_options(self)
-
-    def finalize_options(self):
-        super(priism_build_ext, self).finalize_options()
-        self.set_undefined_options(
-            'build',
-            *arg_for_set_undefined_options(self)
-        )
-        debug_print_user_options(self)
-
-    def run(self):
-        super(priism_build_ext, self).run()
-        for cmd in self.get_sub_commands():
-            self.run_command(cmd)
-
-        self.build_sakura()
-        self.build_smili()
-        self.install_ext()
-
-    def build_sakura(self):
-        execute_command('make sakurapy', cwd=self.priism_build_dir)
-        execute_command('cmake -DCOMPONENT=Sakura -P cmake_install.cmake', cwd=self.priism_build_dir)
-
-    def build_smili(self):
-        execute_command('make sparseimaging', cwd=self.priism_build_dir)
-        execute_command('cmake -DCOMPONENT=Smili -P cmake_install.cmake', cwd=self.priism_build_dir)
-
-    def install_ext(self):
-        execute_command('make install/fast', cwd=self.priism_build_dir)
-
-    sub_commands = build_ext.sub_commands + [('configure_ext', None)]
 
 
 class download_smili(config):
@@ -305,48 +130,6 @@ class download_smili(config):
             self.download_cmd()
 
 
-class download_sakura(config):
-    user_options = []
-
-    def initialize_options(self):
-        super(download_sakura, self).initialize_options()
-
-        package = 'sakura'
-        target = 'libsakura'
-        version = 'libsakura-5.1.6'
-        zipname = f'{version}.zip'
-        base_url = 'https://github.com/tnakazato/sakura'
-        if IS_GIT_OK:
-            url = base_url + '.git'
-            def clone_and_checkout():
-                execute_command(f'git clone {url}')
-                execute_command(f'git checkout {version}', cwd=package)
-
-            self.download_cmd = clone_and_checkout
-        else:
-            url = base_url + f'/archive/{zipname}'
-            def download_and_extract():
-                download_extract(url, filetype='zip')
-                os.symlink(f'{package}-{version}', package)
-
-            self.download_cmd = download_and_extract
-
-        self.package_directory = package
-        self.target_directory = target
-
-    def finalize_options(self):
-        super(download_sakura, self).finalize_options()
-
-    def run(self):
-        super(download_sakura, self).run()
-
-        if not os.path.exists(self.package_directory):
-            self.download_cmd()
-
-        if not os.path.exists(self.target_directory):
-            os.symlink(f'{self.package_directory}/{self.target_directory}', self.target_directory)
-
-
 class download_eigen(config):
     PACKAGE_NAME = 'eigen'
     PACKAGE_VERSION = '3.3.7'
@@ -372,111 +155,94 @@ class download_eigen(config):
             raise FileNotFoundError(f'Failed to download/extract {package_directory}')
 
 
-class configure_ext(Command):
-    user_options = priism_build.user_options
-
-    def initialize_options(self):
-        is_cmake_ok = check_command_availability('cmake')
-        if not is_cmake_ok:
-            raise PriismDependencyError('Command "cmake" is not found. Please install.')
-        self.fftw3_root_dir = None
-        self.priism_build_dir = None
-        self.build_lib = None
-        initialize_attr_for_user_options(self)
-
-    def finalize_options(self):
-        import numpy as np
-
-        self.set_undefined_options(
-            'build',
-            *arg_for_set_undefined_options(self)
-        )
-        self.set_undefined_options(
-            'build_ext',
-            ('priism_build_dir', 'priism_build_dir'),
-            ('build_lib', 'build_lib')
-        )
-        if self.python_root_dir is None:
-            # assuming python executable path to PYTHON_ROOT_DIR/bin/python
-            executable_path = sys.executable
-            binary_dir, _ = os.path.split(executable_path)
-            root_dir, _ = os.path.split(binary_dir)
-            self.python_root_dir = root_dir
-
-        if self.numpy_include_dir is None:
-            self.numpy_include_dir = np.get_include()
-
-        if self.python_include_dir is None:
-            self.python_include_dir = get_python_inc()
-
-        if self.python_library is None:
-            self.python_library = get_python_library(self.python_include_dir)
-
-        self.python_version = get_python_version()
-
-        debug_print_user_options(self)
-        print('fftw3-root-dir={}'.format(self.fftw3_root_dir))
-
-    def __configure_cmake_command(self):
-        cmd = 'cmake -Wno-dev .. -DCMAKE_INSTALL_PREFIX={}'.format(os.path.relpath(self.build_lib, self.priism_build_dir))
-
-        #if self.python_root_dir is not None:
-        #    cmd += ' -DPYTHON_ROOTDIR={}'.format(self.python_root_dir)
-
-        cmd += ' -DNUMPY_INCLUDE_DIR={}'.format(self.numpy_include_dir)
-
-        cmd += ' -DPYTHON_INCLUDE_PATH={}'.format(self.python_include_dir)
-
-        cmd += ' -DPYTHON_LIBRARY={}'.format(self.python_library)
-
-        cmd += f' -DPYTHON_VERSION={self.python_version}'
-
-        cmd += f' -DEIGEN_DIR={download_eigen.PACKAGE_NAME}-{download_eigen.PACKAGE_VERSION}'
-
-        cmd += ' -DENABLE_TEST=OFF'
-
-        if self.cxx_compiler is not None:
-            cmd += ' -DCMAKE_CXX_COMPILER={}'.format(self.cxx_compiler)
+project_dir = os.path.dirname(os.path.abspath(__file__))
+smili_src_dir = os.path.join(project_dir, 'sparseimaging/c++')
 
 
-        if os.environ.get('USE_INTEL_COMPILER', 'no') in ('true', 'yes', 'on'):
-            self.use_intel_compiler = True
+def use_intel_compiler() -> bool:
+    return os.environ.get('USE_INTEL_COMPILER', 'no') in ('true', 'yes', 'on')
 
-        if self.use_intel_compiler is True:
-            cmd += ' -DUSE_INTEL_COMPILER=ON'
 
-        #print('generated cmake command:')
-        #print('  {}'.format(cmd))
-        return cmd
+def get_smili_build_options():
+    makefile = os.path.join(smili_src_dir, 'makefile')
+    with open(makefile, 'r') as f:
+        makefile_contents = f.readlines()
 
-    def run(self):
-        # download external packages
-        for cmd in self.get_sub_commands():
-            self.run_command(cmd)
+    eigen_include_dir = os.path.join(project_dir, f'{download_eigen.PACKAGE_NAME}-{download_eigen.PACKAGE_VERSION}')
+    optimization_flag = '-O3'
+    fftw3_include_dir = '/usr/include'
+    fftw3_library_dir = '/usr/lib'
+    fftw3_libraries = ['fftw3', 'fftw3_omp']
+    icpc_flag = '-ipo -qopenmp -xHost'
+    cpp_std = '-std=c++11'
 
-        # configure with cmake
-        if not os.path.exists(self.priism_build_dir):
-            os.mkdir(self.priism_build_dir)
+    include_dir = [eigen_include_dir, fftw3_include_dir]
+    library_dir = [fftw3_library_dir]
+    libraries = fftw3_libraries
+    extra_compiler_flag = ['-fPIC', cpp_std, optimization_flag]
+    if use_intel_compiler():
+        extra_compiler_flag.extend(icpc_flag.split())
+    extra_link_flag = ['-shared', '-Xlinker', '-rpath', '-Xlinker', '/usr/lib']
+    return include_dir, library_dir, libraries, extra_compiler_flag, extra_link_flag
 
-        cmd = self.__configure_cmake_command()
-        execute_command(cmd, cwd=self.priism_build_dir)
 
-    sub_commands = build_ext.sub_commands + [('download_sakura', None), ('download_smili', None), ('download_eigen', None)]
+class build_smili(build_ext):
+    def build_extensions(self) -> None:
+        if use_intel_compiler():
+            exe = 'icpc'
+        else:
+            exe = 'g++'
 
+        self.compiler.set_executable('compiler_so', exe)
+        self.compiler.set_executable('compiler_cxx', exe)
+        self.compiler.set_executable('linker_so', exe)
+
+        super().build_extensions()
+
+
+smili_build_options = get_smili_build_options()
+
+
+requirements = require_from_file('requirements.txt')
 
 setup(
     name='priism',
     version=_get_version(),
     packages=find_packages('python', exclude=['priism.test']),
     package_dir={'': 'python'},
-    install_requires=_requires_from_file('requirements.txt'),
+    install_requires=requirements,
+    ext_modules=[
+        Extension(
+            'priism.core.libmfista_fft',
+            sources=[
+                os.path.join(smili_src_dir, 'mfista_tools.cpp'),
+                os.path.join(smili_src_dir, 'mfista_memory.cpp'),
+                os.path.join(smili_src_dir, 'mfista_fft_lib.cpp')
+            ],
+            include_dirs=smili_build_options[0],
+            library_dirs=smili_build_options[1],
+            libraries=smili_build_options[2],
+            extra_compile_args=smili_build_options[3],
+            extra_link_args=smili_build_options[4]
+        ),
+        Extension(
+            'priism.core.libmfista_nufft',
+            sources=[
+                os.path.join(smili_src_dir, 'mfista_tools.cpp'),
+                os.path.join(smili_src_dir, 'mfista_memory.cpp'),
+                os.path.join(smili_src_dir, 'mfista_nufft_lib.cpp')
+            ],
+            include_dirs=smili_build_options[0],
+            library_dirs=smili_build_options[1],
+            libraries=smili_build_options[2],
+            extra_compile_args=smili_build_options[3],
+            extra_link_args=smili_build_options[4]
+        )
+    ],
     cmdclass={
-        'build': priism_build,
-        'build_ext': priism_build_ext,
-        'download_sakura': download_sakura,
+        'build_ext': build_smili,
         'download_smili': download_smili,
         'download_eigen': download_eigen,
-        'configure_ext': configure_ext,
     },
     # to disable egg compression
     zip_safe=False
