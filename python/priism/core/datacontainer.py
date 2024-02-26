@@ -20,7 +20,6 @@ from __future__ import print_function
 import math
 import numpy as np
 
-import priism.external.sakura as sakura
 from . import paramcontainer
 
 
@@ -246,11 +245,11 @@ def grid2ws(grid_real, grid_imag, wgrid_real, wgrid_imag):
     nchan = gridshape[3]
     data_id = 0
     num_vis = len(nonzero_real[0])
-    u = sakura.empty_aligned((num_vis,), dtype=np.int32)
-    v = sakura.empty_like_aligned(u)
-    rdata = sakura.empty_aligned((num_vis,), dtype=np.float64)
-    idata = sakura.empty_like_aligned(rdata)
-    wdata = sakura.empty_like_aligned(rdata)
+    u = np.empty((num_vis,), dtype=np.int32)
+    v = np.empty_like(u)
+    rdata = np.empty((num_vis,), dtype=np.float64)
+    idata = np.empty_like(rdata)
+    wdata = np.empty_like(rdata)
     xpos = 0
     for ipol in range(npol):
         for ichan in range(nchan):

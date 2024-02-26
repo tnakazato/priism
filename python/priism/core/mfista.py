@@ -152,10 +152,11 @@ class SakuraSolver(MfistaSolverBase):
 
         Solve the problem using MFISTA algorithm.
         """
-        import priism.external.sakura as sakura
+        raise NotImplementedError('sakura solver is not implemented yet.')
+        # import priism.external.sakura as sakura
         image_shape = grid_data.shape
-        image_data = sakura.empty_aligned(image_shape, dtype=np.float64)
-        sakura.solvemfista(self.l1, self.ltsqv, grid_data, image_data)
+        image_data = np.empty(image_shape, dtype=np.float64)
+        # sakura.solvemfista(self.l1, self.ltsqv, grid_data, image_data)
 
 
 class MfistaSolverFFT(MfistaSolverTemplate):

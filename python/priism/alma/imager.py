@@ -23,7 +23,6 @@ from . import gridder
 from . import visreader
 from . import visconverter
 from . import imagewriter
-import priism.external.sakura as sakura
 import priism.external.casa as casa
 
 import priism.core.imager as core_imager
@@ -157,12 +156,13 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
         for visparam in self.visparams:
             reader = visreader.VisibilityReader(visparam)
             converter = visconverter.VisibilityConverter(visparam, self.imparam)
-            if parallel:
-                for working_set in sakura.paraMap(self.num_threads,
-                                                  converter.generate_working_set,
-                                                  reader.readvis(interval=interval)):
-                    visgridder.grid(working_set)
-            else:
+            # if parallel:
+            #     for working_set in sakura.paraMap(self.num_threads,
+            #                                       converter.generate_working_set,
+            #                                       reader.readvis(interval=interval)):
+            #         visgridder.grid(working_set)
+            # else:
+            if True:
                 for chunk in reader.readvis(interval=interval):
                     working_set = converter.generate_working_set(chunk)
                     visgridder.grid(working_set)

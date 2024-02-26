@@ -21,7 +21,6 @@ import numpy as np
 #import prism..core as core
 import priism.alma.paramcontainer as paramcontainer
 import priism.alma.gridder as almagridder
-import priism.external.sakura as sakura
 from . import utils
 
 
@@ -69,14 +68,14 @@ class GridderTest(utils.TestBase):
         del self.standard_gridparam
 
     def _generate_ws_template(self, nrow=1, nchan=1, npol=1):
-        u = sakura.empty_aligned((nrow,), dtype=np.float64)
-        v = sakura.empty_like_aligned(u)
-        rdata = sakura.empty_aligned((nrow, npol, nchan,), dtype=np.float32)
-        idata = sakura.empty_like_aligned(rdata)
-        flag = sakura.empty_aligned(rdata.shape, dtype=bool)
-        weight = sakura.empty_aligned((nrow, nchan,), dtype=np.float32)
-        row_flag = sakura.empty_aligned(u.shape, dtype=bool)
-        channel_map = sakura.empty_aligned((nchan,), dtype=np.int32)
+        u = np.empty_aligned((nrow,), dtype=np.float64)
+        v = np.empty_like(u)
+        rdata = np.empty((nrow, npol, nchan,), dtype=np.float32)
+        idata = np.empty_like(rdata)
+        flag = np.empty(rdata.shape, dtype=bool)
+        weight = np.empty((nrow, nchan,), dtype=np.float32)
+        row_flag = np.empty(u.shape, dtype=bool)
+        channel_map = np.empty((nchan,), dtype=np.int32)
         ws = almagridder.GridderWorkingSet(data_id=0,
                                            u=u,
                                            v=v,

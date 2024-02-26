@@ -25,7 +25,6 @@ import priism.alma.paramcontainer as paramcontainer
 import priism.alma.visreader as visreader
 import priism.alma.visconverter as visconverter
 import priism.external.casa as casa
-import priism.external.sakura as sakura
 from . import utils
 
 
@@ -367,80 +366,80 @@ class VisibilityConverterTest(utils.TestBase):
         self.assertLess(abs(ws.u[0]), eps)
         self.assertLess(abs(ws.v[0]), eps)
 
-    def test_parallel(self):
-        # create reader
-        reader = visreader.VisibilityReader(self.visparam)
+    # def test_parallel(self):
+    #     # create reader
+    #     reader = visreader.VisibilityReader(self.visparam)
 
-        # create converter
-        start = 3
-        width = 10
-        nchan = 1
-        converter = self.get_converter(start, width, nchan)
+    #     # create converter
+    #     start = 3
+    #     width = 10
+    #     nchan = 1
+    #     converter = self.get_converter(start, width, nchan)
 
-        max_nrow = 16
+    #     max_nrow = 16
 
-        num_measure = 10
-        serial_results = np.empty(num_measure, dtype=np.float32)
-        parallel_results = np.empty_like(serial_results)
-        conv = lambda chunk: (chunk['chunk_id'], converter.generate_working_set(chunk))
-        for i in range(num_measure):
-            # serial run
-            ws_serial = []
-            start_serial = time.time()
-            for chunk_id, ws in map(conv,
-                                    reader.readvis(nrow=max_nrow)):
-                ws_serial.append((chunk_id, ws))
-            end_serial = time.time()
+    #     num_measure = 10
+    #     serial_results = np.empty(num_measure, dtype=np.float32)
+    #     parallel_results = np.empty_like(serial_results)
+    #     conv = lambda chunk: (chunk['chunk_id'], converter.generate_working_set(chunk))
+    #     for i in range(num_measure):
+    #         # serial run
+    #         ws_serial = []
+    #         start_serial = time.time()
+    #         for chunk_id, ws in map(conv,
+    #                                 reader.readvis(nrow=max_nrow)):
+    #             ws_serial.append((chunk_id, ws))
+    #         end_serial = time.time()
 
-            serial_results[i] = end_serial - start_serial
-            print('SERIAL RUN: {0} sec'.format(serial_results[i]))
+    #         serial_results[i] = end_serial - start_serial
+    #         print('SERIAL RUN: {0} sec'.format(serial_results[i]))
 
-            # parallel run
-            num_threads = 2
-            ws_parallel = []
-            start_parallel = time.time()
-            for chunk_id, ws in sakura.paraMap(num_threads,
-                                               conv,
-                                               reader.readvis(nrow=max_nrow)):
-                ws_parallel.append((chunk_id, ws))
-            end_parallel = time.time()
+    #         # parallel run
+    #         num_threads = 2
+    #         ws_parallel = []
+    #         start_parallel = time.time()
+    #         for chunk_id, ws in sakura.paraMap(num_threads,
+    #                                            conv,
+    #                                            reader.readvis(nrow=max_nrow)):
+    #             ws_parallel.append((chunk_id, ws))
+    #         end_parallel = time.time()
 
-            parallel_results[i] = end_parallel - start_parallel
-            print('PARALLEL RUN: {0} sec'.format(parallel_results[i]))
+    #         parallel_results[i] = end_parallel - start_parallel
+    #         print('PARALLEL RUN: {0} sec'.format(parallel_results[i]))
 
-            # consistency check
-            for chunk_id, ws in ws_serial:
-                self.verify_ws_consistency(ws, chunk_id)
-            for chunk_id, ws in ws_parallel:
-                self.verify_ws_consistency(ws, chunk_id)
-            self.assertEqual(len(ws_serial), len(ws_parallel))
-            for _, p in ws_parallel:
-                found = False
-                for i in range(len(ws_serial)):
-                    _, s = ws_serial[i]
-                    if p.data_id == s.data_id:
-                        _, s = ws_serial.pop(i)
-                        self.assertTrue(np.all(p.u == s.u))
-                        self.assertTrue(np.all(p.v == s.v))
-                        self.assertTrue(np.all(p.rdata == s.rdata))
-                        self.assertTrue(np.all(p.idata == s.idata))
-                        self.assertTrue(np.all(p.flag == s.flag))
-                        self.assertTrue(np.all(p.row_flag == s.row_flag))
-                        self.assertTrue(np.all(p.weight == s.weight))
-                        self.assertTrue(np.all(p.channel_map == s.channel_map))
-                        found = True
-                        break
-                self.assertTrue(found)
+    #         # consistency check
+    #         for chunk_id, ws in ws_serial:
+    #             self.verify_ws_consistency(ws, chunk_id)
+    #         for chunk_id, ws in ws_parallel:
+    #             self.verify_ws_consistency(ws, chunk_id)
+    #         self.assertEqual(len(ws_serial), len(ws_parallel))
+    #         for _, p in ws_parallel:
+    #             found = False
+    #             for i in range(len(ws_serial)):
+    #                 _, s = ws_serial[i]
+    #                 if p.data_id == s.data_id:
+    #                     _, s = ws_serial.pop(i)
+    #                     self.assertTrue(np.all(p.u == s.u))
+    #                     self.assertTrue(np.all(p.v == s.v))
+    #                     self.assertTrue(np.all(p.rdata == s.rdata))
+    #                     self.assertTrue(np.all(p.idata == s.idata))
+    #                     self.assertTrue(np.all(p.flag == s.flag))
+    #                     self.assertTrue(np.all(p.row_flag == s.row_flag))
+    #                     self.assertTrue(np.all(p.weight == s.weight))
+    #                     self.assertTrue(np.all(p.channel_map == s.channel_map))
+    #                     found = True
+    #                     break
+    #             self.assertTrue(found)
 
 
-        # verification
-        print('LOG: SERIAL RUN: {0}'.format(serial_results))
-        print('LOG: PARALLEL RUN: {0}'.format(parallel_results))
-        acceleration = serial_results / parallel_results
-        print('LOG: ACCELERATION: {0} (max {1} min {2})'.format(acceleration,
-                                                                acceleration.max(),
-                                                                acceleration.min()))
-        self.assertLess(parallel_results.min(), serial_results.min())
+    #     # verification
+    #     print('LOG: SERIAL RUN: {0}'.format(serial_results))
+    #     print('LOG: PARALLEL RUN: {0}'.format(parallel_results))
+    #     acceleration = serial_results / parallel_results
+    #     print('LOG: ACCELERATION: {0} (max {1} min {2})'.format(acceleration,
+    #                                                             acceleration.max(),
+    #                                                             acceleration.min()))
+    #     self.assertLess(parallel_results.min(), serial_results.min())
 
     def get_chunk_template(self, nrow=1, dd_id=0):
         chunk = {}

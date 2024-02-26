@@ -22,7 +22,6 @@ import scipy.interpolate as interpolate
 import re
 
 import priism.external.casa as casa
-import priism.external.sakura as sakura
 from . import gridder
 
 
@@ -357,12 +356,12 @@ class VisibilityConverter(object):
             # TODO: array shape (order) should be compatible with sakura gridding function
             ws_shape = (nrow, 1, nchan,)
             ws_shape2 = (nrow, nchan,)
-            real = sakura.empty_aligned(ws_shape, dtype=np.float32)
-            imag = sakura.empty_aligned(ws_shape, dtype=np.float32)
-            flag = sakura.empty_aligned(ws_shape, dtype=bool)
-            weight = sakura.empty_aligned(ws_shape2, dtype=np.float32)
-            row_flag = sakura.empty_aligned((nrow,), dtype=bool)
-            channel_map = sakura.empty_aligned((nchan,), dtype=np.int32)
+            real = np.empty(ws_shape, dtype=np.float32)
+            imag = np.empty(ws_shape, dtype=np.float32)
+            flag = np.empty(ws_shape, dtype=bool)
+            weight = np.empty(ws_shape2, dtype=np.float32)
+            row_flag = np.empty((nrow,), dtype=bool)
+            channel_map = np.empty((nchan,), dtype=np.int32)
             channel_map[:] = np.arange(nchan, dtype=np.int32)
 
             # real, image: linear interpolation
@@ -404,12 +403,12 @@ class VisibilityConverter(object):
             # TODO: array shape (order) should be compatible with sakura gridding function
             ws_shape = (nrow, 1, nvischan,)
             ws_shape2 = (nrow, nvischan,)
-            real = sakura.empty_aligned(ws_shape, dtype=np.float32)
-            imag = sakura.empty_aligned(ws_shape, dtype=np.float32)
-            flag = sakura.empty_aligned(ws_shape, dtype=bool)
-            weight = sakura.empty_aligned(ws_shape2, dtype=np.float32)
-            row_flag = sakura.empty_aligned((nrow,), dtype=bool)
-            channel_map = sakura.empty_aligned((nvischan,), dtype=np.int32)
+            real = np.empty(ws_shape, dtype=np.float32)
+            imag = np.empty(ws_shape, dtype=np.float32)
+            flag = np.empty(ws_shape, dtype=bool)
+            weight = np.empty(ws_shape2, dtype=np.float32)
+            row_flag = np.empty((nrow,), dtype=bool)
+            channel_map = np.empty((nvischan,), dtype=np.int32)
             for ichan, chan_chunk in enumerate(in_range):
                 # fill in channel_map
                 f = lsr_frequency[chan_chunk]
@@ -501,8 +500,8 @@ class VisibilityConverter(object):
         offset_v = uvgrid.offsetv
 
         # UVW conversion
-        u = sakura.empty_aligned((nrow, nchan), dtype=uvw.dtype)
-        v = sakura.empty_like_aligned(u)
+        u = np.empty((nrow, nchan), dtype=uvw.dtype)
+        v = np.empty_like(u)
         center_freq = np.asfarray([np.mean(lsr_edge_frequency[i:i+2]) for i in range(nchan)])
         for irow in range(nrow):
             # TODO: phase rotation if image phasecenter is different from
@@ -576,14 +575,14 @@ class VisibilityConverter(object):
             nrow = nrow_ws * nchan
             ws_shape = (nrow, 1, 1,)
             ws_shape2 = (nrow, 1,)
-            real = sakura.empty_aligned(ws_shape, dtype=working_set.rdata.dtype)
-            imag = sakura.empty_aligned(ws_shape, dtype=working_set.idata.dtype)
-            flag = sakura.empty_aligned(ws_shape, dtype=working_set.flag.dtype)
-            weight = sakura.empty_aligned(ws_shape2, dtype=working_set.weight.dtype)
-            row_flag = sakura.empty_aligned((nrow,), dtype=working_set.row_flag.dtype)
-            channel_map = sakura.empty_aligned((1,), dtype=working_set.channel_map.dtype)
-            u = sakura.empty_aligned((nrow,), dtype=working_set.u.dtype)
-            v = sakura.empty_like_aligned(u)
+            real = np.empty(ws_shape, dtype=working_set.rdata.dtype)
+            imag = np.empty(ws_shape, dtype=working_set.idata.dtype)
+            flag = np.empty(ws_shape, dtype=working_set.flag.dtype)
+            weight = np.empty(ws_shape2, dtype=working_set.weight.dtype)
+            row_flag = np.empty((nrow,), dtype=working_set.row_flag.dtype)
+            channel_map = np.empty((1,), dtype=working_set.channel_map.dtype)
+            u = np.empty((nrow,), dtype=working_set.u.dtype)
+            v = np.empty_like(u)
             row_start = 0
             for ichan in vischans:
                 row_end = row_start + nrow_ws

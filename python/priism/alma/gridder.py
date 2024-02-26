@@ -20,7 +20,6 @@ import numpy as np
 
 import priism.core.util as util
 import priism.core.datacontainer as datacontainer
-import priism.external.sakura as sakura
 
 
 class GridderWorkingSet(datacontainer.VisibilityWorkingSet):
@@ -56,14 +55,14 @@ class GridderWorkingSet(datacontainer.VisibilityWorkingSet):
         if hasattr(self, '_pol_map'):
             return self._pol_map
         else:
-            self._pol_map = sakura.empty_aligned((self.npol,), dtype=np.int32)
+            self._pol_map = np.empty((self.npol,), dtype=np.int32)
             self._pol_map[:] = np.arange(self.npol)
             return self._pol_map
 
     @pol_map.setter
     def pol_map(self, value):
         if value is None:
-            #self._pol_map = sakura.empty_aligned((self.npol,), dtype=np.int32)
+            #self._pol_map = np.empty((self.npol,), dtype=np.int32)
             #self._pol_map[:] = range(self.npol)
             pass
         else:
@@ -80,7 +79,7 @@ class GridFunctionUtil(object):
     @staticmethod
     def allocate(convsupport, convsampling, init=False):
         n = (convsupport + 1) * convsampling * 2
-        gf = sakura.empty_aligned((n,), dtype=np.float32)
+        gf = np.empty((n,), dtype=np.float32)
         if init:
             gf[:] = 0.0
         return gf
@@ -294,15 +293,15 @@ class VisibilityGridder(object):
         # sakura gridding function ignore convsupport-pixels
         # from spatial edges
         wsshape = (self.npol, self.nchan)
-        self.wsum_real = sakura.empty_aligned(wsshape, dtype=np.float64)
-        self.wsum_imag = sakura.empty_aligned(wsshape, dtype=np.float64)
+        self.wsum_real = np.empty(wsshape, dtype=np.float64)
+        self.wsum_imag = np.empty(wsshape, dtype=np.float64)
         gridshape = (self.nv + 2 * self.convsupport,
                      self.nu + 2 * self.convsupport,
                      self.npol, self.nchan)
-        self.grid_real = sakura.empty_aligned(gridshape, dtype=np.float32)
-        self.grid_imag = sakura.empty_aligned(gridshape, dtype=np.float32)
-        self.wgrid_real = sakura.empty_aligned(gridshape, dtype=np.float32)
-        self.wgrid_imag = sakura.empty_aligned(gridshape, dtype=np.float32)
+        self.grid_real = np.empty(gridshape, dtype=np.float32)
+        self.grid_imag = np.empty(gridshape, dtype=np.float32)
+        self.wgrid_real = np.empty(gridshape, dtype=np.float32)
+        self.wgrid_imag = np.empty(gridshape, dtype=np.float32)
 
         # zero clear
         self._clear_grid()
@@ -382,14 +381,14 @@ class VisibilityGridder(object):
 
         nonzero_real = np.where(wgrid_real != 0.0)
         nonzero_imag = np.where(wgrid_imag != 0.0)
-        uvgrid_real = sakura.empty_aligned(outgrid_shape, dtype=np.float64)
-        uvgrid_imag = sakura.empty_aligned(outgrid_shape, dtype=np.float64)
-        uvgrid_wreal = sakura.empty_aligned(outgrid_shape, dtype=np.float64)
+        uvgrid_real = np.empty(outgrid_shape, dtype=np.float64)
+        uvgrid_imag = np.empty(outgrid_shape, dtype=np.float64)
+        uvgrid_wreal = np.empty(outgrid_shape, dtype=np.float64)
         uvgrid_wreal[:] = wgrid_real
         if np.all(wgrid_real == wgrid_imag):
             uvgrid_wimag = None
         else:
-            uvgrid_wimag = sakura.empty_aligned(outgrid_shape, dtype=np.float64)
+            uvgrid_wimag = np.empty(outgrid_shape, dtype=np.float64)
             uvgrid_wimag[:] = wgrid_imag
         uvgrid_real[:] = 0.0
         uvgrid_imag[:] = 0.0

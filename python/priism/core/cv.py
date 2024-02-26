@@ -22,7 +22,6 @@ import contextlib
 
 from . import datacontainer
 from . import util
-import priism.external.sakura as sakura
 
 
 class VisibilitySubsetGenerator(object):
@@ -108,11 +107,11 @@ class VisibilitySubsetHandler(object):
             # visibility data to be cached
             # here, we assume npol == 1 (Stokes visibility I_v) and nchan == 1
             num_subvis = len(random_index)
-            rcache = sakura.empty_aligned((num_subvis,), dtype=rdata.dtype)
-            icache = sakura.empty_like_aligned(rcache)
-            wcache = sakura.empty_like_aligned(rcache)
-            ucache = sakura.empty_aligned((num_subvis,), dtype=u.dtype)
-            vcache = sakura.empty_like_aligned(ucache)
+            rcache = np.empty((num_subvis,), dtype=rdata.dtype)
+            icache = np.empty_like(rcache)
+            wcache = np.empty_like(rcache)
+            ucache = np.empty((num_subvis,), dtype=u.dtype)
+            vcache = np.empty_like(ucache)
 
             rcache[:] = rdata[random_index]
             icache[:] = idata[random_index]
@@ -123,11 +122,11 @@ class VisibilitySubsetHandler(object):
             # generate subset
             assert num_subvis < num_vis
             num_active = num_vis - num_subvis
-            ractive = sakura.empty_aligned((num_active,), dtype=rdata.dtype)
-            iactive = sakura.empty_like_aligned(ractive)
-            wactive = sakura.empty_like_aligned(ractive)
-            uactive = sakura.empty_aligned((num_active,), dtype=u.dtype)
-            vactive = sakura.empty_like_aligned(uactive)
+            ractive = np.empty((num_active,), dtype=rdata.dtype)
+            iactive = np.empty_like(ractive)
+            wactive = np.empty_like(ractive)
+            uactive = np.empty((num_active,), dtype=u.dtype)
+            vactive = np.empty_like(uactive)
             ractive[:] = rdata[mask]
             iactive[:] = idata[mask]
             wactive[:] = weight[mask]
@@ -239,8 +238,8 @@ class GriddedVisibilitySubsetHandler(object):
         # | 3| 4| 5|
         # | 0| 1| 2|
         num_subvis = len(random_index)
-        u = sakura.empty_aligned((num_subvis,), dtype=np.float64)
-        v = sakura.empty_like_aligned(u)
+        u = np.empty((num_subvis,), dtype=np.float64)
+        v = np.empty_like(u)
         uid = self.active_index[1][random_index]
         vid = self.active_index[0][random_index]
         cellu = self.uvgrid.cellu
@@ -260,9 +259,9 @@ class GriddedVisibilitySubsetHandler(object):
         assert len(gdata_shape) == 4
         assert gdata_shape[2] == 1  # npol should be 1
         assert gdata_shape[3] == 1  # nchan should be 1
-        real = sakura.empty_aligned((num_subvis,), dtype=np.float32)
-        imag = sakura.empty_like_aligned(real)
-        wreal = sakura.empty_like_aligned(real)
+        real = np.empty((num_subvis,), dtype=np.float32)
+        imag = np.empty_like(real)
+        wreal = np.empty_like(real)
 
         real[:] = grid_real[self.active_index][random_index]
         imag[:] = grid_imag[self.active_index][random_index]
