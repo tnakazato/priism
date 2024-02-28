@@ -101,6 +101,7 @@ from .casatools import OpenMS
 from .casatools import OpenMSMetaData
 from .casatools import OpenImage
 from .casatools import casalog
+from .casatasks import run_casa_task
 
 
 def adjust_casalog_level(level='INFO'):

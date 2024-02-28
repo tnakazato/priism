@@ -316,6 +316,6 @@ class ImageMetaInfoContainer(base_container.ParamContainer):
 
 
 class GridParamContainer(base_container.ParamContainer):
-    def __init__(self, convsupport=3, convsampling=100, gridfunction=None):
+    def __init__(self, wproject: bool = False, memfrac: float = 0.5):
         self.InitContainer(locals())
 

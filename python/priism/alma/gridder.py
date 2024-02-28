@@ -16,11 +16,17 @@
 # along with PRIISM.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import absolute_import
 
+import os
+from typing import Any, List, Tuple, TYPE_CHECKING
+
 import numpy as np
 
 import priism.core.util as util
 import priism.core.datacontainer as datacontainer
+from priism.external.casa import run_casa_task, CreateCasaQuantity, OpenMS, OpenTableForRead
 
+if TYPE_CHECKING:
+    from priism.alma.paramcontainer import GridParamContainer, ImageParamContainer, VisParamContainer
 
 class GridderWorkingSet(datacontainer.VisibilityWorkingSet):
     """
@@ -75,112 +81,112 @@ class GridderWorkingSet(datacontainer.VisibilityWorkingSet):
                 raise ValueError('invalid pol_map ({0}). Should be int list or None.'.format(value))
 
 
-class GridFunctionUtil(object):
-    @staticmethod
-    def allocate(convsupport, convsampling, init=False):
-        n = (convsupport + 1) * convsampling * 2
-        gf = np.empty((n,), dtype=np.float32)
-        if init:
-            gf[:] = 0.0
-        return gf
+# class GridFunctionUtil(object):
+#     @staticmethod
+#     def allocate(convsupport, convsampling, init=False):
+#         n = (convsupport + 1) * convsampling * 2
+#         gf = np.empty((n,), dtype=np.float32)
+#         if init:
+#             gf[:] = 0.0
+#         return gf
 
-    @staticmethod
-    def box(convsupport, convsampling):
-        """
-        Generate Box gridding kernel whose value is 1.0 inside
-        convsupport pixel while 0.0 otherwise.
+#     @staticmethod
+#     def box(convsupport, convsampling):
+#         """
+#         Generate Box gridding kernel whose value is 1.0 inside
+#         convsupport pixel while 0.0 otherwise.
 
-        convsupport -- support radius in pixel
-        convsampling -- number of sampling per pixel
-        """
-        gf = GridFunctionUtil.allocate(convsupport, convsampling)
-        gf[:convsampling] = 1.0
-        gf[convsampling:] = 0.0
-        return gf
+#         convsupport -- support radius in pixel
+#         convsampling -- number of sampling per pixel
+#         """
+#         gf = GridFunctionUtil.allocate(convsupport, convsampling)
+#         gf[:convsampling] = 1.0
+#         gf[convsampling:] = 0.0
+#         return gf
 
-    @staticmethod
-    def gauss(convsupport, convsampling, hwhm):
-        """
-        Generate Gaussian gridding kernel
+#     @staticmethod
+#     def gauss(convsupport, convsampling, hwhm):
+#         """
+#         Generate Gaussian gridding kernel
 
-        convsupport -- support radius in pixel
-        convsampling -- number of sampling per pixel
-        hwhm -- Half-Width of Half-Maximum in pixel unit
-        """
-        gf = GridFunctionUtil.allocate(convsupport, convsampling)
-        gf[:] = 0.0
-        sigma = float(hwhm) / np.sqrt(2.0 * np.log(2.0))
-        m = convsupport * convsampling
-        for i in range(m):
-            x = float(i) / float(convsampling)
-            gf[i] = np.exp(-(x * x) / (2.0 * sigma * sigma))
-        return gf
+#         convsupport -- support radius in pixel
+#         convsampling -- number of sampling per pixel
+#         hwhm -- Half-Width of Half-Maximum in pixel unit
+#         """
+#         gf = GridFunctionUtil.allocate(convsupport, convsampling)
+#         gf[:] = 0.0
+#         sigma = float(hwhm) / np.sqrt(2.0 * np.log(2.0))
+#         m = convsupport * convsampling
+#         for i in range(m):
+#             x = float(i) / float(convsampling)
+#             gf[i] = np.exp(-(x * x) / (2.0 * sigma * sigma))
+#         return gf
 
-    @staticmethod
-    def sf(convsupport, convsampling):
-        """
-        Generate prolate-Spheroidal gridding kernel
+#     @staticmethod
+#     def sf(convsupport, convsampling):
+#         """
+#         Generate prolate-Spheroidal gridding kernel
 
-        convsupport -- support radius in pixel
-        convsampling -- number of sampling per pixel
-        """
-        gf = GridFunctionUtil.allocate(convsupport, convsampling)
-        m = convsupport * convsampling
-        for i in range(m):
-            nu = float(i) / float(m)
-            val = GridFunctionUtil.grdsf(nu)
-            gf[i] = (1.0 - nu * nu) * val
-        gf[m:] = 0.0
-        # normalize so peak is 1.0
-        gf *= 1.0 / gf[0]
-        return gf
+#         convsupport -- support radius in pixel
+#         convsampling -- number of sampling per pixel
+#         """
+#         gf = GridFunctionUtil.allocate(convsupport, convsampling)
+#         m = convsupport * convsampling
+#         for i in range(m):
+#             nu = float(i) / float(m)
+#             val = GridFunctionUtil.grdsf(nu)
+#             gf[i] = (1.0 - nu * nu) * val
+#         gf[m:] = 0.0
+#         # normalize so peak is 1.0
+#         gf *= 1.0 / gf[0]
+#         return gf
 
-    @staticmethod
-    def grdsf(nu):
-        """
-        cf. casacore/scimath_f/grdsf.f
-        """
-        P0 = [8.203343e-2, -3.644705e-1, 6.278660e-1,
-              -5.335581e-1, 2.312756e-1]
-        P1 = [4.028559e-3, -3.697768e-2, 1.021332e-1,
-              -1.201436e-1, 6.412774e-2]
-        Q0 = [1.0000000e0, 8.212018e-1, 2.078043e-1]
-        Q1 = [1.0000000e0, 9.599102e-1, 2.918724e-1]
-        nP = 4
-        nQ = 2
+#     @staticmethod
+#     def grdsf(nu):
+#         """
+#         cf. casacore/scimath_f/grdsf.f
+#         """
+#         P0 = [8.203343e-2, -3.644705e-1, 6.278660e-1,
+#               -5.335581e-1, 2.312756e-1]
+#         P1 = [4.028559e-3, -3.697768e-2, 1.021332e-1,
+#               -1.201436e-1, 6.412774e-2]
+#         Q0 = [1.0000000e0, 8.212018e-1, 2.078043e-1]
+#         Q1 = [1.0000000e0, 9.599102e-1, 2.918724e-1]
+#         nP = 4
+#         nQ = 2
 
-        val = 0.0
-        if 0.0 <= nu and nu < 0.75:
-            P = P0
-            Q = Q0
-            nuend = 0.75
-        elif 0.75 <= nu and nu <= 1.0:
-            P = P1
-            Q = Q1
-            nuend = 1.0
-        else:
-            val = 0.0
-            return val
+#         val = 0.0
+#         if 0.0 <= nu and nu < 0.75:
+#             P = P0
+#             Q = Q0
+#             nuend = 0.75
+#         elif 0.75 <= nu and nu <= 1.0:
+#             P = P1
+#             Q = Q1
+#             nuend = 1.0
+#         else:
+#             val = 0.0
+#             return val
 
-        top = P[0]
-        delnusq = nu * nu - nuend * nuend
-        kdelnusq = 1.0
-        for k in range(1, nP + 1):
-            kdelnusq *= delnusq
-            top += P[k] * kdelnusq
+#         top = P[0]
+#         delnusq = nu * nu - nuend * nuend
+#         kdelnusq = 1.0
+#         for k in range(1, nP + 1):
+#             kdelnusq *= delnusq
+#             top += P[k] * kdelnusq
 
-        bot = Q[0]
-        kdelnusq = 1.0
-        for k in range(1, nQ + 1):
-            kdelnusq *= delnusq
-            bot += Q[k] * kdelnusq
+#         bot = Q[0]
+#         kdelnusq = 1.0
+#         for k in range(1, nQ + 1):
+#             kdelnusq *= delnusq
+#             bot += Q[k] * kdelnusq
 
-        if bot != 0.0:
-            val = top / bot
-        else:
-            val = 0.0
+#         if bot != 0.0:
+#             val = top / bot
+#         else:
+#             val = 0.0
 
-        return val
+#         return val
 
 
 class GridderResult(object):
@@ -204,62 +210,54 @@ class GridderResult(object):
         self.num_ws = num_ws if num_ws is not None else 0
 
 
+def is_channel_value(value: Any) -> bool:
+    """Check if given quantity string doesn't have unit.
+
+    Args:
+        value: string to be inspected
+
+    Returns:
+        True if it doesn't have unit, False otherwise.
+    """
+    if isinstance(value, str):
+        return value.isdigit()
+
+    return isinstance(value, int)
+
+
+
 class VisibilityGridder(object):
     """
     Configure grid and accumulate data onto each grid position.
     Data should be provided in the form of GridderWorkingSet
     instance.
     """
-    def __init__(self, gridparam, imageparam):
+    GRID_DATA_DIR = '.priism'
+    GRID_DATA_NAME = 'gridder.ms'
+
+    def __init__(
+            self, gridparam: 'GridParamContainer',
+            visparams: 'List[VisParamContainer]',
+            imageparam: 'ImageParamContainer'
+        ):
+        """Initialize gridder.
+
+        Args:
+            gridparam: Gridding parameter
+            visparams: List of visibility parameters
+            imageparam: Imaging parameter
+        """
         self.gridparam = gridparam
+        self.visparams = visparams
         self.imageparam = imageparam
-        self.num_ws = 0
+        # self.num_ws = 0
         self._init()
 
-    @property
-    def convsupport(self):
-        if hasattr(self, 'gridparam'):
-            return self.gridparam.convsupport
-        else:
-            return None
-
-    @property
-    def convsampling(self):
-        if hasattr(self, 'gridparam'):
-            return self.gridparam.convsampling
-        else:
-            return None
-
-    @property
-    def weight_only(self):
-        return False
-
-    @property
-    def nchan(self):
-        if hasattr(self, 'imageparam'):
-            nchan = self.imageparam.nchan
-            if nchan > 0:
-                return nchan
-            else:
-                return 1
-        else:
-            return 1
-
-    @property
-    def nkernel(self):
-        if hasattr(self, 'gridparam'):
-            return len(self.gridparam.gridfunction)
-        else:
-            return 0
-
-    @property
-    def gridfunction(self):
-        if hasattr(self, 'gridparam'):
-            return self.gridparam.gridfunction
-        else:
-            return None
-
     def _init(self):
+        os.makedirs(self.GRID_DATA_DIR, exist_ok=True)
+
+    def _init_old(self):
+
         # grid parameter from visibility selection parameter
         #  sel = self.visparam.as_msindex()
         #  poldd = sel['poldd']
@@ -317,12 +315,99 @@ class VisibilityGridder(object):
         self.wsum_real[:] = 0
         self.wsum_imag[:] = 0
 
-    def grid(self, ws_list):
+    def __to_freq(self, visparam: 'VisParamContainer', start: str, width: str) -> Tuple[str, str]:
+        """Convert channel value into frequency quantity.
+
+        Args:
+            visparam: Visibility data selection parameter
+            start: start value of image's spectral axis
+            width: width of image's spectral axis
+
+        Returns:
+            start and width as frequency quantities
+        """
+        vis = visparam.vis
+        with OpenMS(vis) as ms:
+            ms.msselect({'spw': visparam.spw})
+            selected = ms.msselectedindices()
+            selected_spws = selected['spw']
+
+        num_spws = len(selected_spws)
+        with OpenTableForRead(os.path.join(vis, 'SPECTRAL_WINDOW')) as tb:
+            if is_channel_value(start):
+                if num_spws > 1:
+                    raise RuntimeError('Spw selection must be unique when start is specified as channel.')
+                spw_id = selected_spws[0]
+                chan_freq = tb.getcell('CHAN_FREQ', spw_id)
+                chan_width = tb.getcell('CHAN_WIDTH', spw_id)
+                nchan = len(chan_freq)
+                start = int(start)
+                if 0 <= start and start < nchan:
+                    start = chan_freq[start] - chan_width[start] / 2
+                else:
+                    freq_0 = chan_freq[0] - chan_width[0] / 2
+                    start = freq_0 + start * chan_width[0]
+
+            if is_channel_value(width):
+                if num_spws > 1:
+                    raise RuntimeError('Spw selection must be unique when width is specified as channel.')
+                spw_id = selected_spws[0]
+                width = int(width)
+                chan_width = tb.getcell('CHAN_WIDTH', spw_id)
+                width = width * chan_width[0]
+
+        return f'{start}Hz', f'{width}Hz'
+
+    def _configure_spectral_axis(self, visparam: 'VisParamContainer') -> dict:
+        """Configure image channel for given MS.
+
+        Args:
+            visparam: Visibility data selection parameter
+
+        Returns:
+            image channel configuration as dict
+        """
+        start = self.imageparam.start
+        width = self.imageparam.width
+        nchan = self.imageparam.nchan
+        start, width = self.__to_freq(visparam, start, width)
+
+        return {
+            'start': start,
+            'width': width,
+            'nchan': nchan
+        }
+
+    def grid(self):
         """
         Accumulate data provided as a list of working set onto grid.
         """
-        for ws in ws_list:
-            self.grid_ws(ws)
+        # for ws in ws_list:
+        #     self.grid_ws(ws)
+        params = {}
+        # configure msuvbin parameters here
+        params['outputvis'] = os.path.join(
+            self.GRID_DATA_DIR,
+            self.GRID_DATA_NAME
+        )
+        params['imsize'] = self.imageparam.imsize
+        params['cell'] = self.imageparam.cell
+        if not isinstance(params['cell'], str):
+            # could be a list
+            params['cell'] = params['cell'][0]
+        params['ncorr'] = 1  # Stokes I
+        params['wproject'] = self.gridparam.wproject
+        params['memfrac'] = self.gridparam.memfrac
+        for visparam in self.visparams:
+            params['vis'] = visparam.vis
+            # data selection parameters
+            params.update(
+                visparam.as_msselection()
+            )
+            params.update(
+                self._configure_spectral_axis(visparam)
+            )
+            run_casa_task('msuvbin', **params)
 
     def grid_ws(self, ws):
         """

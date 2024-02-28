@@ -133,41 +133,29 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
         """
         self.imparam = paramcontainer.ImageParamContainer.CreateContainer(**locals())
 
-    def configuregrid(self, convsupport, convsampling, gridfunction):
-        if isinstance(gridfunction, str):
-            gridfunction = gridder.GridFunctionUtil.sf(convsupport, convsampling)
+    def configuregrid(self, wproject: bool = False, memfrac: float = 0.5):
+        """Configure gridding options.
+
+        Args:
+            wproject: True to enable wprojection correction. Defaults to False.
+            memfrac: Fraction of memory to be used. Defaults to 0.5.
+        """
         self.gridparam = paramcontainer.GridParamContainer.CreateContainer(**locals())
 
     @casa.adjust_casalog_level('WARN')
-    def gridvis(self, parallel=False):
+    def gridvis(self):
         """
         Grid visibility data on uv-plane.
         """
-        # gridvis consists of several steps:
-        #     1. select and read data according to data selection
-        #     2. pre-gridding data processing
-        #     3. give the data to gridder
-        #     4. post-gridding data processing
-        #
-        visgridder = gridder.VisibilityGridder(self.gridparam, self.imparam)
+        visgridder = gridder.VisibilityGridder(
+            self.gridparam,
+            self.visparams,
+            self.imparam
+        )
+        visgridder.grid()
 
-        # workaround for strange behavior of ms iterator
-        interval = 1.0e-16
-        for visparam in self.visparams:
-            reader = visreader.VisibilityReader(visparam)
-            converter = visconverter.VisibilityConverter(visparam, self.imparam)
-            # if parallel:
-            #     for working_set in sakura.paraMap(self.num_threads,
-            #                                       converter.generate_working_set,
-            #                                       reader.readvis(interval=interval)):
-            #         visgridder.grid(working_set)
-            # else:
-            if True:
-                for chunk in reader.readvis(interval=interval):
-                    working_set = converter.generate_working_set(chunk)
-                    visgridder.grid(working_set)
-        self.griddedvis = visgridder.get_result()
-        self.working_set = visgridder.get_result2()
+        # self.griddedvis = visgridder.get_result()
+        # self.working_set = visgridder.get_result2()
 
     @casa.adjust_casalog_level('WARN')
     def readvis(self, parallel=False):
