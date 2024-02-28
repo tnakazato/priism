@@ -93,14 +93,14 @@ def download_extract(url, filetype):
             tf.extractall()
 
 
-class download_smili(config):
-    user_options = []
+class download_smili:
+    PACKAGE_NAME = 'sparseimaging'
+    PACKAGE_COMMIT_HASH = '46268c1c66be33a8b09c2ebe4f59a841e3d3b21e'
 
-    def initialize_options(self):
-        super(download_smili, self).initialize_options()
-
-        package = 'sparseimaging'
-        commit = '46268c1c66be33a8b09c2ebe4f59a841e3d3b21e'
+    @classmethod
+    def run(cls):
+        package = cls.PACKAGE_NAME
+        commit = cls.PACKAGE_COMMIT_HASH
         zipname = f'{commit}.zip'
         base_url = f'https://github.com/ikeda46/{package}'
         if IS_GIT_OK:
@@ -109,51 +109,49 @@ class download_smili(config):
                 execute_command(f'git clone {url}')
                 execute_command(f'git checkout {commit}', cwd=package)
 
-            self.download_cmd = clone_and_checkout
+            download_cmd = clone_and_checkout
         else:
             url = base_url + f'/archive/{zipname}'
             def download_and_extract():
                 download_extract(url, filetype='zip')
                 os.symlink(f'{package}-{commit}', package)
 
-            self.download_cmd = download_and_extract
+            download_cmd = download_and_extract
 
-        self.package_directory = package
+        package_directory = package
 
-    def finalize_options(self):
-        super(download_smili, self).finalize_options()
+        if not os.path.exists(package_directory):
+            download_cmd()
 
-    def run(self):
-        super(download_smili, self).run()
-
-        if not os.path.exists(self.package_directory):
-            self.download_cmd()
+        # abort if sparseimaging directory doesn't exist
+        if not os.path.exists(package_directory):
+            raise FileNotFoundError(f'Failed to download/extract {package_directory}')
 
 
-class download_eigen(config):
+class download_eigen:
     PACKAGE_NAME = 'eigen'
     PACKAGE_VERSION = '3.3.7'
     PACKAGE_COMMIT_HASH = '21ae2afd4edaa1b69782c67a54182d34efe43f9c'
 
-    user_options = []
-
-    def run(self):
-        super(download_eigen, self).run()
-
-        package_directory = f'{self.PACKAGE_NAME}-{self.PACKAGE_VERSION}'
+    @classmethod
+    def run(cls):
+        package_directory = f'{cls.PACKAGE_NAME}-{cls.PACKAGE_VERSION}'
         if not os.path.exists(package_directory):
             tgzname = f'{package_directory}.tar.gz'
-            url = f'https://gitlab.com/libeigen/eigen/-/archive/{self.PACKAGE_VERSION}/{tgzname}'
+            url = f'https://gitlab.com/libeigen/eigen/-/archive/{cls.PACKAGE_VERSION}/{tgzname}'
             download_extract(url, filetype='tar')
 
             # sometimes directory name is suffixed with commit hash
-            if os.path.exists(f'{self.PACKAGE_NAME}-{self.PACKAGE_COMMIT_HASH}'):
-                os.symlink(f'{self.PACKAGE_NAME}-{self.PACKAGE_COMMIT_HASH}', package_directory)
+            if os.path.exists(f'{cls.PACKAGE_NAME}-{cls.PACKAGE_COMMIT_HASH}'):
+                os.symlink(f'{cls.PACKAGE_NAME}-{cls.PACKAGE_COMMIT_HASH}', package_directory)
 
         # abort if eigen directory doesn't exist
         if not os.path.exists(package_directory):
             raise FileNotFoundError(f'Failed to download/extract {package_directory}')
 
+
+download_eigen.run()
+download_smili.run()
 
 project_dir = os.path.dirname(os.path.abspath(__file__))
 smili_src_dir = os.path.join(project_dir, 'sparseimaging/c++')
