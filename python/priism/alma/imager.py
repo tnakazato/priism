@@ -152,7 +152,7 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
             self.visparams,
             self.imparam
         )
-        visgridder.grid()
+        self.working_set = visgridder.grid()
 
         # self.griddedvis = visgridder.get_result()
         # self.working_set = visgridder.get_result2()

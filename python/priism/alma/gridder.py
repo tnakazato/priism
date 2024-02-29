@@ -409,6 +409,49 @@ class VisibilityGridder(object):
             )
             run_casa_task('msuvbin', **params)
 
+        return self._get_ws()
+
+    def _get_ws(self):
+        vis = os.path.join(self.GRID_DATA_DIR, self.GRID_DATA_NAME)
+        with OpenTableForRead(vis) as tb:
+            data = tb.getcol('DATA')
+            weight = tb.getcol('WEIGHT_SPECTRUM')
+            nrow = tb.nrows()
+
+        # (u, v) is converted to array indices.
+        # Data order is assumed to be as follows:
+        #
+        #        0:(u0, v0),        1:(u1, v0), ...,  N-1:(uN, v0),
+        #        N:(u0, v1),      N+1:(u1, v1), ..., 2N-1:(uN, v1),
+        #   ...
+        #   (M-1)N:(u0, vM), (M-1)N+1:(u1, vM), ..., MN-1:(uN, vM)
+        #
+        # where the format is array_index:(u_vaue, v_value).
+        nu = self.imageparam.imsize[0]
+        nv = self.imageparam.imsize[1]
+        assert nrow == nu * nv
+        u = np.empty(nrow, dtype=int)
+        v = np.empty(nrow, dtype=int)
+        for i in range(nv):
+            start = i * nu
+            end = start + nu
+            v[start:end] = i
+            if i == 0:
+                u[start:end] = np.arange(nu, dtype=int)
+            else:
+                u[start:end] = u[start - nu:start]
+
+        idx = weight.nonzero()
+        data_nonzero = data[idx]
+        return datacontainer.VisibilityWorkingSet(
+            data_id=0,
+            u=u[idx[-1]],
+            v=v[idx[-1]],
+            rdata=data_nonzero.real,
+            idata=data_nonzero.imag,
+            weight=weight[idx]
+        )
+
     def grid_ws(self, ws):
         """
         Accumulate data provided as working set onto grid.
