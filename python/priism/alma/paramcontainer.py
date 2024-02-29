@@ -225,16 +225,23 @@ class ImageMetaInfoContainer(base_container.ParamContainer):
             observingdate = msmd.timerangeforobs(0)
             position = msmd.observatoryposition(0)
             if field is None:
-                field_id = msmd.fieldsforintent('OBSERVE_TARGET#ON_SOURCE')[0]
+                target_fields = msmd.fieldsforintent('OBSERVE_TARGET#ON_SOURCE')
+                if len(target_fields) == 0:
+                    field_id = 0
+                else:
+                    field_id = target_fields[0]
             else:
                 field_id = field
             source_id = msmd.sourceidforfield(field_id)
-            spw_intent = msmd.spwsforintent('OBSERVE_TARGET#ON_SOURCE')
             if spw_selected is None or len(spw_selected) == 0:
-                spw_field = msmd.spwsforfield(field_id)
-                spw_science = list(set(spw_field).intersection(spw_intent))
-            else:
+                spw_selected = msmd.spwsforfield(field_id)
+
+            spw_intent = msmd.spwsforintent('OBSERVE_TARGET#ON_SOURCE')
+            if len(spw_intent) > 0:
                 spw_science = list(set(spw_selected).intersection(spw_intent))
+            else:
+                spw_science = spw_selected
+
             spw_science.sort()
 
         source_table = os.path.join(vis, 'SOURCE')
