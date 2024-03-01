@@ -17,6 +17,7 @@
 from __future__ import absolute_import
 
 import os
+import shutil
 from typing import Any, List, Tuple, TYPE_CHECKING
 
 import numpy as np
@@ -254,7 +255,10 @@ class VisibilityGridder(object):
         self._init()
 
     def _init(self):
-        os.makedirs(self.GRID_DATA_DIR, exist_ok=True)
+        # if directory exists, remove it to clear gridding data
+        if os.path.exists(self.GRID_DATA_DIR):
+            shutil.rmtree(self.GRID_DATA_DIR)
+        os.mkdir(self.GRID_DATA_DIR)
 
     def _init_old(self):
 
