@@ -415,7 +415,7 @@ class VisibilityGridder(object):
         vis = os.path.join(self.GRID_DATA_DIR, self.GRID_DATA_NAME)
         with OpenTableForRead(vis) as tb:
             data = tb.getcol('DATA')
-            weight = tb.getcol('WEIGHT_SPECTRUM')
+            weight_sp = tb.getcol('WEIGHT_SPECTRUM')
             nrow = tb.nrows()
 
         # (u, v) is converted to array indices.
@@ -429,27 +429,54 @@ class VisibilityGridder(object):
         # where the format is array_index:(u_vaue, v_value).
         nu = self.imageparam.imsize[0]
         nv = self.imageparam.imsize[1]
+        offsetu = self.imageparam.uvgridconfig.offsetu
+        offsetv = self.imageparam.uvgridconfig.offsetv
         assert nrow == nu * nv
-        u = np.empty(nrow, dtype=int)
-        v = np.empty(nrow, dtype=int)
+
+        u_all = np.empty(nrow, dtype=int)
+        v_all = np.empty_like(u_all)
         for i in range(nv):
             start = i * nu
             end = start + nu
-            v[start:end] = i
+            v_all[start:end] = nv - i - 1
             if i == 0:
-                u[start:end] = np.arange(nu, dtype=int)
+                u_all[start:end] = np.arange(nu, dtype=int)
             else:
-                u[start:end] = u[start - nu:start]
+                u_all[start:end] = u_all[start - nu:start]
 
-        idx = weight.nonzero()
-        data_nonzero = data[idx]
+        idx = weight_sp[0, 0].nonzero()[0]
+        ndata = len(idx)
+
+        # we should hold visibilities read from MS as well as
+        # their complex conjugates
+        u = np.empty(2 * ndata, dtype=int)
+        v = np.empty_like(u)
+        rdata = np.empty_like(u, dtype=complex)
+        idata = np.empty_like(rdata)
+        weight = np.empty_like(u, dtype=float)
+
+        # data from gridded MS
+        u[:ndata] = u_all[idx]
+        v[:ndata] = v_all[idx]
+        data_nonzero = data[0, 0, idx]
+        rdata[:ndata] = data_nonzero.real
+        idata[:ndata] = data_nonzero.imag
+        weight[:ndata] = weight_sp[0, 0, idx]
+
+        # complex conjugates
+        u[ndata:] = 2 * offsetu - u[:ndata]
+        v[ndata:] = 2 * offsetv - v[:ndata]
+        rdata[ndata:] = rdata[:ndata]
+        idata[ndata:] = - idata[:ndata]
+        weight[ndata:] = weight[:ndata]
+
         return datacontainer.VisibilityWorkingSet(
             data_id=0,
-            u=u[idx[-1]],
-            v=v[idx[-1]],
-            rdata=data_nonzero.real,
-            idata=data_nonzero.imag,
-            weight=weight[idx]
+            u=u,
+            v=v,
+            rdata=rdata,
+            idata=idata,
+            weight=weight
         )
 
     def grid_ws(self, ws):
