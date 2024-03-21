@@ -455,7 +455,7 @@ class VisibilityGridder(object):
         # their complex conjugates
         u = np.empty(2 * ndata, dtype=int)
         v = np.empty_like(u)
-        rdata = np.empty_like(u, dtype=complex)
+        rdata = np.empty_like(u, dtype=float)
         idata = np.empty_like(rdata)
         weight = np.empty_like(u, dtype=float)
 
