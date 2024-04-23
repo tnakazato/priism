@@ -21,6 +21,7 @@ import shutil
 from typing import Any, List, Tuple, TYPE_CHECKING
 
 import numpy as np
+from scipy.signal import fftconvolve
 
 import priism.core.util as util
 import priism.core.datacontainer as datacontainer
@@ -82,7 +83,7 @@ class GridderWorkingSet(datacontainer.VisibilityWorkingSet):
                 raise ValueError('invalid pol_map ({0}). Should be int list or None.'.format(value))
 
 
-# class GridFunctionUtil(object):
+class GridFunctionUtil(object):
 #     @staticmethod
 #     def allocate(convsupport, convsampling, init=False):
 #         n = (convsupport + 1) * convsampling * 2
@@ -142,53 +143,82 @@ class GridderWorkingSet(datacontainer.VisibilityWorkingSet):
 #         gf *= 1.0 / gf[0]
 #         return gf
 
-#     @staticmethod
-#     def grdsf(nu):
-#         """
-#         cf. casacore/scimath_f/grdsf.f
-#         """
-#         P0 = [8.203343e-2, -3.644705e-1, 6.278660e-1,
-#               -5.335581e-1, 2.312756e-1]
-#         P1 = [4.028559e-3, -3.697768e-2, 1.021332e-1,
-#               -1.201436e-1, 6.412774e-2]
-#         Q0 = [1.0000000e0, 8.212018e-1, 2.078043e-1]
-#         Q1 = [1.0000000e0, 9.599102e-1, 2.918724e-1]
-#         nP = 4
-#         nQ = 2
+    @staticmethod
+    def grdsf(nu):
+        """
+        cf. casacore/scimath_f/grdsf.f
+        """
+        P0 = [8.203343e-2, -3.644705e-1, 6.278660e-1,
+              -5.335581e-1, 2.312756e-1]
+        P1 = [4.028559e-3, -3.697768e-2, 1.021332e-1,
+              -1.201436e-1, 6.412774e-2]
+        Q0 = [1.0000000e0, 8.212018e-1, 2.078043e-1]
+        Q1 = [1.0000000e0, 9.599102e-1, 2.918724e-1]
+        nP = 4
+        nQ = 2
 
-#         val = 0.0
-#         if 0.0 <= nu and nu < 0.75:
-#             P = P0
-#             Q = Q0
-#             nuend = 0.75
-#         elif 0.75 <= nu and nu <= 1.0:
-#             P = P1
-#             Q = Q1
-#             nuend = 1.0
-#         else:
-#             val = 0.0
-#             return val
+        val = 0.0
+        if 0.0 <= nu and nu < 0.75:
+            P = P0
+            Q = Q0
+            nuend = 0.75
+        elif 0.75 <= nu and nu <= 1.0:
+            P = P1
+            Q = Q1
+            nuend = 1.0
+        else:
+            val = 0.0
+            return val
 
-#         top = P[0]
-#         delnusq = nu * nu - nuend * nuend
-#         kdelnusq = 1.0
-#         for k in range(1, nP + 1):
-#             kdelnusq *= delnusq
-#             top += P[k] * kdelnusq
+        top = P[0]
+        delnusq = nu * nu - nuend * nuend
+        kdelnusq = 1.0
+        for k in range(1, nP + 1):
+            kdelnusq *= delnusq
+            top += P[k] * kdelnusq
 
-#         bot = Q[0]
-#         kdelnusq = 1.0
-#         for k in range(1, nQ + 1):
-#             kdelnusq *= delnusq
-#             bot += Q[k] * kdelnusq
+        bot = Q[0]
+        kdelnusq = 1.0
+        for k in range(1, nQ + 1):
+            kdelnusq *= delnusq
+            bot += Q[k] * kdelnusq
 
-#         if bot != 0.0:
-#             val = top / bot
-#         else:
-#             val = 0.0
+        if bot != 0.0:
+            val = top / bot
+        else:
+            val = 0.0
 
-#         return val
+        return val
 
+    @staticmethod
+    def sf1d(m):
+        gf = np.zeros(m * 2, dtype=float)
+        for i in range(m):
+            nu = float(i) / float(m)
+            val = GridFunctionUtil.grdsf(nu)
+            gf[i] = (1.0 - nu * nu) * val
+        gf[m:] = 0.0
+        # normalize so peak is 1.0
+        gf *= 1.0 / gf[0]
+        return gf
+
+    @staticmethod
+    def sf2d() -> np.ndarray:
+        sf1d_kernel = GridFunctionUtil.sf1d(2)
+        sf2d_kernel = np.zeros((17, 17), dtype=float)
+        mx = sf2d_kernel.shape[0] / 2
+        my = sf2d_kernel.shape[1] / 2
+        for ix in range(sf2d_kernel.shape[0]):
+            for iy in range(sf2d_kernel.shape[1]):
+                ip = int(np.abs(ix - mx))
+                vx = sf1d_kernel[ip] if ip < len(sf1d_kernel) else 0
+                iq = int(np.abs(iy - my))
+                vy = sf1d_kernel[iq] if iq < len(sf1d_kernel) else 0
+                sf2d_kernel[ix, iy] = vx * vy
+
+        sf2d_kernel /= sf2d_kernel.sum()
+
+        return sf2d_kernel
 
 class GridderResult(object):
     """
@@ -474,13 +504,58 @@ class VisibilityGridder(object):
         idata[ndata:] = - idata[:ndata]
         weight[ndata:] = weight[:ndata]
 
-        return datacontainer.VisibilityWorkingSet(
+        ws = datacontainer.VisibilityWorkingSet(
             data_id=0,
             u=u,
             v=v,
             rdata=rdata,
             idata=idata,
             weight=weight
+        )
+
+        return self._smooth_ws(ws)
+
+    def _smooth_ws(self, ws: datacontainer.VisibilityWorkingSet) -> datacontainer.VisibilityWorkingSet:
+
+        # prepare 2D SF kernel
+        sf_kernel = GridFunctionUtil.sf2d()
+
+        # place visibility and weight data onto grid
+        # grid ranges from 0 to umax+umin, which consists of
+        # left margin (umin grids), core part (umax-umin grids),
+        # and right margin (umin grids)
+        #
+        # |left margin | core   |right margin      |
+        # 0,1,2,3,...,umin,...,umax,umax+1,...,umax+umin
+        # | | |   ...  |   ...  |      |   ...     |
+        #
+        nu = ws.u.max() + ws.v.min()
+        nv = ws.v.max() + ws.v.min()
+        grid = np.zeros((nu, nv), dtype=float)
+
+        def dogrid(u, v, data):
+            grid[:] = 0
+            for iu, iv, val in zip(u, v, data):
+                grid[iu, iv] += val
+            data_sm = fftconvolve(grid, sf_kernel, mode='same')
+            return data_sm
+
+        rdata_sm = dogrid(ws.u, ws.v, ws.rdata)
+        idata_sm = dogrid(ws.u, ws.v, ws.idata)
+        weight_sm = dogrid(ws.u, ws.v, ws.weight)
+        # FFT-based convolution could put tiny values to the pixels
+        # whose values are inherently zero. The following threshold
+        # is to exclude such pixels.
+        threshold = 1e-7
+        idx = np.where(np.abs(weight_sm) > threshold)
+
+        return datacontainer.VisibilityWorkingSet(
+            data_id=1,
+            u=idx[0].copy(),
+            v=idx[1].copy(),
+            rdata=rdata_sm[idx].copy(),
+            idata=idata_sm[idx].copy(),
+            weight=weight_sm[idx].copy()
         )
 
     def grid_ws(self, ws):
