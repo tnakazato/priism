@@ -6,6 +6,9 @@ tutorial_twhya.ipynb) on how to use PRIISM. Recommended way to install PRIISM is
 > [!IMPORTANT]
 > The latest `requirements.txt` intends to support CASA 6.6.4 or higher. For older version of CASA, please use `requirements-old.txt` instead. If you already have PRIISM installation based on CASA 6.6.3 or lower, it is advisable to configure new environment from scratch when you update PRIISM to the latest version, which will be based on CASA 6.6.4 or higher.
 
+> [!TIP]
+> If you encountered an error when you install PRIISM on CASA 6.6.4, pleaser first check if you created directory for casadata, `~/.casa/data`. If the directory doesn't exist, please create it.
+
 ```
 # at top-level directory of priism
 $ python3 -m pip install .
