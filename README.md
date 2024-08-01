@@ -68,15 +68,16 @@ prerequisites for both `priism` and CASA.
 
 ### Tested Platform
 
-`priism.alma` has been tested on the plotforms listed below.
+`priism.alma` is tested against the following configurations on GitHub Actions.
 
-* Red Hat Enterprise Linux 7 (RHEL7) with CASA 6.5.3 modular release
-* Red Hat Enterprise Linux 7 (RHEL7) with CASA 6.5.3 modular release in NAOJ/ADC/MDAS system
-* CentOS 7 with CASA 6.5.3 modular release
-* Ubuntu 18.04 with CASA 6.5.3 modular release
-* Ubuntu 20.04 with CASA 6.5.3 modular release
-* macOS 10.15.7 with CASA 6.5.1 modular release
-* macOS 12.6.3 with CASA 6.5.3 modular release
+* Ubuntu 22.04 with CASA 6.6.4 modular release (Python 3.8 and 3.10)
+* macOS 12 with CASA 6.6.4 modular release (Python 3.8)
+* Ubuntu 22.04 with CASA 6.5.3 monolithic release (Python 3.8)
+
+In addition, it has been manually tested on the following configurations.
+
+* Ubuntu 18.04 with CASA 6.6.4 modular release (Python 3.8)
+* Rocky Linux 8.9 with CASA 6.6.4 monolithic release (Python 3.10)
 
 
 ## Prerequisites
