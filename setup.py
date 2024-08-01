@@ -63,6 +63,15 @@ def install_prior_requirements(requirements, to_install):
     run_cmd = execute_command(cmd_pymod)
 
 
+def get_dependencies():
+    import casatools
+    casa_version = casatools.ctsys.version()
+    if casa_version[0] >= 6 and casa_version[1] >= 6 and casa_version[2] >= 4:
+        _requires_from_file('requirements.txt')
+    else:
+        _requires_from_file('requirements-old.txt')
+
+
 def _requires_from_file(filename):
     with open(filename, 'r') as f:
         requirements = [line.rstrip('\n') for line in f.readlines()]
@@ -469,7 +478,7 @@ setup(
     version=_get_version(),
     packages=find_packages('python', exclude=['priism.test']),
     package_dir={'': 'python'},
-    install_requires=_requires_from_file('requirements.txt'),
+    install_requires=get_dependencies(),
     cmdclass={
         'build': priism_build,
         'build_ext': priism_build_ext,
