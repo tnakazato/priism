@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ main ]
 
+env:
+  CASA_RELEASE: casa-6.5.3-28-py3.8
+
 jobs:
   build:
 
@@ -23,34 +26,34 @@ jobs:
     - name: Install Monolithic CASA
       run: |
         sudo apt install -y wget
-        wget -q https://casa.nrao.edu/download/distro/casa/release/rhel/casa-6.5.3-28-py3.8.tar.xz
-        tar xf casa-6.5.3-28-py3.8.tar.xz
+        wget -q https://casa.nrao.edu/download/distro/casa/release/rhel/$CASA_RELEASE.tar.xz
+        tar xf $CASA_RELEASE.tar.xz
 
     - name: Install dependencies
       run: |
-        ./casa-6.5.3-28-py3.8/bin/python3 -m pip install --upgrade pip wheel
-        ./casa-6.5.3-28-py3.8/bin/python3 -m pip install -r requirements.txt
+        ./$CASA_RELEASE/bin/python3 -m pip install --upgrade pip wheel
+        ./$CASA_RELEASE/bin/python3 -m pip install -r requirements-old.txt
 
     - name: Lint with flake8
       run: |
-        ./casa-6.5.3-28-py3.8/bin/python3 -m pip install flake8
+        ./$CASA_RELEASE/bin/python3 -m pip install flake8
         # stop the build if there are Python syntax errors or undefined names
-        ./casa-6.5.3-28-py3.8/bin/python3 -m flake8 python --count --select=E9,F63,F7,F82 --show-source --statistics
+        ./$CASA_RELEASE/bin/python3 -m flake8 python --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        ./casa-6.5.3-28-py3.8/bin/python3 -m flake8 python --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        ./$CASA_RELEASE/bin/python3 -m flake8 python --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
     - name: Build PRIISM
-      run: ./casa-6.5.3-28-py3.8/bin/python3 setup.py build
+      run: ./$CASA_RELEASE/bin/python3 setup.py build
 
     - name: Install PRIISM
-      run: ./casa-6.5.3-28-py3.8/bin/python3 setup.py install
+      run: ./$CASA_RELEASE/bin/python3 setup.py install
 
     - name: Check if libmfista library is created
       run: |
-        PRIISM_INSTALL_DIR=$(./casa-6.5.3-28-py3.8/bin/python3 -c 'import os, sys, priism; print(os.path.dirname(priism.__file__))' | grep -E "^/.*/python3.*/priism")
+        PRIISM_INSTALL_DIR=$(./$CASA_RELEASE/bin/python3 -c 'import os, sys, priism; print(os.path.dirname(priism.__file__))' | grep -E "^/.*/python3.*/priism")
         ls -l $PRIISM_INSTALL_DIR/core/libmfista_nufft.so
 
     - name: Test with pytest
       run: |
-        ./casa-6.5.3-28-py3.8/bin/python3 -m pip install pytest
-        ./casa-6.5.3-28-py3.8/bin/python3 -m pytest tests/test_util.py
+        ./$CASA_RELEASE/bin/python3 -m pip install pytest
+        ./$CASA_RELEASE/bin/python3 -m pytest tests/test_util.py
