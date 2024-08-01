@@ -3,10 +3,16 @@
 PRIISM is an imaging tool for radio interferometry based on the sparse modeling technique. Here, installation procedure and general description of PRIISM are provided. Please see [Notebook Tutorial](./tutorial_hltau.ipynb,
 tutorial_twhya.ipynb) on how to use PRIISM. Recommended way to install PRIISM is a combination with CASA 6 modular release. For quick start, please check [Prerequisites](#prerequisites) and then, run the command below. You might want to set up venv for priism.
 
+> [!IMPORTANT]
+> The latest `requirements.txt` intends to support CASA 6.6.4 or higher. For older version of CASA, please use `requirements-old.txt` instead. If you already have PRIISM installation based on CASA 6.6.3 or lower, it is advisable to configure new environment from scratch when you update PRIISM to the latest version, which will be based on CASA 6.6.4 or higher.
+
 ```
 # at top-level directory of priism
 $ python3 -m pip install .
 ```
+
+> [!TIP]
+> Since installation with `pip` is still unstable, please use installation with `setup.py`, which is described below, if `pip` installation doesn't work.
 
 Alternatively, self-contained Docker environment is available. The following example launches Jupyter Notebook with PRIISM. In the notebook, `$HOME/work` will be a top-level directory. Access to CLI is also possible. Please see [Docker Environment](#docker-environment) section for detail.
 
