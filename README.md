@@ -74,7 +74,7 @@ prerequisites for both `priism` and CASA.
 `priism.alma` is tested against the following configurations on GitHub Actions.
 
 * Ubuntu 22.04 with CASA 6.6.4 modular release (Python 3.8 and 3.10)
-* macOS 12 with CASA 6.6.4 modular release (Python 3.8)
+* macOS 13 with CASA 6.6.4 modular release (Python 3.8)
 * Ubuntu 22.04 with CASA 6.5.3 monolithic release (Python 3.8)
 
 In addition, it has been manually tested on the following configurations.
