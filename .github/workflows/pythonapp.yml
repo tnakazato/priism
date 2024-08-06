@@ -39,10 +39,11 @@ jobs:
       if: ${{ matrix.os == 'ubuntu-latest' }}
       run: sudo apt install -y libfftw3-bin libfftw3-dev
 
-    - name: Install FFTW3 (macOS)
+    - name: Install FFTW3 and libomp (macOS)
       if: ${{ startsWith(matrix.os, 'macos-') }}
       run: |
         brew install fftw
+        brew install libomp
         OMP_INCLUDE_FILE=$(find /usr/local/Cellar/libomp -name omp.h | head -n 1)
         echo "OpenMP Header: $OMP_INCLUDE_FILE"
         ln -s $OMP_INCLUDE_FILE /usr/local/include/
