@@ -47,10 +47,10 @@ jobs:
       run: |
         brew install fftw
         brew install libomp
-        OMP_INCLUDE_FILE=$(find /usr/local/Cellar/libomp -name omp.h | head -n 1)
+        OMP_INCLUDE_FILE=$(find /usr/local/Cellar/libomp /opt/homebrew/opt/libomp/ -name omp.h | head -n 1)
         echo "OpenMP Header: $OMP_INCLUDE_FILE"
         ln -s $OMP_INCLUDE_FILE /usr/local/include/
-        OMP_LIBRARY=$(find /usr/local/Cellar/libomp -name libomp.dylib | head -n 1)
+        OMP_LIBRARY=$(find /usr/local/Cellar/libomp /opt/homebrew/opt/libomp/ -name libomp.dylib | head -n 1)
         echo "OpenMP Library: $OMP_LIBRARY"
         ln -s $OMP_LIBRARY /usr/local/lib
 
