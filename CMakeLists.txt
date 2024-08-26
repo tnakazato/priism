@@ -66,13 +66,13 @@ if(NOT EXISTS ${FFTW3_LIBRARY_DIR}/libfftw3.so)
 endif()
 message(STATUS "FFTW3_LIBRARY_DIR is ${FFTW3_LIBRARY_DIR}")
 if(USE_INTEL_COMPILER)
-  execute_process(COMMAND sed -e "s:^CFLAGS=.*$:CFLAGS=-O3 -ipo -qopenmp -xHost -I${FFTW3_INCLUDE_DIR}:g" makefile
+  execute_process(COMMAND sed -e "s:^CFLAGS=.*$:CFLAGS=-O3 -ipo -qopenmp -xHost -I${FFTW3_INCLUDE_DIR} -I$(INCLUDEDIR) -L$(LIBDIR):g" makefile
                   COMMAND sed -e "s:-O2 -Wall:-Wall:g"
                   COMMAND sed -e "s:^CXX=.*:CXX=icpc:g"
                   OUTPUT_FILE ${SPARSEIMAGING_MAKEFILE}
                   WORKING_DIRECTORY ${SPARSEIMAGING_BUILD_DIR})
 else()
-  execute_process(COMMAND sed -e "s:CFLAGS=-O2:CFLAGS=-O2 -I${FFTW3_INCLUDE_DIR}:g" makefile
+  execute_process(COMMAND sed -e "s:CFLAGS=-O2:CFLAGS=-O2 -I${FFTW3_INCLUDE_DIR} -I$(INCLUDEDIR) -L$(LIBDIR):g" makefile
                   COMMAND sed -e "s:-lrt:-lstdc++:g"
                   COMMAND sed -e "s:^CLIBS_FFTW = :CLIBS_FFTW = -L${FFTW3_LIBRARY_DIR} :g"
                   COMMAND sed -e "s:-O2:-O3:g"
