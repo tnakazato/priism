@@ -49,10 +49,10 @@ jobs:
         brew install libomp
         OMP_INCLUDE_FILE=$(find /usr/local/Cellar/libomp /opt/homebrew/opt/libomp -name omp.h | head -n 1)
         echo "OpenMP Header: $OMP_INCLUDE_FILE"
-        mkdir -p /usr/local/include && ln -s $OMP_INCLUDE_FILE /usr/local/include/
+        export CPPFLAGS="I$(dirname $OMP_INCLUDE_FILE)"
         OMP_LIBRARY=$(find /usr/local/Cellar/libomp /opt/homebrew/opt/libomp -name libomp.dylib | head -n 1)
         echo "OpenMP Library: $OMP_LIBRARY"
-        mkdir -p /usr/local/lib && ln -s $OMP_LIBRARY /usr/local/lib
+        export LDFLAGS="-L$(dirname $OMP_LIBRARY)"
 
     - name: Install dependencies
       run: |
