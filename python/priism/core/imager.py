@@ -732,10 +732,19 @@ class CVPlotterBase:
         self.axes_list = collections.defaultdict(dict)
 
     def plotimage(self, L1, Ltsv, data, mse):
-        assert L1 in self.L1_list
-        assert Ltsv in self.Ltsv_list
-        row = np.where(self.L1_list == L1)[0][0]
-        column = np.where(self.Ltsv_list == Ltsv)[0][0]
+        
+        # Use np.isclose for tolerance-based comparisons
+        # assert L1 in self.L1_list
+        # assert Ltsv in self.Ltsv_list
+        assert any(np.isclose(L1, val) for val in self.L1_list), f"L1: {L1} not found in L1_list"
+        assert any(np.isclose(Ltsv, val) for val in self.Ltsv_list), f"Ltsv: {Ltsv} not found in Ltsv_list"
+
+        # Find the index using np.isclose for tolerance-based matching
+        # row = np.where(self.L1_list == L1)[0][0]
+        # column = np.where(self.Ltsv_list == Ltsv)[0][0]
+        row = np.where(np.isclose(self.L1_list, L1))[0][0]
+        column = np.where(np.isclose(self.Ltsv_list, Ltsv))[0][0]
+
         cx = self.outer_frame.left_margin + (column + 0.5) * self.outer_frame.dx
         cy = self.outer_frame.bottom_margin + (row + 0.5) * self.outer_frame.dy
         left = cx - self.image_width / 2
@@ -751,10 +760,19 @@ class CVPlotterBase:
         self.axes_list[row][column] = a
 
     def mark_bestimage(self, L1, Ltsv):
-        assert L1 in self.L1_list
-        assert Ltsv in self.Ltsv_list
-        row = np.where(self.L1_list == L1)[0][0]
-        column = np.where(self.Ltsv_list == Ltsv)[0][0]
+        
+        # Use np.isclose for tolerance-based comparisons
+        # assert L1 in self.L1_list
+        # assert Ltsv in self.Ltsv_list
+        assert any(np.isclose(L1, val) for val in self.L1_list), f"L1: {L1} not found in L1_list"
+        assert any(np.isclose(Ltsv, val) for val in self.Ltsv_list), f"Ltsv: {Ltsv} not found in Ltsv_list"
+
+        # Find the index using np.isclose for tolerance-based matching
+        # row = np.where(self.L1_list == L1)[0][0]
+        # column = np.where(self.Ltsv_list == Ltsv)[0][0]
+        row = np.where(np.isclose(self.L1_list, L1))[0][0]
+        column = np.where(np.isclose(self.Ltsv_list, Ltsv))[0][0]
+        
         best_axes = self.axes_list[row][column]
         bbox = best_axes.get_position()
         if int(matplotlib.__version__.split('.')[0]) > 1:

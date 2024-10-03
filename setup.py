@@ -165,14 +165,21 @@ def get_python_library(include_dir):
         libnames.append(libname2)
 
     libpath = sysconfig.get_config_var('LIBDIR')
+    print(f"Trying library names: {libnames}")
+    print(f"Checking in libpath: {libpath}")
+
     for libname in libnames:
         pylib = os.path.join(libpath, libname)
+        print(f"Checking {pylib}")
         if os.path.exists(pylib):
             return pylib
 
     libpath2 = os.path.join(libpath, sysconfig.get_config_var('MULTIARCH'))
+    print(f"Checking in libpath2: {libpath2}")
+
     for libname in libnames:
         pylib = os.path.join(libpath2, libname)
+        print(f"Checking {pylib}")
         if os.path.exists(pylib):
             return pylib
 
@@ -184,17 +191,23 @@ def get_python_library(include_dir):
 
     for l in ['lib', 'lib64']:
         libpath = os.path.join(prefix, l)
+        print(f"Checking in {libpath}")
+
         for libname in libnames:
             pylib = os.path.join(libpath, libname)
+            print(f"Checking {pylib}")
             if os.path.exists(pylib):
                 return pylib
 
         libpath2 = os.path.join(libpath, sysconfig.get_config_var('MULTIARCH'))
         for libname in libnames:
             pylib = os.path.join(libpath2, libname)
+            print(f"Checking {pylib}")
             if os.path.exists(pylib):
                 return pylib
 
+    # Print out a helpful error message instead of just failing
+    print(f"Failed to find Python library in {libnames}")
     assert False
 
 
