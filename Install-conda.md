@@ -1,8 +1,12 @@
-## Installation Guide for Priism in Anaconda
+## Installation Guide for Priism in Conda Environments
 
 ### Notes
+
 - This installation process has been tested on Linux (Archlinux and OpenSUSE), and it should also work for other Linux distributions. However, it has **not** been tested on macOS.
+- We recommend using **Miniforge** or **Miniconda** for this installation, as they are free and open-source. However, please note that access to **Anaconda’s public repository** of packages is only free for individuals and small organizations (fewer than 200 employees). A paid license is required for larger organizations or those embedding/mirroring Anaconda’s repository. For more details, refer to [Anaconda's terms of service](https://www.anaconda.com/terms-of-service).
+- Using **Miniforge**, which is configured to use the **conda-forge** channel by default, is a good alternative if you want to avoid licensing concerns related to Anaconda’s repository.
 - Ensure you have the appropriate permissions for copying files and modifying your environment.
+
 
 ### Step-by-Step Installation Instructions 
 
@@ -18,7 +22,7 @@
 
 3. **Install Jupyter and necessary dependencies:**
     ```bash
-    conda install anaconda::jupyter
+    conda install conda-forge::jupyter
     conda install conda-forge::astropy
     ```
     
@@ -48,7 +52,7 @@
 
 8. **Manually copy the Python library (`libpython3.10.a`):**
     - Download the latest CASA package from the official website, locate the `libpython3.10.a` file (typically found in `/your_casa_folder/lib/py/lib`).
-    - Copy the file to the `lib` folder of your `priism` environment (typically `/your_anaconda_folder/envs/priism/lib/`).
+    - Copy the file to the `lib` folder of your `priism` environment (typically `/your_conda_folder/envs/priism/lib/`).
 
 9. **Ensure that the `~/.casa/data` folder exists:**
     - If it doesn’t exist, create the folder:
