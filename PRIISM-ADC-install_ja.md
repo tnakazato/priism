@@ -4,9 +4,20 @@ PRIISMのインストール手順をまとめます。CASAは6.6.4、 Pythonの�
 
 ## PRIISM向け仮想環境の作成
 
-残念ながら、新システム（2024年7月〜）ではPython 3.11のみ利用可能です。CASAがPython 3.11に対応していないため、PRIISM専用の仮想環境を使ったインストールは、現時点ではできません。
+PRIISMはCASAをベースにしており、CASAはPython 3.8とPython 3.10をサポートしています。新システム（2024年7月〜）の`python3`はPython 3.10ですので、以下ではPython 3.10をベースとした仮想環境を構築します。
 
-そこで、CASAを仮想環境とみなしてPRIISMをCASAに直接インストールすることにします。Python 3.10版のCASAを使うようにしてください。
+```
+# Python 3.10 ベースの仮想環境
+python3 -m venv priism
+
+# 仮想環境の有効化
+source priism/bin/activate
+
+# pipをアップグレードしておきます。またwheelもインストールしておきます。
+python3 -m pip install --upgrade pip wheel
+```
+
+または、CASAを仮想環境とみなしてPRIISMをCASAに直接インストールすることもできます。Python 3.10版のCASAを使うようにしてください。
 
 ```
 # ADCの共有エリアからCASAを丸ごとコピー（この例では CASA 6.6.4）
