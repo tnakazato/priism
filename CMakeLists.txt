@@ -82,8 +82,47 @@ else()
                   WORKING_DIRECTORY ${SPARSEIMAGING_BUILD_DIR})
 endif()
 if(APPLE)
-  execute_process(COMMAND sed -i -e "s:-fopenmp:-Xpreprocessor -fopenmp -lomp :g" ${SPARSEIMAGING_MAKEFILE}
-                  WORKING_DIRECTORY ${SPARSEIMAGING_BUILD_DIR})
+  # search path to Cellar directory for Apple Silicon model
+  execute_process(COMMAND find /opt/homebrew/Cellar/libomp -name omp.h
+                  COMMAND head -n 1
+                  COMMAND xargs dirname
+                  COMMAND tr -d "\n"
+                  ERROR_QUIET
+                  OUTPUT_VARIABLE OMP_INCLUDE_DIR)
+  message(STATUS "OpenMP include directory (Silicon): ${OMP_INCLUDE_DIR}")
+  execute_process(COMMAND find /opt/homebrew/Cellar/libomp -name libomp.dylib
+                  COMMAND head -n 1
+                  COMMAND xargs dirname
+                  COMMAND tr -d "\n"
+                  ERROR_QUIET
+                  OUTPUT_VARIABLE OMP_LIBRARY_DIR)
+  message(STATUS "OpenMP library directory (Silicon): ${OMP_LIBRARY_DIR}")
+  if(OMP_INCLUDE_DIR STREQUAL "")
+    # if it failed, try Cellar directory for Intel model
+    execute_process(COMMAND find /usr/local/Cellar/libomp -name omp.h
+                    COMMAND head -n 1
+                    COMMAND xargs dirname
+                    COMMAND tr -d "\n"
+                    ERROR_QUIET
+                    OUTPUT_VARIABLE OMP_INCLUDE_DIR)
+    message(STATUS "OpenMP include file (Intel): ${OMP_INCLUDE_DIR}")
+    execute_process(COMMAND find /usr/local/Cellar/libomp -name libomp.dylib
+                    COMMAND head -n 1
+                    COMMAND xargs dirname
+                    COMMAND tr -d "\n"
+                    ERROR_QUIET
+                    OUTPUT_VARIABLE OMP_LIBRARY_DIR)
+    message(STATUS "OpenMP library directory (Silicon): ${OMP_LIBRARY_DIR}")
+  endif()
+
+  if(NOT OMP_INCLUDE_DIR STREQUAL "")
+    # add custom path
+    execute_process(COMMAND sed -i -e "s:-fopenmp:-Xpreprocessor -fopenmp -I${OMP_INCLUDE_DIR} -L${OMP_LIBRARY_DIR} -lomp :g" ${SPARSEIMAGING_MAKEFILE}
+                    WORKING_DIRECTORY ${SPARSEIMAGING_BUILD_DIR})
+  else()
+    execute_process(COMMAND sed -i -e "s:-fopenmp:-Xpreprocessor -fopenmp -lomp :g" ${SPARSEIMAGING_MAKEFILE}
+                    WORKING_DIRECTORY ${SPARSEIMAGING_BUILD_DIR})
+  endif()
 endif()
 if(EIGEN3_INCLUDE_DIR)
   message(STATUS "Edit makefile for sparseimaging")
