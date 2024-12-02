@@ -47,14 +47,6 @@ jobs:
       run: |
         brew install fftw
         brew install libomp
-        LIBOMP_ROOT_OS13=/usr/local/Cellar/libomp
-        LIBOMP_ROOT_OS14=/opt/homebrew/Cellar/libomp
-        [ -d ${LIBOMP_ROOT_OS13} ] && OMP_INCLUDE_FILE=$(find ${LIBOMP_ROOT_OS13} -name omp.h | head -n 1) || OMP_INCLUDE_FILE=$(find ${LIBOMP_ROOT_OS14} -name omp.h | head -n 1)
-        echo "OpenMP Header: $OMP_INCLUDE_FILE"
-        mkdir ./include && ln -s $OMP_INCLUDE_FILE ./include
-        [ -d ${LIBOMP_ROOT_OS13} ] && OMP_LIBRARY=$(find ${LIBOMP_ROOT_OS13} -name libomp.dylib | head -n 1) || OMP_LIBRARY=$(find ${LIBOMP_ROOT_OS14} -name libomp.dylib | head -n 1)
-        echo "OpenMP Library: $OMP_LIBRARY"
-        mkdir ./lib && ln -s $OMP_LIBRARY ./lib
 
     - name: Install dependencies
       run: |
