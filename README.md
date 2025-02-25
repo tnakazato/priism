@@ -11,6 +11,7 @@ tutorial_twhya.ipynb) on how to use PRIISM. Recommended way to install PRIISM is
 
 ```
 # at top-level directory of priism
+$ python3 -m pip install -r requirements.txt
 $ python3 -m pip install .
 ```
 
