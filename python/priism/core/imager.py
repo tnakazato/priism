@@ -27,10 +27,10 @@ import pickle
 import shutil
 import time
 
-import skopt
-import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
+import numpy as np
+import optuna
 
 from . import datacontainer
 from . import paramcontainer
@@ -557,9 +557,11 @@ class SparseModelingImager(object):
         result_mse = []
         result_image = []
 
-        def __objective_function(x):
-            L1 = 10.0**x[0]
-            Ltsv = 10.0**x[1]
+        def objective(trial):
+            L1_index = trial.suggest_int("L1 index", 0, len(l1_list) - 1)
+            L1 = l1_list[L1_index]
+            Ltsv_index = trial.suggest_int("Ltsv index", 0, len(ltsv_list) - 1)
+            Ltsv = ltsv_list[Ltsv_index]
 
             mse, imagename = self._cv_exec(
                 L1, Ltsv, hp_scale, imageprefix, maxiter,
@@ -583,22 +585,9 @@ class SparseModelingImager(object):
 
             return mse
 
-        def list2bound(param_list):
-            pmin = int(round(math.log10(min(param_list))))
-            pmax = int(round(math.log10(max(param_list))))
-            bound = skopt.space.space.Integer(pmin, pmax, prior='uniform', base=10)
-            return bound
-
-        bounds = [
-            list2bound(l1_list),
-            list2bound(ltsv_list)
-        ]
-
-        self.cv_bayes_result = skopt.gp_minimize(
-            __objective_function,
-            bounds,
-            n_calls=bayesopt_maxiter,
-        )
+        study = optuna.create_study()
+        study.optimize(objective, n_trials = bayesopt_maxiter)
+        self.cv_bayes_result = study.best_params
 
         return self.CrossValidationResult(
             mse=result_mse, image=result_image,
@@ -732,7 +721,7 @@ class CVPlotterBase:
         self.axes_list = collections.defaultdict(dict)
 
     def plotimage(self, L1, Ltsv, data, mse):
-        
+
         # Use np.isclose for tolerance-based comparisons
         # assert L1 in self.L1_list
         # assert Ltsv in self.Ltsv_list
@@ -760,7 +749,7 @@ class CVPlotterBase:
         self.axes_list[row][column] = a
 
     def mark_bestimage(self, L1, Ltsv):
-        
+
         # Use np.isclose for tolerance-based comparisons
         # assert L1 in self.L1_list
         # assert Ltsv in self.Ltsv_list
@@ -772,7 +761,7 @@ class CVPlotterBase:
         # column = np.where(self.Ltsv_list == Ltsv)[0][0]
         row = np.where(np.isclose(self.L1_list, L1))[0][0]
         column = np.where(np.isclose(self.Ltsv_list, Ltsv))[0][0]
-        
+
         best_axes = self.axes_list[row][column]
         bbox = best_axes.get_position()
         if int(matplotlib.__version__.split('.')[0]) > 1:
