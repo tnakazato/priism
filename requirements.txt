@@ -3,3 +3,4 @@ casatasks>=6.6.4.0
 casatools>=6.6.4.0
 certifi
 optuna
+setuptools
