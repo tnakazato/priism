@@ -209,7 +209,6 @@ def get_python_library(include_dir):
 
     # Print out a helpful error message instead of just failing
     print(f"Failed to find Python library in {libnames}")
-    # assert False
 
 
 class priism_build(build):
@@ -343,7 +342,7 @@ class download_sakura(config):
             url = base_url + '.git'
             def clone_and_checkout():
                 execute_command(f'git clone {url}')
-                # execute_command(f'git checkout {version}', cwd=package)
+                execute_command(f'git checkout {version}', cwd=package)
 
             self.download_cmd = clone_and_checkout
         else:
