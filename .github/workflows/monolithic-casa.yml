@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 env:
-  CASA_RELEASE: casa-6.5.3-28-py3.8
+  CASA_RELEASE: casa-6.6.4-34-py3.10
 
 jobs:
   build:
@@ -32,7 +32,7 @@ jobs:
     - name: Install dependencies
       run: |
         ./$CASA_RELEASE/bin/python3 -m pip install --upgrade pip wheel
-        ./$CASA_RELEASE/bin/python3 -m pip install -r requirements-old.txt
+        ./$CASA_RELEASE/bin/python3 -m pip install -r requirements.txt
 
     - name: Lint with flake8
       run: |
