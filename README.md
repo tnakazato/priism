@@ -7,7 +7,7 @@ tutorial_twhya.ipynb) on how to use PRIISM. Recommended way to install PRIISM is
 > The latest `requirements.txt` intends to support CASA 6.6.4 or higher. For older version of CASA, please use `requirements-old.txt` instead. If you already have PRIISM installation based on CASA 6.6.3 or lower, it is advisable to configure new environment from scratch when you update PRIISM to the latest version, which will be based on CASA 6.6.4 or higher.
 
 > [!TIP]
-> If you encountered an error when you install PRIISM on CASA 6.6.4, pleaser first check if you created directory for casadata, `~/.casa/data`. If the directory doesn't exist, please create it.
+> If you encountered an error when you install PRIISM on CASA 6.6.4 or higher, pleaser first check if you created directory for casadata, `~/.casa/data`. If the directory doesn't exist, please create it.
 
 ```
 # at top-level directory of priism
@@ -16,6 +16,13 @@ $ python3 -m pip install .
 
 > [!TIP]
 > Since installation with `pip` is still unstable, please use installation with `setup.py`, which is described below, if `pip` installation doesn't work.
+
+```
+# at top-level directory of priism
+$ python3 -m pip install -r requirements.txt
+$ python3 setup.py build
+$ python3 setup.py install
+```
 
 Alternatively, self-contained Docker environment is available. The following example launches Jupyter Notebook with PRIISM. In the notebook, `$HOME/work` will be a top-level directory. Access to CLI is also possible. Please see [Docker Environment](#docker-environment) section for detail.
 
@@ -73,21 +80,21 @@ prerequisites for both `priism` and CASA.
 
 `priism.alma` is tested against the following configurations on GitHub Actions.
 
-* Ubuntu 22.04 with CASA 6.6.4 modular release (Python 3.8 and 3.10)
-* macOS 13 with CASA 6.6.4 modular release (Python 3.8)
-* Ubuntu 22.04 with CASA 6.5.3 monolithic release (Python 3.8)
+* Ubuntu 24.04 with CASA 6.7.0 modular release (Python 3.10)
+* macOS 13 & macOS 14 with CASA 6.7.0 modular release (Python 3.10)
+* Ubuntu 24.04 with CASA 6.7.0 monolithic release (Python 3.10)
 
 In addition, it has been manually tested on the following configurations.
 
-* Ubuntu 18.04 with CASA 6.6.4 modular release (Python 3.8)
-* Rocky Linux 8.9 with CASA 6.6.4 monolithic release (Python 3.10)
+* Ubuntu 24.04 with CASA 6.6.6 monolithic release (Python 3.10)
+* Rocky Linux 8.9 with CASA 6.7.0 monolithic release (Python 3.10)
 
 
 ## Prerequisites
 
 Prerequisites for an installation with CASA 6 modular release (recommended) is as follows:
 
-* Python 3.8
+* Python 3.10
 * gcc/g++ 4.8 or higher or clang/clang++ 3.5 or higher
 * FFTW3
 * git (optional but highly desirable)
@@ -111,11 +118,9 @@ After cloning PRIISM's repository, install procedure is as follows:
 $ git clone https://github.com/tnakazato/priism.git
   # or get zip file and extract
 $ cd priism/
-  # install doesn't work with the latest pip
-$ python3 -m pip install pip==22.0.4
+$ python3 -m pip install --upgrade pip
 $ python3 -m pip install .
 ```
-Note that installed `numpy` is not latest one. It is recommended to use that version when you install PRIISM.
 
 Installation with `setup.py` should still work. So, please use the following procedure if installation with `pip` doesn't work.
 
@@ -160,9 +165,9 @@ Download and install CASA.
 ```
 $ mkdir ${CASA_DIR}
 $ cd ${CASA_DIR}/
-$ wget https://casa.nrao.edu/download/distro/casa/release/rhel/casa-6.5.3-28-py3.8.tar.xz --no-check-certificate
-$ tar -xvf casa-6.5.3-28-py3.8.tar.xz
-$ export PATH=${CASA_DIR}/casa-6.5.3-28-py3.8/bin/:${PATH}
+$ wget https://casa.nrao.edu/download/distro/casa/release/rhel/casa-6.7.0-31-py3.10.el8.tar.xz --no-check-certificate
+$ tar -xvf casa-6.7.0-31-py3.10.el8.tar.xz
+$ export PATH=${CASA_DIR}/casa-6.7.0-31-py3.10.el8/bin/:${PATH}
 ```
 
 Install PRIISM package. You can use CASA's python3 as if it is virtual environment. PRIISM will be installed into `site-packages` directory in CASA.
