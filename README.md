@@ -94,7 +94,7 @@ In addition, it has been manually tested on the following configurations.
 
 Prerequisites for an installation with CASA 6 modular release (recommended) is as follows:
 
-* Python 3.10
+* Python 3.10 or higher
 * gcc/g++ 4.8 or higher or clang/clang++ 3.5 or higher
 * FFTW3
 * git (optional but highly desirable)
