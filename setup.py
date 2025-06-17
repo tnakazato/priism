@@ -25,10 +25,8 @@ import tarfile
 import urllib.request as request
 import zipfile
 
-from distutils.command.build import build
-from distutils.command.build_ext import build_ext
-from distutils.command.config import config
-from distutils.sysconfig import get_python_inc, get_python_version
+from setuptools.command.build import build
+from setuptools.command.build_ext import build_ext
 from setuptools import setup, find_packages, Command
 
 
@@ -290,7 +288,7 @@ class priism_build_ext(build_ext):
     sub_commands = build_ext.sub_commands + [('configure_ext', None)]
 
 
-class download_smili(config):
+class download_smili(build):
     user_options = []
 
     def initialize_options(self):
@@ -327,7 +325,7 @@ class download_smili(config):
             self.download_cmd()
 
 
-class download_sakura(config):
+class download_sakura(build):
     user_options = []
 
     def initialize_options(self):
@@ -369,7 +367,7 @@ class download_sakura(config):
             os.symlink(f'{self.package_directory}/{self.target_directory}', self.target_directory)
 
 
-class download_eigen(config):
+class download_eigen(build):
     PACKAGE_NAME = 'eigen'
     PACKAGE_VERSION = '3.3.7'
     PACKAGE_COMMIT_HASH = '21ae2afd4edaa1b69782c67a54182d34efe43f9c'
@@ -429,12 +427,12 @@ class configure_ext(Command):
             self.numpy_include_dir = np.get_include()
 
         if self.python_include_dir is None:
-            self.python_include_dir = get_python_inc(prefix=sys.base_prefix)
+            self.python_include_dir = sysconfig.get_path('include')
 
         if self.python_library is None:
             self.python_library = get_python_library(self.python_include_dir)
 
-        self.python_version = get_python_version()
+        self.python_version = sysconfig.get_python_version()
 
         debug_print_user_options(self)
         print('fftw3-root-dir={}'.format(self.fftw3_root_dir))
