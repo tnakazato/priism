@@ -66,7 +66,8 @@ def install_prior_requirements(requirements, to_install):
 def get_dependencies():
     import casatools
     casa_version = casatools.ctsys.version()
-    if casa_version[0] >= 6 and casa_version[1] >= 6 and casa_version[2] >= 4:
+    if casa_version[0] > 6 or (casa_version[0] == 6 and casa_version[1] > 6) \
+        or (casa_version[0] == 6 and casa_version[1] == 6 and casa_version[2] >= 4):
         _requires_from_file('requirements.txt')
     else:
         _requires_from_file('requirements-old.txt')
