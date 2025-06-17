@@ -335,7 +335,7 @@ class download_sakura(config):
 
         package = 'sakura'
         target = 'libsakura'
-        version = 'libsakura-5.3.0'
+        version = 'libsakura-5.3.1'
         zipname = f'{version}.zip'
         base_url = 'https://github.com/tnakazato/sakura'
         if IS_GIT_OK:
