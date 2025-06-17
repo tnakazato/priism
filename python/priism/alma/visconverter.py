@@ -503,7 +503,7 @@ class VisibilityConverter(object):
         # UVW conversion
         u = sakura.empty_aligned((nrow, nchan), dtype=uvw.dtype)
         v = sakura.empty_like_aligned(u)
-        center_freq = np.asfarray([np.mean(lsr_edge_frequency[i:i+2]) for i in range(nchan)])
+        center_freq = np.asarray([np.mean(lsr_edge_frequency[i:i+2]) for i in range(nchan)], dtype=float)
         for irow in range(nrow):
             # TODO: phase rotation if image phasecenter is different from
             #       the reference direction of the observation

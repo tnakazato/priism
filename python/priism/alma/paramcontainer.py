@@ -19,6 +19,8 @@ from __future__ import absolute_import
 import itertools
 import os
 
+import numpy as np
+
 import priism.external.casa as casa
 import priism.core.paramcontainer as base_container
 import priism.core.datacontainer as datacontainer
@@ -243,9 +245,10 @@ class ImageMetaInfoContainer(base_container.ParamContainer):
                 spw_science = spw_selected
 
             spw_science.sort()
+            spw_science = np.asarray(spw_science)
 
         source_table = os.path.join(vis, 'SOURCE')
-        taql = f'SOURCE_ID=={source_id} && SPECTRAL_WINDOW_ID IN {list(spw_science)}'
+        taql = f'SOURCE_ID=={source_id} && SPECTRAL_WINDOW_ID IN {spw_science.tolist()}'
         with casa.SelectTableForRead(source_table, taql) as tb:
             restfreqs = [
                 tb.getcell('REST_FREQUENCY', i) for i in range(tb.nrows())

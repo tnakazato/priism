@@ -66,7 +66,8 @@ def install_prior_requirements(requirements, to_install):
 def get_dependencies():
     import casatools
     casa_version = casatools.ctsys.version()
-    if casa_version[0] >= 6 and casa_version[1] >= 6 and casa_version[2] >= 4:
+    if casa_version[0] > 6 or (casa_version[0] == 6 and casa_version[1] > 6) \
+        or (casa_version[0] == 6 and casa_version[1] == 6 and casa_version[2] >= 4):
         _requires_from_file('requirements.txt')
     else:
         _requires_from_file('requirements-old.txt')
@@ -208,7 +209,6 @@ def get_python_library(include_dir):
 
     # Print out a helpful error message instead of just failing
     print(f"Failed to find Python library in {libnames}")
-    assert False
 
 
 class priism_build(build):
@@ -429,7 +429,7 @@ class configure_ext(Command):
             self.numpy_include_dir = np.get_include()
 
         if self.python_include_dir is None:
-            self.python_include_dir = get_python_inc()
+            self.python_include_dir = get_python_inc(prefix=sys.base_prefix)
 
         if self.python_library is None:
             self.python_library = get_python_library(self.python_include_dir)
