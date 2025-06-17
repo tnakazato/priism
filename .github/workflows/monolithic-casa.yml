@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 env:
-  CASA_RELEASE: casa-6.6.4-34-py3.10.el8
+  CASA_RELEASE: casa-6.7.0-31-py3.10.el8
 
 jobs:
   build:
