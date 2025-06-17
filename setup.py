@@ -342,7 +342,7 @@ class download_sakura(config):
             url = base_url + '.git'
             def clone_and_checkout():
                 execute_command(f'git clone {url}')
-                execute_command(f'git checkout {version}', cwd=package)
+                # execute_command(f'git checkout {version}', cwd=package)
 
             self.download_cmd = clone_and_checkout
         else:
