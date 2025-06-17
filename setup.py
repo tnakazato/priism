@@ -430,7 +430,7 @@ class configure_ext(Command):
             self.numpy_include_dir = np.get_include()
 
         if self.python_include_dir is None:
-            self.python_include_dir = get_python_inc()
+            self.python_include_dir = get_python_inc(prefix=sys.base_prefix)
 
         if self.python_library is None:
             self.python_library = get_python_library(self.python_include_dir)
