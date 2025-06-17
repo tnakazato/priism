@@ -29,6 +29,10 @@ jobs:
         wget -q https://casa.nrao.edu/download/distro/casa/release/rhel/$CASA_RELEASE.tar.xz
         tar xf $CASA_RELEASE.tar.xz
 
+    - name: Setup casconfig environment
+      run: |
+        mkdir -p ~/.casa/data
+
     - name: Install dependencies
       run: |
         ./$CASA_RELEASE/bin/python3 -m pip install --upgrade pip wheel
