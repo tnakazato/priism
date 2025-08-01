@@ -198,6 +198,12 @@ class SparseModelingImager(object):
 
     def _solve(self, mfistaparam, working_set, storeinitialimage=True, overwriteinitialimage=False):
         assert working_set is not None
+        if working_set is None or len(working_set.rdata) == 0:
+            raise RuntimeError(
+                "No visibility data is given. Please run readvis or gridvis first. "
+                "If you already did, probably all the visibility data are flagged (invalid). "
+                "Please check contents of the MS and tweak channel selection appropriately."
+            )
         self.solver.mfistaparam = mfistaparam
         return self.solver.solve(working_set, self.imparam, storeinitialimage, overwriteinitialimage)
 
