@@ -34,11 +34,30 @@ class ImageWriter(object):
         return pdir
 
     @staticmethod
-    def frequency_setup_for_spw(vis, spw_id, chan):
-        with casa.OpenTableForRead(os.path.join(vis, 'SPECTRAL_WINDOW')) as tb:
-            chan_freq = tb.getcell('CHAN_FREQ', spw_id)
-            chan_width = tb.getcell('CHAN_WIDTH', spw_id)
-        return '{0:16.12f}Hz'.format(chan_freq[chan]), '{0:16.12f}Hz'.format(chan_width[chan])
+    def frequency_setup_for_spw(vis: str, spw_id: int, channel: float) -> tuple[dict, float]:
+        me = casa.CreateCasaMeasure()
+        qa = casa.CreateCasaQuantity()
+        with casa.OpenMSMetaData(vis) as msmd:
+            chan_freq = msmd.chanfreqs(spw_id)
+            chan_width = msmd.chanwidths(spw_id)
+            ref_freq = msmd.reffreq(spw_id)
+            freq_frame = me.getref(ref_freq)
+        xp = np.arange(len(chan_freq))
+        cf = np.interp(channel, xp, chan_freq)
+        cw = np.interp(channel, xp, chan_width)
+        freq_quantity = qa.quantity(cf, 'Hz')
+        cf_vis = me.frequency(rf=freq_frame, v0=freq_quantity)
+        return cf_vis, cw
+
+    @staticmethod
+    def to_lsrk(cf: dict, reference_time: dict, phase_direction: dict, observatory_position: dict) -> dict:
+        me = casa.CreateCasaMeasure()
+        me.done()
+        me.doframe(reference_time)
+        me.doframe(phase_direction)
+        me.doframe(observatory_position)
+        cf_lsrk = me.measure(cf, 'LSRK')
+        return cf_lsrk
 
     def __init__(self, imageparam, imagearray, imagemeta=None):
         self.imageparam = imageparam
