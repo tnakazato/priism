@@ -16,6 +16,8 @@
 # along with PRIISM.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import absolute_import
 
+import copy
+
 import numpy as np
 
 from . import paramcontainer
@@ -214,7 +216,10 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
         """
         if self.imparam is None:
             raise RuntimeError('You have to define image configuration before export!')
-        self.imparam.imagename = imagename
+
+        imparam_for_writer = copy.deepcopy(self.imparam)
+
+        imparam_for_writer.imagename = imagename
 
         if self.imagearray is None:
             raise RuntimeError('You don\'t have an image array!')
@@ -227,23 +232,46 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
             field_id = int(self.imparam.phasecenter)
             phase_direction = imagewriter.ImageWriter.phase_direction_for_field(vis=vis,
                                                                                 field_id=field_id)
-            self.imparam.phasecenter = phase_direction
-        if (isinstance(self.imparam.start, str) and self.imparam.start.isdigit()) \
-           or isinstance(self.imparam.start, int):
-            # TODO: we need LSRK frequency
-            start = self.imparam.start
-            spw = int(self.visparams[0].as_msindex()['spw'][0])
-            print('Use Freuquency for channel {0} spw {1}'.format(start, spw))
-            cf, cw = imagewriter.ImageWriter.frequency_setup_for_spw(vis=vis,
-                                                                     spw_id=spw,
-                                                                     chan=start)
-            self.imparam.start = cf
-            self.imparam.width = cw
+            imparam_for_writer.phasecenter = phase_direction
+
         mssel_index = self.visparams[0].as_msindex()
         field = None if len(mssel_index['field']) == 0 else mssel_index['field'][0]
         spw_selected = None if len(mssel_index['spw']) == 0 else mssel_index['spw']
         imagemeta = paramcontainer.ImageMetaInfoContainer.fromvis(vis, field, spw_selected)
-        writer = imagewriter.ImageWriter(self.imparam, self.imagearray.data,
+
+        if (isinstance(self.imparam.start, str) and self.imparam.start.isdigit()) \
+           or isinstance(self.imparam.start, int):
+            start_index = self.imparam.start
+            assert self.imparam.nchan == 1
+            chan_width = self.imparam.width
+            spw = int(mssel_index['spw'][0])
+            spw_chan = mssel_index['channel'][0]
+            chan_list = np.arange(spw_chan[1], spw_chan[2] + 1, spw_chan[3])
+            start = chan_list[start_index]
+            nchan = chan_width
+            end = chan_list[start_index + nchan - 1]
+            channel = (start + end) / 2.0
+            print(f'Use Freuquency for channel {channel} spw {spw}')
+            cf_vis, cw = imagewriter.ImageWriter.frequency_setup_for_spw(
+                vis=vis,
+                spw_id=spw,
+                channel=channel
+            )
+            reference_time = imagemeta.observing_date
+            phase_direction = imparam_for_writer.phasecenter
+            observatory_position = imagemeta.telescope_position
+            cf_lsrk = imagewriter.ImageWriter.to_lsrk(
+                cf_vis,
+                reference_time,
+                phase_direction,
+                observatory_position
+            )
+            cf_new = cf_lsrk['m0']
+            imparam_for_writer.start = f'{cf_new["value"]:16.12f}{cf_new["unit"]}'
+            width = nchan * cw
+            imparam_for_writer.width = f'{width:16.12f}Hz'
+
+        writer = imagewriter.ImageWriter(imparam_for_writer, self.imagearray.data,
                                          imagemeta)
         writer.write(overwrite=overwrite)
 
