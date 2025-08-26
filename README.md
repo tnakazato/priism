@@ -306,6 +306,7 @@ We thank T. Tsukagoshi, M. Yamaguchi, K. Akiyama, and Y. Tamura among many other
 
 ## Reference
 
+* [Nakazato, T., Ikeda, S., Kosugi, G., Honma, M., 2020, Proceedings of the SPIE, Volume 11453, id. 114532V 11 pp. (2020).](https://www.spiedigitallibrary.org/conference-proceedings-of-spie/11453/2560904/PRIISM--Synthesis-imaging-tool-based-on-the-sparse-modeling/10.1117/12.2560904.full) https://doi.org/10.1117/12.2560904
 * [Nakazato, T., Ikeda, S., Akiyama, K., Kosugi, G., Yamaguchi, M., and Honma, M., 2019, Astronomical Data Analysis Software and Systems XXVIII. ASP Conference Series, Vol. 523, p. 143](http://aspbooks.org/custom/publications/paper/523-0143.html)
 * [Nakazato, T. and Ikeda, S., 2020, Astrophysics Source Code Library, record ascl:2006.002](https://ui.adsabs.harvard.edu/abs/2020ascl.soft06002N/abstract)
 
