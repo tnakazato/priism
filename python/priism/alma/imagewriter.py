@@ -33,13 +33,6 @@ class ImageWriter(object):
             pdir = msmd.phasecenter(field_id)
         return pdir
 
-    @staticmethod
-    def frequency_setup_for_spw(vis, spw_id, chan):
-        with casa.OpenTableForRead(os.path.join(vis, 'SPECTRAL_WINDOW')) as tb:
-            chan_freq = tb.getcell('CHAN_FREQ', spw_id)
-            chan_width = tb.getcell('CHAN_WIDTH', spw_id)
-        return '{0:16.12f}Hz'.format(chan_freq[chan]), '{0:16.12f}Hz'.format(chan_width[chan])
-
     def __init__(self, imageparam, imagearray, imagemeta=None):
         self.imageparam = imageparam
         self.imagearray = imagearray
