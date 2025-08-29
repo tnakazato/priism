@@ -118,7 +118,7 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
             |
         |-------|-------|-------| nchan=3
         |<----->|
-          width=<constant channel width of image channel>
+          width=<number of visibility channels to be accumulated into one image channel>
 
 
         Parameters:
@@ -135,6 +135,12 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
             stokes          stokes parameter (fixed to 'I')
         """
         self.imparam = paramcontainer.ImageParamContainer.CreateContainer(**locals())
+        if self.imparam.nchan != 1:
+            raise RuntimeError(
+                'Only nchan=1 is supported in this version. '
+                'If you mean to accumulate multiple visibility channels into '
+                'one image channel, please use width instead of nchan.'
+            )
 
     def configuregrid(self, convsupport, convsampling, gridfunction):
         if isinstance(gridfunction, str):
