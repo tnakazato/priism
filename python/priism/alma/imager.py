@@ -247,38 +247,28 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
 
         if (isinstance(self.imparam.start, str) and self.imparam.start.isdigit()) \
            or isinstance(self.imparam.start, int):
-            start_index = self.imparam.start
             assert self.imparam.nchan == 1
-            chan_width = self.imparam.width
-            spw = int(mssel_index['spw'][0])
-            spw_chan = mssel_index['channel'][0]
-            chan_list = np.arange(spw_chan[1], spw_chan[2] + 1, spw_chan[3])
-            start = chan_list[start_index]
-            nchan = chan_width
-            end = chan_list[start_index + nchan - 1]
-            channel = (start + end) / 2.0
-            print(f'Use Freuquency for channel {channel} spw {spw}')
-            cf_vis, cw = imagewriter.ImageWriter.frequency_setup_for_spw(
-                vis=vis,
-                spw_id=spw,
-                channel=channel
-            )
-            reference_time = imagemeta.observing_date
-            phase_direction = imparam_for_writer.phasecenter
-            observatory_position = imagemeta.telescope_position
-            cf_lsrk = imagewriter.ImageWriter.to_lsrk(
-                cf_vis,
-                reference_time,
-                phase_direction,
-                observatory_position
-            )
-            cf_new = cf_lsrk['m0']
-            imparam_for_writer.start = f'{cf_new["value"]:16.12f}{cf_new["unit"]}'
-            width = nchan * cw
+            lsrk_freq_min, lsrk_freq_max = 1e100, 0
+            for visparam in self.visparams:
+                _mssel_index = visparam.as_msindex()
+                spw_chan_list = _mssel_index['channel']
+                print(f'spw_chan_list: {spw_chan_list}')
+                for spw_chan in spw_chan_list:
+                    _freq_min, _freq_max = visparam.to_lsrk_range(
+                        spw_chan,
+                        imparam_for_writer.phasecenter
+                    )
+                    lsrk_freq_min = min(lsrk_freq_min, _freq_min)
+                    lsrk_freq_max = max(lsrk_freq_max, _freq_max)
+            imparam_for_writer.start = f'{lsrk_freq_min:16.12f}Hz'
+            width = lsrk_freq_max - lsrk_freq_min
             imparam_for_writer.width = f'{width:16.12f}Hz'
 
-        writer = imagewriter.ImageWriter(imparam_for_writer, self.imagearray.data,
-                                         imagemeta)
+        writer = imagewriter.ImageWriter(
+            imparam_for_writer,
+            self.imagearray.data,
+            imagemeta
+        )
         writer.write(overwrite=overwrite)
 
     def getimage(self, imagename):
