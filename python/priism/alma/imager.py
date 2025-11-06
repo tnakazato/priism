@@ -260,8 +260,8 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
                     )
                     lsrk_freq_min = min(lsrk_freq_min, _freq_min)
                     lsrk_freq_max = max(lsrk_freq_max, _freq_max)
-            imparam_for_writer.start = f'{lsrk_freq_min:16.12f}Hz'
             width = lsrk_freq_max - lsrk_freq_min
+            imparam_for_writer.start = f'{lsrk_freq_min + width / 2:16.12f}Hz'
             imparam_for_writer.width = f'{width:16.12f}Hz'
 
         writer = imagewriter.ImageWriter(

@@ -108,8 +108,12 @@ class VisParamContainer(base_container.ParamContainer):
                 qa.quantity(time_list_for_spw.min(), 's')
             )
             chan_freq_for_spw = msmd.chanfreqs(spw_id)
+            chan_width_for_spw = msmd.chanwidths(spw_id)
             position = msmd.observatoryposition()
-        freqs = (chan_freq_for_spw[i] for i in (chan_start, chan_end))
+        freqs = (
+            chan_freq_for_spw[chan_start] - chan_width_for_spw[spw_id] / 2,
+            chan_freq_for_spw[chan_end] + chan_width_for_spw[spw_id] / 2
+        )
         me.done()
         me.doframe(position)
         me.doframe(start_time)
