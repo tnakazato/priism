@@ -84,6 +84,51 @@ class VisParamContainer(base_container.ParamContainer):
             idx = ms.msselectedindices()
         return idx
 
+    def to_lsrk_range(self, spw_chan: list[int], phasecenter: dict) -> tuple[float, float]:
+        """
+        Convert channel selection specified by spw_chan
+        to LSRK frequency range.
+
+        Parameters:
+            spw_chan: spw channel selection in the form of
+                [spw_id, start_chan, end_chan, chan_increment].
+                end_chan should be inclusive.
+            phasecenter: phase center direction measure.
+
+        Returns:
+            Minimum and maximum LSRK frequencies in Hz.
+        """
+        me = casa.CreateCasaMeasure()
+        qa = casa.CreateCasaQuantity()
+        spw_id, chan_start, chan_end, _ = spw_chan
+        with casa.OpenMSMetaData(self.vis) as msmd:
+            time_list_for_spw = msmd.timesforspws(spw_id)
+            start_time = me.epoch(
+                'UTC',
+                qa.quantity(time_list_for_spw.min(), 's')
+            )
+            chan_freq_for_spw = msmd.chanfreqs(spw_id)
+            chan_width_for_spw = msmd.chanwidths(spw_id)
+            position = msmd.observatoryposition()
+        freqs = (
+            chan_freq_for_spw[chan_start] - chan_width_for_spw[chan_start] / 2,
+            chan_freq_for_spw[chan_end] + chan_width_for_spw[chan_end] / 2
+        )
+        me.done()
+        me.doframe(position)
+        me.doframe(start_time)
+        me.doframe(phasecenter)
+        topo_freqs = map(lambda f: qa.quantity(f, 'Hz'), freqs)
+        converted = map(
+            lambda q: me.measure(me.frequency('TOPO', q), 'LSRK')['m0'],
+            topo_freqs
+        )
+        lsrk_freqs = map(
+            lambda q: qa.convert(q, 'Hz')['value'],
+            converted
+        )
+        return tuple(sorted(lsrk_freqs))
+
 
 class ImageParamContainer(base_container.ParamContainer):
     """

@@ -16,6 +16,8 @@
 # along with PRIISM.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import absolute_import
 
+import copy
+
 import numpy as np
 
 from . import paramcontainer
@@ -116,7 +118,7 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
             |
         |-------|-------|-------| nchan=3
         |<----->|
-          width=<constant channel width of image channel>
+          width=<number of visibility channels to be accumulated into one image channel>
 
 
         Parameters:
@@ -133,6 +135,12 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
             stokes          stokes parameter (fixed to 'I')
         """
         self.imparam = paramcontainer.ImageParamContainer.CreateContainer(**locals())
+        if self.imparam.nchan != 1:
+            raise RuntimeError(
+                'Only nchan=1 is supported in this version. '
+                'If you mean to accumulate multiple visibility channels into '
+                'one image channel, please use width instead of nchan.'
+            )
 
     def configuregrid(self, convsupport, convsampling, gridfunction):
         if isinstance(gridfunction, str):
@@ -214,7 +222,10 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
         """
         if self.imparam is None:
             raise RuntimeError('You have to define image configuration before export!')
-        self.imparam.imagename = imagename
+
+        imparam_for_writer = copy.deepcopy(self.imparam)
+
+        imparam_for_writer.imagename = imagename
 
         if self.imagearray is None:
             raise RuntimeError('You don\'t have an image array!')
@@ -227,24 +238,37 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
             field_id = int(self.imparam.phasecenter)
             phase_direction = imagewriter.ImageWriter.phase_direction_for_field(vis=vis,
                                                                                 field_id=field_id)
-            self.imparam.phasecenter = phase_direction
-        if (isinstance(self.imparam.start, str) and self.imparam.start.isdigit()) \
-           or isinstance(self.imparam.start, int):
-            # TODO: we need LSRK frequency
-            start = self.imparam.start
-            spw = int(self.visparams[0].as_msindex()['spw'][0])
-            print('Use Freuquency for channel {0} spw {1}'.format(start, spw))
-            cf, cw = imagewriter.ImageWriter.frequency_setup_for_spw(vis=vis,
-                                                                     spw_id=spw,
-                                                                     chan=start)
-            self.imparam.start = cf
-            self.imparam.width = cw
+            imparam_for_writer.phasecenter = phase_direction
+
         mssel_index = self.visparams[0].as_msindex()
         field = None if len(mssel_index['field']) == 0 else mssel_index['field'][0]
         spw_selected = None if len(mssel_index['spw']) == 0 else mssel_index['spw']
         imagemeta = paramcontainer.ImageMetaInfoContainer.fromvis(vis, field, spw_selected)
-        writer = imagewriter.ImageWriter(self.imparam, self.imagearray.data,
-                                         imagemeta)
+
+        if (isinstance(self.imparam.start, str) and self.imparam.start.isdigit()) \
+           or isinstance(self.imparam.start, int):
+            assert self.imparam.nchan == 1
+            lsrk_freq_min, lsrk_freq_max = 1e100, 0
+            for visparam in self.visparams:
+                _mssel_index = visparam.as_msindex()
+                spw_chan_list = _mssel_index['channel']
+                print(f'spw_chan_list: {spw_chan_list}')
+                for spw_chan in spw_chan_list:
+                    _freq_min, _freq_max = visparam.to_lsrk_range(
+                        spw_chan,
+                        imparam_for_writer.phasecenter
+                    )
+                    lsrk_freq_min = min(lsrk_freq_min, _freq_min)
+                    lsrk_freq_max = max(lsrk_freq_max, _freq_max)
+            width = lsrk_freq_max - lsrk_freq_min
+            imparam_for_writer.start = f'{lsrk_freq_min + width / 2:16.12f}Hz'
+            imparam_for_writer.width = f'{width:16.12f}Hz'
+
+        writer = imagewriter.ImageWriter(
+            imparam_for_writer,
+            self.imagearray.data,
+            imagemeta
+        )
         writer.write(overwrite=overwrite)
 
     def getimage(self, imagename):

@@ -33,13 +33,6 @@ class ImageWriter(object):
             pdir = msmd.phasecenter(field_id)
         return pdir
 
-    @staticmethod
-    def frequency_setup_for_spw(vis, spw_id, chan):
-        with casa.OpenTableForRead(os.path.join(vis, 'SPECTRAL_WINDOW')) as tb:
-            chan_freq = tb.getcell('CHAN_FREQ', spw_id)
-            chan_width = tb.getcell('CHAN_WIDTH', spw_id)
-        return '{0:16.12f}Hz'.format(chan_freq[chan]), '{0:16.12f}Hz'.format(chan_width[chan])
-
     def __init__(self, imageparam, imagearray, imagemeta=None):
         self.imageparam = imageparam
         self.imagearray = imagearray
@@ -105,29 +98,27 @@ class ImageWriter(object):
 
         # spectral coordinate
         refframe = 'LSRK'
-        print('start {0} width {1}'.format(self.imageparam.start,
-                                           self.imageparam.width))
+        print(f'start {self.imageparam.start} width {self.imageparam.width}')
         start = qa.convert(self.imageparam.start, 'Hz')
         width = qa.convert(self.imageparam.width, 'Hz')
         nchan = self.imageparam.nchan
-        f = np.fromiter((start['value'] + i * width['value'] for i in range(nchan)), dtype=np.float64)
-        print('f = {0}'.format(f))
-        frequencies = qa.quantity(f, 'Hz')
         veldef = 'radio'
-        if len(f) > 1:
+        if nchan > 1:
+            f = np.fromiter((start['value'] + i * width['value'] for i in range(nchan)), dtype=np.float64)
+            print('f = {0}'.format(f))
+            frequencies = qa.quantity(f, 'Hz')
             c.setspectral(refcode=refframe,
                           frequencies=frequencies,
                           doppler=veldef)
         else:
             print('set increment for spectral axis: {0}'.format(width))
-            #c.setreferencepixel(value=0, type='spectral')
-            #c.setreferencevalue(value=start, type='spectral')
-            #c.setincrement(value=width, type='spectral')
             r = c.torecord()
-            if 'spectral2' in r:
-                key = 'spectral2'
-            elif 'spectral1' in r:
-                key = 'spectral1'
+            for k in r:
+                if k.startswith('spectral'):
+                    key = k
+                    break
+            else:
+                raise RuntimeError('spectral axis not found in coordinate system')
             r[key]['wcs']['crpix'] = 0.0
             r[key]['wcs']['crval'] = start['value']
             r[key]['wcs']['cdelt'] = width['value']
