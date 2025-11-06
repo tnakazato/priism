@@ -111,8 +111,8 @@ class VisParamContainer(base_container.ParamContainer):
             chan_width_for_spw = msmd.chanwidths(spw_id)
             position = msmd.observatoryposition()
         freqs = (
-            chan_freq_for_spw[chan_start] - chan_width_for_spw[spw_id] / 2,
-            chan_freq_for_spw[chan_end] + chan_width_for_spw[spw_id] / 2
+            chan_freq_for_spw[chan_start] - chan_width_for_spw[chan_start] / 2,
+            chan_freq_for_spw[chan_end] + chan_width_for_spw[chan_end] / 2
         )
         me.done()
         me.doframe(position)
