@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ main ]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   CASA_RELEASE: casa-6.7.0-31-py3.10.el8
 
