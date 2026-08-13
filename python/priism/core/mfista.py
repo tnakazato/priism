@@ -18,11 +18,12 @@ from __future__ import absolute_import
 
 import numpy as np
 
+from . import pysparseimaging
 from . import sparseimagingfft
 from . import sparseimagingnufft
 
 
-class MfistaSolverBase(object):
+class MfistaSolverBase:
     """
     Solver for sparse modeling using MFISTA algorithm
     """
@@ -89,7 +90,7 @@ class MfistaSolverTemplate(MfistaSolverBase):
         """
         Constructor
         """
-        super(MfistaSolverTemplate, self).__init__(mfistaparam)
+        super().__init__(mfistaparam)
 
     def solve(self, visibility, imageparam, storeinitialimage=True, overwriteinitialimage=False):
         """
@@ -141,7 +142,7 @@ class MfistaSolverTemplate(MfistaSolverBase):
 
 class SakuraSolver(MfistaSolverBase):
     def __init__(self, mfistaparam):
-        super(SakuraSolver, self).__init__(mfistaparam)
+        super().__init__(mfistaparam)
 
     def solve(self, grid_data):
         """
@@ -172,7 +173,7 @@ class MfistaSolverFFT(MfistaSolverTemplate):
         """
         Constructor
         """
-        super(MfistaSolverFFT, self).__init__(mfistaparam)
+        super().__init__(mfistaparam)
 
     def normalize_result(self, vis_data, image_data):
         """
@@ -203,15 +204,35 @@ class MfistaSolverNUFFT(MfistaSolverTemplate):
         """
          Constructor
         """
-        super(MfistaSolverNUFFT, self).__init__(mfistaparam)
+        super().__init__(mfistaparam)
 
 
-def SolverFactory(mode='mfista_fft'):
-    if mode == 'mfista_fft':
-        return MfistaSolverFFT
-    elif mode == 'mfista_nufft':
-        return MfistaSolverNUFFT
-    elif mode == 'sakura':
-        return SakuraSolver
-    else:
-        RuntimeError('Unsupported mode: {}'.format(mode))
+class PyMfistaSolver(MfistaSolverTemplate):
+    """
+    Solver for sparse modeling using MFISTA algorithm with NUFFT
+
+    This depends on sparseimaging package written by Shiro Ikeda.
+    It calls C-function via wrapper class defined in external submodule.
+    (priism.core.sparseimagingnufft.SparseImagingExecutor)
+     """
+    Executor = pysparseimaging.SparseImagingExecutor
+
+    def __init__(self, mfistaparam):
+        """
+         Constructor
+        """
+        super().__init__(mfistaparam)
+
+
+def SolverFactory(mode: str = 'mfista_fft') -> object:
+    match mode:
+        case 'pymfista' | 'pymfista_nufft':
+            return PyMfistaSolver
+        case 'mfista_fft':
+            return MfistaSolverFFT
+        case 'mfista_nufft':
+            return MfistaSolverNUFFT
+        case 'sakura':
+            return SakuraSolver
+        case _:
+            raise RuntimeError('Unsupported mode: {}'.format(mode))
