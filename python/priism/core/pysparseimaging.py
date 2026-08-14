@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from functools import partial
 from collections import namedtuple
 from collections.abc import Callable
@@ -9,6 +10,7 @@ import numpy as np
 
 from . import sparseimagingnufft
 
+logger = logging.getLogger(__name__)
 
 # MSP = 6
 # MSP2 = MSP * 2
@@ -195,8 +197,8 @@ def calc_Q_part(xvec1: np.ndarray, xvec2: np.ndarray, c: float, AyAz: np.ndarray
     # (x1 - x2)'(x1 - x2)
     term2 = np.square(buf_vec).sum()
 
-    print(f"term1: {term1}")
-    print(f"term2: {term2}")
+    logger.debug("term1: %s", term1)
+    logger.debug("term2: %s", term2)
 
     return -term1 + c * term2 / 2
 
@@ -220,9 +222,15 @@ def calc_F_part_nufft(u: np.ndarray, v: np.ndarray, vis: np.ndarray, weight: np.
         _xvec = xvec
     # isign=+1 matches the C++ engine's NUFFT2d2 convention, see calc_costs_nufft
     model_vis = finufft.nufft2d2(u, v, _xvec, eps=1e-12, isign=+1) # / len(u)
-    print(f"model_vis = {model_vis.imag.min()}, {model_vis.real.min()} ~ {model_vis.imag.max()}, {model_vis.real.max()}")
+    logger.debug(
+        "model_vis = %s, %s ~ %s, %s",
+        model_vis.imag.min(), model_vis.real.min(), model_vis.imag.max(), model_vis.real.max()
+    )
     yAx = (vis - model_vis) * weight
-    print(f"yAx = {yAx.imag.min()}, {yAx.real.min()} ~ {yAx.imag.max()}, {yAx.real.max()}")
+    logger.debug(
+        "yAx = %s, %s ~ %s, %s",
+        yAx.imag.min(), yAx.real.min(), yAx.imag.max(), yAx.real.max()
+    )
 
     return yAx
 
@@ -257,8 +265,8 @@ def dF_dx_nufft(u: np.ndarray, v: np.ndarray, weight: np.ndarray, yAx: np.ndarra
     # transform in calc_F_part_nufft, matching the C++ engine's gradient
     dfdx = finufft.nufft2d1(u_full, v_full, weighted_yAx_full, eps=1e-12, isign=-1, n_modes=(nx, ny)) / 2
     # dfdx = finufft.nufft2d1(u, v, weighted_yAx, eps=1e-12, n_modes=(nx, ny))
-    print(f"dfdx.imag min: {dfdx.imag.min()}, dfdx.real min: {dfdx.real.min()}")
-    print(f"dfdx.imag max: {dfdx.imag.max()}, dfdx.real max: {dfdx.real.max()}")
+    logger.debug("dfdx.imag min: %s, dfdx.real min: %s", dfdx.imag.min(), dfdx.real.min())
+    logger.debug("dfdx.imag max: %s, dfdx.real max: %s", dfdx.imag.max(), dfdx.real.max())
     return dfdx.real
 
 
@@ -370,12 +378,12 @@ def mfista_L1_TSV_core_nufft(
     #     vis_std
     # )
 
-    print("Memory allocation and preparations.\n")
+    logger.debug("Memory allocation and preparations.")
 
     # tile boundary container
     # tile_boundary = []
 
-    print("Preparation for FFT.")
+    logger.debug("Preparation for FFT.")
 
     # prepare for nufft (keeps same call)
     # preNUFFT: TBD
@@ -402,15 +410,15 @@ def mfista_L1_TSV_core_nufft(
     elif nonneg_flag == 1:
         soft_th_box = partial(soft_threshold_box, threshold_func=soft_thresold_nonneg)
     else:
-        print("nonneg_flag must be chosen properly.")
+        logger.error("nonneg_flag must be chosen properly.")
         return 0, 0.0, np.array([])
 
-    print(" Done.\n")
+    logger.debug("Done.")
 
     c = cinit
 
-    print("Computing image with MFISTA using NUFFT.")
-    print(f"Stop if iter = {maxiter} or Delta_cost < {eps}\n")
+    logger.debug("Computing image with MFISTA using NUFFT.")
+    logger.debug("Stop if iter = %d or Delta_cost < %s", maxiter, eps)
 
     # initial cost
     # Fourier transformation of xvec (model image) using NUFFT
@@ -423,13 +431,16 @@ def mfista_L1_TSV_core_nufft(
     #     M, Nx, Ny, yAx, E1, E2x, E2y, E4, mx, my, y_neg,
     #     rvec, cvec, fftwplan_r2c, vis, weight, xvec, mbuf_h
     # )
-    print(f"len(u) = {len(u)}, len(v) = {len(v)}, abs(vis).min = {np.abs(vis).min()}, abs(vis).max = {np.abs(vis).max()}, weight.min = {weight.min()}, weight.max = {weight.max()}")
-    print(f"u = {u.min()} ~ {u.max()}")
-    print(f"v = {v.min()} ~ {v.max()}")
+    logger.debug(
+        "len(u) = %d, len(v) = %d, abs(vis).min = %s, abs(vis).max = %s, weight.min = %s, weight.max = %s",
+        len(u), len(v), np.abs(vis).min(), np.abs(vis).max(), weight.min(), weight.max()
+    )
+    logger.debug("u = %s ~ %s", u.min(), u.max())
+    logger.debug("v = %s ~ %s", v.min(), v.max())
     yAx = calc_F_part_nufft(u, v, vis, weight, xvec.reshape(imshape))
-    print(f"yAx shape: {yAx.shape}")
+    logger.debug("yAx shape: %s", yAx.shape)
     costtmp = np.square(np.abs(yAx)).sum() / 2
-    print(f"costtmp (initial): {costtmp}")
+    logger.debug("costtmp (initial): %s", costtmp)
 
     # looks like equivalent is
     #   1. perform NUFFT to get model visibilities from xvec
@@ -439,13 +450,13 @@ def mfista_L1_TSV_core_nufft(
     # add L1 normalizaton term to the cost
     l1cost = np.sum(np.abs(xvec))
     costtmp += lambda_l1 * l1cost
-    print(f"costtmp (L1): {costtmp}")
+    logger.debug("costtmp (L1): %s", costtmp)
 
     # add TSV term to the cost
     if lambda_tsv > 0:
         tsvcost = TSV(xvec.reshape(imshape))
         costtmp += lambda_tsv * tsvcost
-        print(f"costtmp (TSV): {costtmp}")
+        logger.debug("costtmp (TSV): %s", costtmp)
 
     eta = 10.0
     iter_cnt = 0
@@ -454,9 +465,7 @@ def mfista_L1_TSV_core_nufft(
     for iter_cnt in range(maxiter):
         cost[iter_cnt] = costtmp
 
-        # TODO: remove True
-        if True or (iter_cnt % 10) == 0:
-            print(f"{iter_cnt+1:5d} cost = {cost[iter_cnt]:.5f}, c = {c}")
+        logger.debug("%5d cost = %.5f, c = %s", iter_cnt + 1, cost[iter_cnt], c)
 
         # compute Chi-square part
         # input:
@@ -470,7 +479,7 @@ def mfista_L1_TSV_core_nufft(
         # )
         yAx = calc_F_part_nufft(u, v, vis, weight, zvec.reshape(imshape))
         Qcore = np.square(np.abs(yAx)).sum() / 2
-        print(f"Qcore: {Qcore}")
+        logger.debug("Qcore: %s", Qcore)
 
         # compute gradient dF/dx at zvec
         # input:
@@ -499,16 +508,16 @@ def mfista_L1_TSV_core_nufft(
         # inner loop for line-search / backtracking
         Fval = 0.0
         for i in range(maxiter):
-            print(f"Backtracking: iter {i}")
+            logger.debug("Backtracking: iter %d", i)
             xtmp = zvec + dfdx.ravel() / c
-            print(f"    zvec = {zvec.min()} ~ {zvec.max()}")
-            print(f"    xtmp = {xtmp.min()} ~ {xtmp.max()}")
+            logger.debug("    zvec = %s ~ %s", zvec.min(), zvec.max())
+            logger.debug("    xtmp = %s ~ %s", xtmp.min(), xtmp.max())
             # no box_flag
             #   xnew = max(xtmp - lambda_l1 / c, 0)
             # with box_flag
             #   xnew = max(xtmp - lambda_l1 / c, 0) if box > 0 else 0
             xnew = soft_th_box(xtmp, lambda_l1 / c, box_flag, box)
-            print(f"    xnew = {xnew.min()} ~ {xnew.max()}")
+            logger.debug("    xnew = %s ~ %s", xnew.min(), xnew.max())
 
             # compute cost at xnew
             # Fval = calc_F_part_nufft(
@@ -524,16 +533,16 @@ def mfista_L1_TSV_core_nufft(
                 Fval += lambda_tsv * tsvcost
 
             Qval = calc_Q_part(xnew, zvec, c, dfdx.ravel())
-            print(f"Qcore: {Qcore}, Qval: {Qval}")
+            logger.debug("Qcore: %s, Qval: %s", Qcore, Qval)
             Qval += Qcore
 
-            print(f"Fval {Fval} Qval {Qval}")
+            logger.debug("Fval %s Qval %s", Fval, Qval)
             if Fval <= Qval:
                 break
 
             c *= eta
 
-        print(f"iter {iter_cnt}, xnew mean {xnew.mean()}, std {xnew.std()}")
+        logger.debug("iter %d, xnew mean %s, std %s", iter_cnt, xnew.mean(), xnew.std())
 
         eta = ETA  # keep same ETA constant name as in C++ context
         c /= eta
