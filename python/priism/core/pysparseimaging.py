@@ -279,7 +279,8 @@ def mfista_L1_TSV_core_nufft(
         xinit: np.ndarray,
         nonneg_flag: bool,
         box_flag: bool,
-        cl_box: np.ndarray
+        cl_box: np.ndarray,
+        restart_flag: bool = True
 ) -> tuple[PyMfistaResults, np.ndarray]:
     """Python translation of the C++ mfista_L1_TSV_core_nufft.
 
@@ -301,6 +302,9 @@ def mfista_L1_TSV_core_nufft(
         nonneg_flag: if True, enforce non-negativity
         box_flag: if True, enable clean box
         cl_box: clean box
+        restart_flag: if True, apply Nesterov gradient restart (O'Donoghue
+            & Candes 2015) to the momentum coefficient instead of letting
+            it grow monotonically every iteration
 
     Returns:
         Result tuple (PyMfistaResults) and final image array
@@ -541,6 +545,7 @@ def mfista_L1_TSV_core_nufft(
 
         # matches C++ `zvec = xvec;` here: the momentum update below must
         # combine xnew with the *previous xvec*, not the previous zvec
+        y_k = zvec.copy()
         z_old = xvec.copy()
 
         if Fval < cost[iter_cnt]:
@@ -567,7 +572,20 @@ def mfista_L1_TSV_core_nufft(
             print(f"converged at iter {iter_cnt}")
             break
 
-        mu = munew
+        if restart_flag:
+            # Gradient restart (O'Donoghue & Candes 2015): function restart
+            # (F(x_k) > F(x_{k-1})) never fires under MFISTA's monotone
+            # accept/reject rule, so it is not useful here. Instead, detect
+            # when the momentum point y_k = zvec is pointing the "wrong way"
+            # relative to the actual step just taken (xnew - z_old); when it
+            # is, forget the accumulated momentum by resetting mu to 1
+            # instead of letting it keep growing via mu = munew.
+            if np.dot(y_k - xnew, xnew - z_old) > 0.0:
+                mu = 1.0
+            else:
+                mu = munew
+        else:
+            mu = munew
 
     # end main loop
 
