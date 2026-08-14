@@ -53,7 +53,10 @@ def calc_costs_nufft(
         _xvec = xvec.astype(complex)
     else:
         _xvec = xvec
-    model_vis = finufft.nufft2d2(u_dx, v_dy, _xvec, eps=1e-12) # / len(u_dx)
+    # isign=+1 matches the C++ engine's NUFFT2d2 convention (NU_SIGN=-1 in
+    # mfista.hpp); finufft's default isign=-1 for type-2 produces the
+    # complex-conjugate visibility relative to the C++ engine.
+    model_vis = finufft.nufft2d2(u_dx, v_dy, _xvec, eps=1e-12, isign=+1) # / len(u_dx)
     chisq: float = np.sum(
         (np.square(np.real(model_vis) - vis_r) + np.square(np.imag(model_vis) - vis_i))
         / np.square(vis_std)
@@ -225,7 +228,8 @@ def calc_F_part_nufft(u: np.ndarray, v: np.ndarray, vis: np.ndarray, weight: np.
         _xvec = xvec.astype(complex)
     else:
         _xvec = xvec
-    model_vis = finufft.nufft2d2(u, v, _xvec, eps=1e-12) # / len(u)
+    # isign=+1 matches the C++ engine's NUFFT2d2 convention, see calc_costs_nufft
+    model_vis = finufft.nufft2d2(u, v, _xvec, eps=1e-12, isign=+1) # / len(u)
     print(f"model_vis = {model_vis.imag.min()}, {model_vis.real.min()} ~ {model_vis.imag.max()}, {model_vis.real.max()}")
     yAx = (vis - model_vis) * weight
     print(f"yAx = {yAx.imag.min()}, {yAx.real.min()} ~ {yAx.imag.max()}, {yAx.real.max()}")
@@ -259,7 +263,9 @@ def dF_dx_nufft(u: np.ndarray, v: np.ndarray, weight: np.ndarray, yAx: np.ndarra
     v_full[len(v):] = -v
     weighted_yAx_full[:len(weighted_yAx)] = weighted_yAx
     weighted_yAx_full[len(weighted_yAx):] = np.conjugate(weighted_yAx)
-    dfdx = finufft.nufft2d1(u_full, v_full, weighted_yAx_full, eps=1e-12, n_modes=(nx, ny)) / 2
+    # isign=-1 here pairs as the true adjoint of the isign=+1 forward
+    # transform in calc_F_part_nufft, matching the C++ engine's gradient
+    dfdx = finufft.nufft2d1(u_full, v_full, weighted_yAx_full, eps=1e-12, isign=-1, n_modes=(nx, ny)) / 2
     # dfdx = finufft.nufft2d1(u, v, weighted_yAx, eps=1e-12, n_modes=(nx, ny))
     print(f"dfdx.imag min: {dfdx.imag.min()}, dfdx.real min: {dfdx.real.min()}")
     print(f"dfdx.imag max: {dfdx.imag.max()}, dfdx.real max: {dfdx.real.max()}")
@@ -543,7 +549,9 @@ def mfista_L1_TSV_core_nufft(
         l1cost = np.sum(np.abs(xnew))
         Fval += lambda_l1 * l1cost
 
-        z_old = zvec.copy()
+        # matches C++ `zvec = xvec;` here: the momentum update below must
+        # combine xnew with the *previous xvec*, not the previous zvec
+        z_old = xvec.copy()
 
         if Fval < cost[iter_cnt]:
             costtmp = Fval
