@@ -90,45 +90,35 @@ def calc_costs_nufft(
     return chisq, l1cost, n_active, tsvcost, final_cost
 
 
-def soft_thresold(v: float, eta: float) -> float:
-    """Apply soft-thresholding to a value.
+def soft_thresold(v: np.ndarray, eta: float) -> np.ndarray:
+    """Apply soft-thresholding to an array.
 
     Args:
-        v: input value
+        v: input array
         eta: threshold value
     Returns:
-        Soft-thresholded value
+        Soft-thresholded array
     """
     abs_eta = abs(eta)
 
-    r = 0.0
-    if v > abs_eta:
-        r = v - abs_eta
-    elif v < -abs_eta:
-        r = v + abs_eta
-
-    return r
+    return np.sign(v) * np.maximum(np.abs(v) - abs_eta, 0.0)
 
 
-def soft_thresold_nonneg(v: float, eta: float) -> float:
-    """Apply soft-thresholding to a non-negative value.
+def soft_thresold_nonneg(v: np.ndarray, eta: float) -> np.ndarray:
+    """Apply soft-thresholding to a non-negative array.
 
     Args:
-        v: input value
+        v: input array
         eta: threshold value
     Returns:
-        Soft-thresholded value
+        Soft-thresholded array
     """
     abs_eta = abs(eta)
 
-    r = 0.0
-    if v > abs_eta:
-        r = v - abs_eta
-
-    return r
+    return np.maximum(v - abs_eta, 0.0)
 
 
-def soft_threshold_box(vec: np.ndarray, eta: float, box_flag: bool, box: np.ndarray | None, threshold_func: Callable[[float, float], float]) -> np.ndarray:
+def soft_threshold_box(vec: np.ndarray, eta: float, box_flag: bool, box: np.ndarray | None, threshold_func: Callable[[np.ndarray, float], np.ndarray]) -> np.ndarray:
     """Apply soft-thresholding with box constraints.
 
     Args:
@@ -136,15 +126,15 @@ def soft_threshold_box(vec: np.ndarray, eta: float, box_flag: bool, box: np.ndar
         eta: threshold value
         box_flag: if True, apply box constraints
         box: box constraints array (same shape as vec) or None
-        threshold_func: function to apply for thresholding
+        threshold_func: vectorized function to apply for thresholding
 
     Returns:
         Soft-thresholded numpy array
     """
-    nvec = np.asarray([threshold_func(v, eta) for v in vec], dtype=float)
+    nvec = threshold_func(vec, eta)
 
     if box_flag:
-        nvec *= box
+        nvec = nvec * box
 
     return nvec
 
