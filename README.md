@@ -280,8 +280,20 @@ combinations. If a single solve has the machine to itself, raising
 `nthreads` can speed it up substantially, but more threads is not always
 faster -- benchmark on your own machine and problem size before choosing a
 value, since finufft's per-call threading overhead can outweigh the benefit
-well before all available cores are used. This option is ignored by the
-C++-based solvers (`mfista_fft`, `mfista_nufft`).
+well before all available cores are used.
+
+Passing `nthreads=0` defers the choice to finufft's own internal thread-count
+heuristic entirely (equivalent to omitting the option). Whether this is a
+good idea is highly sensitive to image size and shape: in our own
+benchmarking (MacBook Pro, Apple M4, macOS 26.5.2, Python 3.12.14, ~45000
+real ALMA visibilities), finufft's own default measured about 4x **slower**
+per call than the best explicit value on a 112x112 image, but was among the
+**fastest** options on a 128x128 image (power-of-2 sizes appear to get a
+much faster FFT path). There is no universally safe choice -- benchmark
+`nthreads=0` against a few explicit values for your own image size before
+relying on it.
+
+This option is ignored by the C++-based solvers (`mfista_fft`, `mfista_nufft`).
 
 ### Batch Processing
 `runner` module is prepared for batch processing using PRIISM module.
