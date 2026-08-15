@@ -154,14 +154,16 @@ class SparseModelingImager(object):
         self.solver = solver_cls(mfistaparam)
 
     def mfista(self, l1, ltsv, maxiter=50000, eps=1.0e-5, clean_box=None,
-               storeinitialimage=True, overwriteinitialimage=False, nonnegative=True):
+               storeinitialimage=True, overwriteinitialimage=False, nonnegative=True,
+               nthreads=1):
         print('***WARNING*** mfista will be deprecate in the future. Please use solve instead.')
         self.solve(l1, ltsv, maxiter, eps, clean_box,
-                   storeinitialimage, overwriteinitialimage, nonnegative)
+                   storeinitialimage, overwriteinitialimage, nonnegative,
+                   nthreads=nthreads)
 
     def solve(self, l1, ltsv, maxiter=50000, eps=1.0e-5, clean_box=None,
               storeinitialimage=True, overwriteinitialimage=False, nonnegative=True,
-              scalehyperparam=True):
+              scalehyperparam=True, nthreads=1):
         """
         Run MFISTA algorithm on visibility data loaded on memory.
         gridvis or readvis must be executed beforehand.
@@ -178,6 +180,12 @@ class SparseModelingImager(object):
             scalehyperparam -- apply hyper-parameter scaling (L1 and Ltsv) to reproduce
                                the behavior compatible with previous version (earlier than
                                0.9.x). Default is True (backward-compatible).
+            nthreads -- number of threads finufft may use per NUFFT call, when
+                        solver='pymfista_nufft'. Default is 1 to avoid
+                        oversubscribing when multiple solves run concurrently
+                        (e.g. cross-validation grid search); raise it if a
+                        single solve has the machine to itself. Ignored by
+                        the C++-based solvers.
         """
         if scalehyperparam:
             # scaling factor for hyper-parameter
@@ -191,7 +199,8 @@ class SparseModelingImager(object):
         self.mfistaparam = paramcontainer.MfistaParamContainer(l1=internal_L1, ltsv=internal_Ltsv,
                                                                maxiter=maxiter, eps=eps,
                                                                clean_box=clean_box,
-                                                               nonnegative=nonnegative)
+                                                               nonnegative=nonnegative,
+                                                               nthreads=nthreads)
         arr = self._solve(self.mfistaparam, self.working_set,
                           storeinitialimage=storeinitialimage, overwriteinitialimage=overwriteinitialimage)
         self.imagearray = datacontainer.ResultingImageStorage(arr)

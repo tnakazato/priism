@@ -264,6 +264,25 @@ template scripts for each solver. Name of the scripts are as follows:
 * `priism.alma` (mfista_fft): `cvrun_fft.py`
 * `priism.alma` (mfista_nufft): `cvrun_nufft.py`
 
+There is also a pure-Python implementation of the NUFFT solver, selected via
+`solver='pymfista_nufft'`, which relies on [finufft](https://finufft.readthedocs.io/)
+instead of the bundled C++ engine. Its `solve`/`mfista` methods accept an
+`nthreads` option (default `1`) controlling how many threads finufft may use
+per NUFFT call:
+
+```
+>>> worker.solve(l1=1e6, ltsv=1e8, maxiter=1000, nthreads=4)
+```
+
+The default of `1` avoids oversubscribing CPU cores when many solves run
+concurrently, e.g. during a cross validation grid search over `l1`/`ltsv`
+combinations. If a single solve has the machine to itself, raising
+`nthreads` can speed it up substantially, but more threads is not always
+faster -- benchmark on your own machine and problem size before choosing a
+value, since finufft's per-call threading overhead can outweigh the benefit
+well before all available cores are used. This option is ignored by the
+C++-based solvers (`mfista_fft`, `mfista_nufft`).
+
 ### Batch Processing
 `runner` module is prepared for batch processing using PRIISM module.
 Following commands obtain image for the specified MS (measurement set) data (visibility data). Input parameter is (field, SPW, channel) for input MS data and image/pixel size for output image. Parameters are set typical values as default.

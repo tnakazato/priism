@@ -35,9 +35,17 @@ class ParamContainer(object):
 
 
 class MfistaParamContainer(ParamContainer):
-    def __init__(self, l1, ltsv, maxiter=50000, eps=1.0e-5, clean_box=None, nonnegative=True):
+    def __init__(self, l1, ltsv, maxiter=50000, eps=1.0e-5, clean_box=None, nonnegative=True,
+                 nthreads=1):
         """
         Constructor
+
+        nthreads -- number of threads the (pure-Python) NUFFT solver's
+                    finufft calls may use. Default is 1 to avoid
+                    oversubscribing when multiple solves run concurrently
+                    (e.g. cross-validation grid search); raise it if you
+                    know a single solve has the machine to itself. Only
+                    honored by the 'pymfista_nufft' solver.
         """
         self.InitContainer(locals())
 

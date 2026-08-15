@@ -68,6 +68,10 @@ class MfistaSolverBase:
     def nonnegative(self):
         return self.__from_param('nonnegative', True)
 
+    @property
+    def nthreads(self):
+        return self.__from_param('nthreads', 1)
+
     def solve(self, grid_data):
         """
         Given complex visibility data, find the best image
@@ -113,8 +117,14 @@ class MfistaSolverTemplate(MfistaSolverBase):
         inputs = executor.Inputs.from_visibility_working_set(visibility,
                                                              imageparam)
 
-        result = executor.run(inputs, initialimage=self.initialimage,
-                              maxiter=self.maxiter, eps=self.eps, cl_box=self.clean_box)
+        run_kwargs = dict(initialimage=self.initialimage,
+                          maxiter=self.maxiter, eps=self.eps, cl_box=self.clean_box)
+        if self.Executor is pysparseimaging.SparseImagingExecutor:
+            # nthreads is only meaningful for the pure-Python (finufft-based)
+            # executor; the C++/ctypes executors don't accept it. Once the
+            # C++ solver options are removed this branch can go away.
+            run_kwargs['nthreads'] = self.nthreads
+        result = executor.run(inputs, **run_kwargs)
 
         # keep output image as an initial image to next run if necessary
         if storeinitialimage:
