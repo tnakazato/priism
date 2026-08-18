@@ -373,7 +373,7 @@ class Session:
 
         print('## File name prefix for cross validation: '+self.p['cvname'])
 
-        self.worker.crossvalidation(self.p['l1List'], self.p['ltsvList'],
+        self.worker.optimizeparameters(self.p['l1List'], self.p['ltsvList'],
                                     num_fold=int(self.p['numFold']),
                                     imageprefix=self.p['cvname'],
                                     imagepolicy=self.p['imagePolicy'],
@@ -382,6 +382,7 @@ class Session:
                                     datafile=self.p['cvname']+'.cvresult.dat',
                                     maxiter=int(self.p['maxiter']),
                                     resultasinitialimage=False, scalehyperparam=False,
+                                    criterion='cv',
                                     optimizer=self.p['optimizer'],
                                     bayesopt_maxiter=int(self.p['bayesopt_maxiter']))
 

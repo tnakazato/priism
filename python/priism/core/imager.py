@@ -353,12 +353,12 @@ class SparseModelingImager(object):
     def cvforgridvis(self, l1_list, ltsv_list, num_fold=10, imageprefix='image', imagepolicy='full',
                      summarize=True, figfile=None, datafile=None, maxiter=50000, eps=1.0e-5, clean_box=None,
                      resultasinitialimage=True, nonnegative=True):
-        print('***WARNING*** cvforgridvis will be deprecate in the future. Please use crossvalidation instead.')
+        print('***WARNING*** cvforgridvis will be deprecate in the future. Please use optimizeparameters instead.')
         return self.crossvalidation(l1_list, ltsv_list, num_fold, imageprefix, imagepolicy,
                                     summarize, figfile, datafile, maxiter, eps, clean_box,
                                     resultasinitialimage, nonnegative=True, )
 
-    def crossvalidation(self, l1_list, ltsv_list, num_fold=10, imageprefix='image', imagepolicy='full',
+    def optimizeparameters(self, l1_list, ltsv_list, num_fold=10, imageprefix='image', imagepolicy='full',
                         summarize=True, figfile=None, datafile=None, maxiter=50000, eps=1.0e-5, clean_box=None,
                         resultasinitialimage=True, nonnegative=True, scalehyperparam=True,
                         criterion='cv', optimizer='classical',
@@ -542,6 +542,24 @@ class SparseModelingImager(object):
         # finally, return best L1 and Ltsv
         return {'L1': best_L1, 'Ltsv': best_Ltsv}
 
+    def crossvalidation(self, l1_list, ltsv_list, num_fold=10, imageprefix='image', imagepolicy='full',
+                        summarize=True, figfile=None, datafile=None, maxiter=50000, eps=1.0e-5, clean_box=None,
+                        resultasinitialimage=True, nonnegative=True, scalehyperparam=True, optimizer='classical',
+                        bayesopt_maxiter=15):
+        """
+        Deprecated. Use optimizeparameters(..., criterion='cv', optimizer=...) instead.
+        Kept as a thin wrapper with its original (pre-'ellipsoid'-criterion)
+        signature, always selecting criterion='cv'.
+        """
+        print('***WARNING*** crossvalidation will be deprecated in the future. '
+              'Please use optimizeparameters instead.')
+        return self.optimizeparameters(
+            l1_list, ltsv_list, num_fold, imageprefix, imagepolicy,
+            summarize, figfile, datafile, maxiter, eps, clean_box,
+            resultasinitialimage, nonnegative, scalehyperparam,
+            criterion='cv', optimizer=optimizer, bayesopt_maxiter=bayesopt_maxiter
+        )
+
     def initializecv(self, num_fold=10):
         assert self.working_set is not None
 
@@ -638,7 +656,7 @@ class SparseModelingImager(object):
         # Use the freshly-computed self.imagearray directly rather than
         # round-tripping through getimage(imagename)/disk -- exportimage()
         # is still called above so the FITS/pickle file exists on disk for
-        # the imagepolicy/best-image handling in crossvalidation().
+        # the imagepolicy/best-image handling in optimizeparameters().
         image_2d = np.squeeze(self.imagearray.data)
         cost, c1, c2 = evaluator.evaluate(
             self.working_set, image_2d, ellipse_th=ellipse_th, cos_th=cos_th
