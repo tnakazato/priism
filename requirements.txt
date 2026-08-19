@@ -1,6 +1,6 @@
 cmake<4.0.0
-casatasks>=6.6.4.0
-casatools>=6.6.4.0
+casatasks>=6.6.4.0,!=6.7.6.14
+casatools>=6.6.4.0,!=6.7.6.14
 certifi
 optuna
 setuptools
