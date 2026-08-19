@@ -4,3 +4,4 @@ casatools>=6.6.4.0
 certifi
 optuna
 setuptools
+finufft
