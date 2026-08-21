@@ -156,10 +156,14 @@ class ImageParamContainer(base_container.ParamContainer):
 
     @imsize.setter
     def imsize(self, value):
-        if hasattr(value, '__iter__'):
-            self._imsize = list(value)
-        else:
+        # NOTE: str has __iter__ (iterates characters), so it must be
+        # checked before the general __iter__ test below, or a scalar
+        # string value (e.g. '512') gets shredded into a list of its
+        # individual characters instead of being treated as one value.
+        if isinstance(value, str) or not hasattr(value, '__iter__'):
             self._imsize = [int(value)]
+        else:
+            self._imsize = list(value)
 
         if len(self._imsize) == 0:
             raise TypeError('given imsize is not correct')
@@ -174,10 +178,17 @@ class ImageParamContainer(base_container.ParamContainer):
 
     @cell.setter
     def cell(self, value):
-        if hasattr(value, '__iter__'):
-            self._cell = list(value)
-        else:
+        # NOTE: str has __iter__ (iterates characters), so it must be
+        # checked before the general __iter__ test below, or a scalar
+        # string value (e.g. '0.01arcsec') gets shredded into a list of
+        # its individual characters instead of being treated as one value
+        # -- e.g. cell='0.01arcsec' silently became cell=['0', '.'],
+        # which parses as a near-zero angle and breaks uvgridconfig with
+        # a ZeroDivisionError deep in fill_uvw().
+        if isinstance(value, str) or not hasattr(value, '__iter__'):
             self._cell = [str(value)]
+        else:
+            self._cell = list(value)
 
         if len(self._cell) == 0:
             raise TypeError('given cell is not correct')
