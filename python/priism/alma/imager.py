@@ -178,23 +178,40 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
         self.working_set = visgridder.get_result2()
 
     @casa.adjust_casalog_level('WARN')
-    def readvis(self, parallel=False):
+    def readvis(self, parallel=False, with_gain_metadata=False):
         """
         Read visibility data
+
+        with_gain_metadata -- if True, additionally read antenna1/antenna2/
+                               time per visibility and populate them on
+                               self.working_set, for external
+                               self-calibration use (see
+                               VisibilityConverter.__init__). Adds a couple
+                               of extra columns to the same MS scan; does
+                               not perform a second read. Default False
+                               leaves plain imaging use unaffected.
         """
         u = []
         v = []
         real = []
         imag = []
         weight = []
+        antenna1 = [] if with_gain_metadata else None
+        antenna2 = [] if with_gain_metadata else None
+        gain_time = [] if with_gain_metadata else None
         interval = 1.0e-16
         for visparam in self.visparams:
             reader = visreader.VisibilityReader(visparam)
-            converter = visconverter.VisibilityConverter(visparam, self.imparam)
+            converter = visconverter.VisibilityConverter(
+                visparam, self.imparam, with_gain_metadata=with_gain_metadata
+            )
+            items = visconverter.VisibilityConverter.required_columns
+            if with_gain_metadata:
+                items = items + visconverter.VisibilityConverter.gain_metadata_columns
             if parallel:
                 raise NotImplementedError()
             else:
-                for chunk in reader.readvis(interval=interval):
+                for chunk in reader.readvis(items=items, interval=interval):
                     ws_list = converter.generate_working_set(chunk)
                     for ws in ws_list:
                         flag = ws.flag
@@ -204,13 +221,27 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
                         real.extend(ws.rdata[valid])
                         imag.extend(ws.idata[valid])
                         weight.extend(ws.weight[(valid[0], valid[2])])
+                        if with_gain_metadata:
+                            # ws.antenna1/antenna2/time were tiled through
+                            # the same per-row blocks as ws.u/ws.v in
+                            # flatten(), so indexing with the same valid[0]
+                            # keeps them aligned with u/v/real/imag/weight
+                            # above.
+                            antenna1.extend(ws.antenna1[valid[0]])
+                            antenna2.extend(ws.antenna2[valid[0]])
+                            gain_time.extend(ws.time[valid[0]])
 
-        self.working_set = datacontainer.VisibilityWorkingSet(data_id=0,
-                                                              u=np.asarray(u),
-                                                              v=np.asarray(v),
-                                                              rdata=np.asarray(real, dtype=np.float64),
-                                                              idata=np.asarray(imag, dtype=np.float64),
-                                                              weight=np.asarray(weight, dtype=np.float64))
+        self.working_set = datacontainer.VisibilityWorkingSet(
+            data_id=0,
+            u=np.asarray(u),
+            v=np.asarray(v),
+            rdata=np.asarray(real, dtype=np.float64),
+            idata=np.asarray(imag, dtype=np.float64),
+            weight=np.asarray(weight, dtype=np.float64),
+            antenna1=np.asarray(antenna1, dtype=np.int32) if with_gain_metadata else None,
+            antenna2=np.asarray(antenna2, dtype=np.int32) if with_gain_metadata else None,
+            time=np.asarray(gain_time, dtype=np.float64) if with_gain_metadata else None,
+        )
 
     def exportimage(self, imagename, overwrite=False):
         """

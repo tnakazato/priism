@@ -33,6 +33,12 @@ class VisibilityConverter(object):
     """
     required_columns = ['time', 'uvw', 'field_id', 'data_desc_id',
                         'data', 'flag', 'weight']
+    # extra columns needed only when a caller opts into gain metadata
+    # (antenna1/antenna2/time per row), e.g. for external self-calibration.
+    # Not part of required_columns so that plain imaging use (the
+    # overwhelming majority of callers) reads exactly the same columns,
+    # at exactly the same cost, as before this was added.
+    gain_metadata_columns = ['antenna1', 'antenna2']
     frequency_reference = ['REST',
                            'LSRK',
                            'LSRD',
@@ -43,9 +49,18 @@ class VisibilityConverter(object):
                            'LGROUP',
                            'CMB']
 
-    def __init__(self, visparam, imageparam):
+    def __init__(self, visparam, imageparam, with_gain_metadata=False):
+        """
+        with_gain_metadata -- if True, generate_working_set() additionally
+                               fills antenna1/antenna2/time on the returned
+                               working sets, sourced from the same chunk
+                               (no extra MS read), for external
+                               self-calibration use. Default False leaves
+                               plain imaging use completely unaffected.
+        """
         self.visparam = visparam
         self.imageparam = imageparam
+        self.with_gain_metadata = with_gain_metadata
 
         self._warn_refocus()
 
@@ -629,6 +644,20 @@ class VisibilityConverter(object):
         ws.u = u
         ws.v = v
 
+    def fill_gain_metadata(self, ws, chunk):
+        """
+        Fill antenna1/antenna2/time for self-calibration use.
+
+        Unlike u/v these don't depend on frequency, so they're kept as
+        one value per row (no nchan axis) and simply carried through
+        flatten()'s row-block duplication unchanged.
+
+        ws -- working set to be filled
+        chunk -- input data chunk (same one already used by fill_data/fill_uvw)
+        """
+        ws.antenna1 = np.array(chunk['antenna1'], dtype=np.int32, copy=True)
+        ws.antenna2 = np.array(chunk['antenna2'], dtype=np.int32, copy=True)
+        ws.time = np.full(ws.antenna1.shape, chunk['time'][0], dtype=np.float64)
 
     def flatten(self, working_set):
         """
@@ -652,6 +681,11 @@ class VisibilityConverter(object):
             channel_map = sakura.empty_aligned((1,), dtype=working_set.channel_map.dtype)
             u = sakura.empty_aligned((nrow,), dtype=working_set.u.dtype)
             v = sakura.empty_like_aligned(u)
+            has_gain_metadata = working_set.antenna1 is not None
+            if has_gain_metadata:
+                antenna1 = sakura.empty_aligned((nrow,), dtype=working_set.antenna1.dtype)
+                antenna2 = sakura.empty_like_aligned(antenna1)
+                gain_time = sakura.empty_aligned((nrow,), dtype=working_set.time.dtype)
             row_start = 0
             for ichan in vischans:
                 row_end = row_start + nrow_ws
@@ -663,12 +697,25 @@ class VisibilityConverter(object):
                 channel_map[0] = imchan
                 u[row_start:row_end] = working_set.u[:, ichan]
                 v[row_start:row_end] = working_set.v[:, ichan]
+                if has_gain_metadata:
+                    # antenna1/antenna2/time don't vary with channel, so
+                    # every vischan block gets the same (row-indexed) values
+                    # -- this deliberately mirrors u/v's row-block tiling
+                    # above so that the same `valid` mask/index used
+                    # downstream to filter/select u/v selects matching
+                    # antenna/time entries too.
+                    antenna1[row_start:row_end] = working_set.antenna1[:]
+                    antenna2[row_start:row_end] = working_set.antenna2[:]
+                    gain_time[row_start:row_end] = working_set.time[:]
                 row_start = row_end
 
             ws = gridder.GridderWorkingSet(data_id=working_set.data_id, u=u, v=v,
                                            rdata=real, idata=imag, flag=flag,
                                            weight=weight, row_flag=row_flag,
-                                           channel_map=channel_map)
+                                           channel_map=channel_map,
+                                           antenna1=antenna1 if has_gain_metadata else None,
+                                           antenna2=antenna2 if has_gain_metadata else None,
+                                           time=gain_time if has_gain_metadata else None)
             #print('yielding channelized working set from channels {}'.format(vischans))
             yield ws
 
@@ -696,6 +743,12 @@ class VisibilityConverter(object):
                 assert any(col in chunk for col in candidate_datacolumns)
             else:
                 assert column in chunk
+        if self.with_gain_metadata:
+            for column in self.gain_metadata_columns:
+                assert column in chunk, \
+                    'with_gain_metadata=True requires {0} in the chunk; ' \
+                    'pass items=required_columns+gain_metadata_columns to ' \
+                    'VisibilityReader.readvis()'.format(column)
         # - all chunk entry should have same timestamp (mitigate in future?)
         assert np.all(chunk['time'] == chunk['time'][0])
         # - all chunk entry should have same spw (mitigate in future?)
@@ -725,6 +778,12 @@ class VisibilityConverter(object):
 
         # 3~5. UVW manipulation
         self.fill_uvw(working_set, chunk, lsr_frequency)
+
+        # optional. gain metadata (antenna1/antenna2/time) for external
+        #           self-calibration use; skipped entirely for plain
+        #           imaging use (with_gain_metadata=False, the default)
+        if self.with_gain_metadata:
+            self.fill_gain_metadata(working_set, chunk)
 
         # EXTRA. convert channelized working set into a set of
         #        single-channel working set
