@@ -17,6 +17,7 @@
 from __future__ import absolute_import
 
 import copy
+import logging
 
 import numpy as np
 
@@ -30,6 +31,9 @@ import priism.external.casa as casa
 
 import priism.core.imager as core_imager
 import priism.core.datacontainer as datacontainer
+
+
+logger = logging.getLogger(__name__)
 
 
 class AlmaSparseModelingResult(object):
@@ -233,7 +237,7 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
         # convert phasecenter if it is given as FIELD_ID
         vis = self.visparams[0].vis
         if isinstance(self.imparam.phasecenter, str) and self.imparam.phasecenter.isdigit():
-            print('Use PHASE_DIR for FIELD {0}'.format(self.imparam.phasecenter))
+            logger.info(f'Use PHASE_DIR for FIELD {self.imparam.phasecenter}')
             # take first MS
             field_id = int(self.imparam.phasecenter)
             phase_direction = imagewriter.ImageWriter.phase_direction_for_field(vis=vis,
@@ -252,7 +256,7 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
             for visparam in self.visparams:
                 _mssel_index = visparam.as_msindex()
                 spw_chan_list = _mssel_index['channel']
-                print(f'spw_chan_list: {spw_chan_list}')
+                logger.info(f'spw_chan_list: {spw_chan_list}')
                 for spw_chan in spw_chan_list:
                     _freq_min, _freq_max = visparam.to_lsrk_range(
                         spw_chan,

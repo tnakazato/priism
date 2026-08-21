@@ -16,11 +16,15 @@
 # along with PRIISM.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import absolute_import
 
+import logging
+
 import numpy as np
-import os
 
 import priism.external.casa as casa
 from . import paramcontainer
+
+
+logger = logging.getLogger(__name__)
 
 
 class ImageWriter(object):
@@ -77,7 +81,7 @@ class ImageWriter(object):
 
         # direction coordinate
         phasecenter = self.imageparam.phasecenter
-        print('DEBUG phasecenter={0}'.format(phasecenter))
+        logger.debug(f'DEBUG phasecenter={phasecenter}')
         refframe = me.getref(phasecenter)
         refpix = [int(x) // 2 for x in self.imageparam.imsize]
         center = me.getvalue(phasecenter)
@@ -89,7 +93,7 @@ class ImageWriter(object):
         incr[0] = qa.mul(-1.0, incr[0])
         sincr = list(map(q2s, incr))
         projection = self.imageparam.projection
-        print('DEBUG refpix={0}, refval={1}'.format(refpix, refval))
+        logger.debug(f'DEBUG refpix={refpix}, refval={refval}')
         c.setdirection(refcode=refframe,
                        proj=projection,
                        refpix=refpix,
@@ -98,20 +102,20 @@ class ImageWriter(object):
 
         # spectral coordinate
         refframe = 'LSRK'
-        print(f'start {self.imageparam.start} width {self.imageparam.width}')
+        logger.info(f'start {self.imageparam.start} width {self.imageparam.width}')
         start = qa.convert(self.imageparam.start, 'Hz')
         width = qa.convert(self.imageparam.width, 'Hz')
         nchan = self.imageparam.nchan
         veldef = 'radio'
         if nchan > 1:
             f = np.fromiter((start['value'] + i * width['value'] for i in range(nchan)), dtype=np.float64)
-            print('f = {0}'.format(f))
+            logger.info(f'f = {f}')
             frequencies = qa.quantity(f, 'Hz')
             c.setspectral(refcode=refframe,
                           frequencies=frequencies,
                           doppler=veldef)
         else:
-            print('set increment for spectral axis: {0}'.format(width))
+            logger.info(f'set increment for spectral axis: {width}')
             r = c.torecord()
             for k in r:
                 if k.startswith('spectral'):
@@ -145,11 +149,11 @@ class ImageWriter(object):
                 c1 = (nchan - 1) // 2
                 rest_frequency = qa.quantity(f[c1], frequencies['unit'])
 
-        print('rest_frequency={0}'.format(rest_frequency))
+        logger.info(f'rest_frequency={rest_frequency}')
         if qa.checkfreq(rest_frequency) and qa.gt(rest_frequency, qa.quantity(0, 'Hz')):
             c.setrestfrequency(rest_frequency)
 
-        print(c.summary(list=False)[0])
+        logger.info(c.summary(list=False)[0])
 
         return c
 
@@ -177,6 +181,6 @@ def parse_phasecenter(phasecenter_str):
         else:
             raise ValueError('Invalid phasecenter: "{0}"'.format(phasecenter_str))
 
-    #print 'DEBUG rf={0} lon={1} lat={2}'.format(ref, lon, lat)
+    logger.debug(f'DEBUG rf={ref} lon={lon} lat={lat}')
     direction = me.direction(rf=ref, v0=lon, v1=lat)
     return direction

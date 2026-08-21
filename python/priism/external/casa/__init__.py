@@ -18,6 +18,10 @@ from __future__ import absolute_import
 
 import collections
 import functools
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 # casa version
@@ -46,7 +50,7 @@ def _get_casa_version():
             _casac = casac.casac()
             utils = _casac.utils()
             version_string = utils.version_info().strip()
-            #print(version_string)
+            logger.debug(version_string)
         except Exception:
             try:
                 # this could be CASA 6 environment
@@ -55,7 +59,7 @@ def _get_casa_version():
             except Exception:
                 # no casa found...
                 version_string = 'NONE'
-    #print(version_string)
+    logger.debug(f"final version: {version_string}")
 
     # version string format: MAJOR.MINOR.PATCH-BUILD
     s = version_string.split('-')
@@ -83,7 +87,7 @@ casa_version = _get_casa_version()
 if casa_version.major < 0:
     raise ImportError('CASA tools/tasks is not available. prism.alma will not work. Please use prism or prism.core instead.')
 elif casa_version.major < 5:
-    print('WARNING: CASA version should be 5.0.0 or higher. prism.alma will not work. Please use prism or prism.core instead.')
+    logger.warning('WARNING: CASA version should be 5.0.0 or higher. prism.alma will not work. Please use prism or prism.core instead.')
 
 # casa tool generators
 from .casatools import CasaToolGenerator

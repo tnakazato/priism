@@ -16,7 +16,12 @@
 # along with PRIISM.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import absolute_import
 
+import logging
+
 from . import libsakurapy
+
+
+logger = logging.getLogger(__name__)
 
 
 def grid(working_set, gridfunction, convsupport, convsampling, weight_only,
@@ -87,4 +92,4 @@ def grid(working_set, gridfunction, convsupport, convsampling, weight_only,
 def solvemfista(l1, ltsqv, grid_data, image_data):
     grid_real = grid_data.real
     grid_imag = grid_data.imag
-    print('LOG: solvemfista(l1, ltsqv, grid_real, grid_imag, image_data)')
+    logger.info('LOG: solvemfista(l1, ltsqv, grid_real, grid_imag, image_data)')
