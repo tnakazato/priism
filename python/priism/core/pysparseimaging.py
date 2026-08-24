@@ -609,10 +609,10 @@ def mfista_L1_TSV_core_nufft(
 
     # adjust final iter value same as C++ behavior
     if iter_cnt + 1 == maxiter:
-        logger.info(f"{iter_cnt:5d} cost = {cost[iter_cnt-1]:.5f}")
+        logger.debug(f"{iter_cnt:5d} cost = {cost[iter_cnt-1]:.5f}")
         iter_out = iter_cnt
     else:
-        logger.info(f"{iter_cnt+1:5d} cost = {cost[iter_cnt]:.5f}")
+        logger.debug(f"{iter_cnt+1:5d} cost = {cost[iter_cnt]:.5f}")
         iter_out = iter_cnt
 
     # update cinit if mutable container provided
@@ -714,14 +714,14 @@ class SparseImagingExecutor:
                     Default is 1 (see mfista_L1_TSV_core_nufft for rationale).
         """
         # input summary
-        logger.info(f'lambda_l1 = {self.lambda_L1}')
-        logger.info(f'lambda_tv = {self.lambda_TV}')
-        logger.info(f'lambda_tsv = {self.lambda_TSV}')
-        logger.info(f'c = {self.cinit:g}')
-        logger.info('')
-        logger.info(f'number of u-v points: {inputs.m}')
-        logger.info(f'X-dim of image:       {inputs.nx}')
-        logger.info(f'Y-dim of image:       {inputs.ny}')
+        logger.debug(f'lambda_l1 = {self.lambda_L1}')
+        logger.debug(f'lambda_tv = {self.lambda_TV}')
+        logger.debug(f'lambda_tsv = {self.lambda_TSV}')
+        logger.debug(f'c = {self.cinit:g}')
+        logger.debug('')
+        logger.debug(f'number of u-v points: {inputs.m}')
+        logger.debug(f'X-dim of image:       {inputs.nx}')
+        logger.debug(f'Y-dim of image:       {inputs.ny}')
 
         # run MFISTA
         result = PySparseImagingResults(inputs.nx, inputs.ny, initialimage=initialimage)
@@ -776,26 +776,29 @@ class SparseImagingExecutor:
 
     def _show_io_info(self, inputs: PySparseImagingInputs, initialimage: np.ndarray | None):
         # show IO filenames
-        logger.info('\n\nInput/Output summary:\n')
-        logger.info(f' Input u-v data file:      {inputs.infile}')
+        logger.debug('\n\nInput/Output summary:\n')
+        logger.debug(f' Input u-v data file:      {inputs.infile}')
         if initialimage is None:
-            logger.info(' x was initialized with 0.0')
+            logger.debug(' x was initialized with 0.0')
         else:
-            logger.info(' x was initialize by the user\n')
+            logger.debug(' x was initialize by the user\n')
 
     def _show_result(self, mfista_result):
         # show results
-        logger.info('\n\n Size of the problem:\n\n')
+        logger.info('')
+        logger.info('')
+        logger.info("Size of the problem:")
         logger.info(f' size of input vector:  {mfista_result.M}')
         logger.info(f' size of output vector: {mfista_result.N}')
         if mfista_result.NX != 0:
             logger.info(f'size of image:          {mfista_result.NX} x {mfista_result.NY}')
 
-        logger.info('\n\n Problem Setting:\n')
+        logger.info("")
+        logger.info("Problem Setting:")
         if mfista_result.nonneg == 1:
-            logger.info(' x is a nonnegative vector.\n\n')
+            logger.info(' x is a nonnegative vector.\n')
         elif mfista_result.nonneg == 0:
-            logger.info(' x is a real vector (takes 0, positive, and negative value).\n\n')
+            logger.info(' x is a real vector (takes 0, positive, and negative value).\n')
 
         if mfista_result.lambda_l1 != 0:
             logger.info(f' Lambda_l1: {mfista_result.lambda_l1:e}')
@@ -805,7 +808,8 @@ class SparseImagingExecutor:
             logger.info(f' Lambda_tv: {mfista_result.lambda_tv:e}')
         logger.info(f' MAXITER: {mfista_result.maxiter}')
 
-        logger.info('\n Results:\n')
+        logger.info("")
+        logger.info('Results:')
         logger.info(f' # of iterations:       {mfista_result.ITER}')
         logger.info(f' cost:                  {mfista_result.finalcost:e}')
         logger.info(f' computation time[sec]: {mfista_result.comp_time:e}\n')
@@ -818,4 +822,4 @@ class SparseImagingExecutor:
             logger.info(f' TSV cost:              {mfista_result.tsvcost:e}')
         if mfista_result.lambda_tv != 0:
             logger.info(f' TV cost:               {mfista_result.tvcost:e}')
-        logger.info('\n LOOE:    Could not be computed because Hessian was not positive definite.')
+        logger.debug('LOOE:    Could not be computed because Hessian was not positive definite.')

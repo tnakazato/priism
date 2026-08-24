@@ -237,7 +237,7 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
         # convert phasecenter if it is given as FIELD_ID
         vis = self.visparams[0].vis
         if isinstance(self.imparam.phasecenter, str) and self.imparam.phasecenter.isdigit():
-            logger.info(f'Use PHASE_DIR for FIELD {self.imparam.phasecenter}')
+            logger.debug(f'Use PHASE_DIR for FIELD {self.imparam.phasecenter}')
             # take first MS
             field_id = int(self.imparam.phasecenter)
             phase_direction = imagewriter.ImageWriter.phase_direction_for_field(vis=vis,

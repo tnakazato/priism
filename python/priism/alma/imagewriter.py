@@ -102,7 +102,7 @@ class ImageWriter(object):
 
         # spectral coordinate
         refframe = 'LSRK'
-        logger.info(f'start {self.imageparam.start} width {self.imageparam.width}')
+        logger.debug(f'start {self.imageparam.start} width {self.imageparam.width}')
         start = qa.convert(self.imageparam.start, 'Hz')
         width = qa.convert(self.imageparam.width, 'Hz')
         nchan = self.imageparam.nchan
@@ -115,7 +115,7 @@ class ImageWriter(object):
                           frequencies=frequencies,
                           doppler=veldef)
         else:
-            logger.info(f'set increment for spectral axis: {width}')
+            logger.debug(f'set increment for spectral axis: {width}')
             r = c.torecord()
             for k in r:
                 if k.startswith('spectral'):
@@ -149,11 +149,11 @@ class ImageWriter(object):
                 c1 = (nchan - 1) // 2
                 rest_frequency = qa.quantity(f[c1], frequencies['unit'])
 
-        logger.info(f'rest_frequency={rest_frequency}')
+        logger.debug(f'rest_frequency={rest_frequency}')
         if qa.checkfreq(rest_frequency) and qa.gt(rest_frequency, qa.quantity(0, 'Hz')):
             c.setrestfrequency(rest_frequency)
 
-        logger.info(c.summary(list=False)[0])
+        logger.info(f"Output image summary: {c.summary(list=False)[0]}")
 
         return c
 

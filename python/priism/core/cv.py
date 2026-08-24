@@ -40,7 +40,7 @@ class VisibilitySubsetGenerator(object):
             # amplitude should be nonzero in active pixels
             self.num_active = len(self.working_set)
             self.active_index = range(self.num_active)
-            logger.info(f'num_active={self.num_active}')
+            logger.debug(f'num_active={self.num_active}')
 
             # random index
             self.index_generator = util.RandomIndexGenerator(self.num_active, self.num_fold)
@@ -73,7 +73,7 @@ class VisibilitySubsetHandler(object):
 
         # amplitude should be nonzero in active pixels
         num_active = len(self.visibility)
-        logger.info(f'num_active={num_active}')
+        logger.debug(f'num_active={num_active}')
 
     def generate_subset(self, subset_id):
         self.subset_id = subset_id
@@ -170,7 +170,7 @@ class GriddedVisibilitySubsetGenerator(object):
             grid_imag = griddedvis.imag
             self.active_index = np.where(np.logical_or(grid_real != 0, grid_imag != 0))
             self.num_active = len(self.active_index[0])
-            logger.info(f'num_active={self.num_active}')
+            logger.debug(f'num_active={self.num_active}')
 
             # random index
             self.index_generator = util.RandomIndexGenerator(self.num_active, self.num_fold)
@@ -213,7 +213,7 @@ class GriddedVisibilitySubsetHandler(object):
         # amplitude should be nonzero in active pixels
         #self.active_index = np.where(np.logical_and(grid_real != 0, grid_imag != 0))
         num_active = len(self.active_index[0])
-        logger.info(f'num_active={num_active}')
+        logger.debug(f'num_active={num_active}')
 
         # random index
         #self.index_generator = util.RandomIndexGenerator(num_active, self.num_fold)
