@@ -16,6 +16,8 @@
 # along with PRIISM.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import absolute_import
 
+import logging
+
 from .core import GriddedVisibilityStorage
 from .core import ResultingImageStorage
 from .core import UVGridConfig
@@ -23,3 +25,10 @@ from .core import UVGridConfig
 from .core import SparseModelingImager
 
 from .core import __version__
+
+
+logging.basicConfig(
+    format="%(asctime)s\t%(levelname)s\t%(funcName)s\t%(message)s",
+    datefmt="%Y/%m/%d %H:%M:%S",
+    level=logging.INFO
+)
