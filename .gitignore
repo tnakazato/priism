@@ -10,8 +10,10 @@ __pycache__
 *.egg-info
 sis14_twhya_calibrated_flagged.ms.tar
 sis14_twhya_calibrated_flagged.ms
+twhya_calibrated.ms*
 twhya_smoothed.ms
 twhya_*.fits
 HLTau_Band6_CalibratedData
 HLTau_Band6_CalibratedData.tgz
+casa-*.log
 
