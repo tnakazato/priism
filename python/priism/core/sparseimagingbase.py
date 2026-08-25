@@ -21,8 +21,8 @@ import ctypes
 import logging
 import os
 
+import matplotlib.pyplot as plt
 import numpy as np
-import pylab as pl
 
 
 logger = logging.getLogger(__name__)
@@ -483,22 +483,71 @@ class SparseImagingExecutor(object):
 
 
 # utility
-def plot_inputs(inputs, interpolation='nearest', coverage=False):
-    areal = np.zeros((inputs.nx, inputs.ny,), dtype=np.float)
-    aimag = np.zeros_like(areal)
-    for i in range(inputs.m):
-        areal[inputs.u[i], inputs.v[i]] = inputs.yreal[i]
-        aimag[inputs.u[i], inputs.v[i]] = inputs.yimag[i]
+def plot_inputs(inputs, interpolation='nearest', mode="rectangular"):
+    """Plot input visibility data.
 
-    if coverage:
-        areal[areal.nonzero()] = 1.0
-        aimag[areal.nonzero()] = 1.0
+    Args:
+        inputs: Inputs instance.
+        interpolation: Interpolation method for plot. Defaults to 'nearest'.
+        mode: Plot mode. Options are "rectangular" (real and imagingary),
+              "polar" (amplitude and phase), and "coverage" (uv-coverage).
+              Defaults to "rectangular".
 
-    pl.figure('REAL')
-    pl.clf()
-    pl.imshow(areal, interpolation=interpolation)
-    pl.colorbar()
-    pl.figure('IMAG')
-    pl.clf()
-    pl.imshow(aimag, interpolation=interpolation)
-    pl.colorbar()
+    Raises:
+        ValueError: _description_
+    """
+    data1 = np.zeros((inputs.nx, inputs.ny,), dtype=np.float32)
+    data2 = np.zeros_like(data1)
+
+    if inputs.u.dtype in (np.float64, np.float32):
+        offset_u = inputs.nx // 2
+        du = 2 * np.pi / (inputs.nx + 1)
+        u = (inputs.u / du + offset_u).astype(np.int_)
+        offset_v = inputs.ny // 2
+        dv = 2 * np.pi / (inputs.ny + 1)
+        v = (inputs.v / dv + offset_v).astype(np.int_)
+    else:
+        u = inputs.u
+        v = inputs.v
+
+    if mode == "coverage":
+        for i in range(inputs.m):
+            data1[u[i], v[i]] = 1
+            data2[u[i], v[i]] = 1
+        title1 = "COVERAGE"
+        title2 = ""
+    elif mode == "rectangular":
+        for i in range(inputs.m):
+            data1[u[i], v[i]] = inputs.yreal[i]
+            data2[u[i], v[i]] = inputs.yimag[i]
+        title1 = "REAL"
+        title2 = "IMAG"
+    elif mode == "polar":
+        for i in range(inputs.m):
+            data1[u[i], v[i]] = inputs.yreal[i]
+            data2[u[i], v[i]] = inputs.yimag[i]
+        data_complex = data1.astype(np.complex64)
+        data_complex.imag = data2
+        data1 = np.absolute(data_complex)
+        data2 = np.angle(data_complex)
+        title1 = "AMPLITUDE"
+        title2 = "PHASE"
+    else:
+        raise ValueError(f"invalid mode: {mode}")
+
+    if mode == "coverage":
+        plt.figure()
+        plt.clf()
+        plt.imshow(data1, interpolation=interpolation)
+        plt.title(title1)
+    else:
+        plt.figure(figsize=(12.8, 4.8))
+        plt.clf()
+        plt.subplot(121)
+        plt.imshow(data1, interpolation=interpolation)
+        plt.colorbar()
+        plt.title(title1)
+        plt.subplot(122)
+        plt.imshow(data2, interpolation=interpolation)
+        plt.colorbar()
+        plt.title(title2)
