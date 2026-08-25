@@ -16,13 +16,18 @@
 # along with PRIISM.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import absolute_import
 
+import contextlib
+import logging
+
 import numpy as np
 import scipy.interpolate
-import contextlib
 
 from . import datacontainer
 from . import util
 import priism.external.sakura as sakura
+
+
+logger = logging.getLogger(__name__)
 
 
 class VisibilitySubsetGenerator(object):
@@ -35,7 +40,7 @@ class VisibilitySubsetGenerator(object):
             # amplitude should be nonzero in active pixels
             self.num_active = len(self.working_set)
             self.active_index = range(self.num_active)
-            print('num_active={0}'.format(self.num_active))
+            logger.debug(f'num_active={self.num_active}')
 
             # random index
             self.index_generator = util.RandomIndexGenerator(self.num_active, self.num_fold)
@@ -68,7 +73,7 @@ class VisibilitySubsetHandler(object):
 
         # amplitude should be nonzero in active pixels
         num_active = len(self.visibility)
-        print('num_active={0}'.format(num_active))
+        logger.debug(f'num_active={num_active}')
 
     def generate_subset(self, subset_id):
         self.subset_id = subset_id
@@ -85,7 +90,7 @@ class VisibilitySubsetHandler(object):
 
             # random index
             random_index = self.index_generator.get_subset_index(self.subset_id)
-            #print('DEBUG_TN: subset ID {0} random_index = {1}'.format(self.subset_id, list(random_index)))
+            logger.debug(f'DEBUG: subset ID {self.subset_id} random_index = {list(random_index)}')
 
             # mask array for active visibility
             num_vis = len(self.visibility)
@@ -165,7 +170,7 @@ class GriddedVisibilitySubsetGenerator(object):
             grid_imag = griddedvis.imag
             self.active_index = np.where(np.logical_or(grid_real != 0, grid_imag != 0))
             self.num_active = len(self.active_index[0])
-            print('num_active={0}'.format(self.num_active))
+            logger.debug(f'num_active={self.num_active}')
 
             # random index
             self.index_generator = util.RandomIndexGenerator(self.num_active, self.num_fold)
@@ -208,7 +213,7 @@ class GriddedVisibilitySubsetHandler(object):
         # amplitude should be nonzero in active pixels
         #self.active_index = np.where(np.logical_and(grid_real != 0, grid_imag != 0))
         num_active = len(self.active_index[0])
-        print('num_active={0}'.format(num_active))
+        logger.debug(f'num_active={num_active}')
 
         # random index
         #self.index_generator = util.RandomIndexGenerator(num_active, self.num_fold)
@@ -225,7 +230,7 @@ class GriddedVisibilitySubsetHandler(object):
 
         # random index
         random_index = self.index_generator.get_subset_index(self.subset_id)
-        #print('DEBUG_TN: subset ID {0} random_index = {1}'.format(self.subset_id, list(random_index)))
+        logger.debug(f'DEBUG: subset ID {self.subset_id} random_index = {list(random_index)}')
 
         # uv location
         # assumption here is that the first index corresponds to v while
@@ -335,7 +340,7 @@ class MeanSquareErrorEvaluator(object):
             wsum += np.sum(wdata)
         mse /= wsum
         end_time = time.time()
-        print('Evaluate MSE: Elapsed {} sec'.format(end_time - start_time))
+        logger.debug(f'Evaluate MSE: Elapsed {end_time - start_time} sec')
         return mse
 
     def evaluate_and_accumulate(self, visibility_cache, image):
@@ -343,7 +348,6 @@ class MeanSquareErrorEvaluator(object):
         Evaluate MSE (Mean Square Error) from image which is a solution of MFISTA
         and visibility_cache provided as a set of GridderWorkingSet instance.
         """
-        # TODO: evaluate MSE
         mse = self._evaluate_mse(visibility_cache, image)
 
         # register it

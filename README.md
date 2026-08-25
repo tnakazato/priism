@@ -264,6 +264,90 @@ template scripts for each solver. Name of the scripts are as follows:
 * `priism.alma` (mfista_fft): `cvrun_fft.py`
 * `priism.alma` (mfista_nufft): `cvrun_nufft.py`
 
+There is also a pure-Python implementation of the NUFFT solver, selected via
+`solver='pymfista_nufft'`, which relies on [finufft](https://finufft.readthedocs.io/)
+instead of the bundled C++ engine. Its `solve`/`mfista` methods accept an
+`nthreads` option (default `1`) controlling how many threads finufft may use
+per NUFFT call:
+
+```
+>>> worker.solve(l1=1e6, ltsv=1e8, maxiter=1000, nthreads=4)
+```
+
+The default of `1` avoids oversubscribing CPU cores when many solves run
+concurrently, e.g. during a cross validation grid search over `l1`/`ltsv`
+combinations. If a single solve has the machine to itself, raising
+`nthreads` can speed it up substantially, but more threads is not always
+faster -- benchmark on your own machine and problem size before choosing a
+value, since finufft's per-call threading overhead can outweigh the benefit
+well before all available cores are used.
+
+Passing `nthreads=0` defers the choice to finufft's own internal thread-count
+heuristic entirely (equivalent to omitting the option). Whether this is a
+good idea is highly sensitive to image size and shape: in our own
+benchmarking (MacBook Pro, Apple M4, macOS 26.5.2, Python 3.12.14, ~45000
+real ALMA visibilities), finufft's own default measured about 4x **slower**
+per call than the best explicit value on a 112x112 image, but was among the
+**fastest** options on a 128x128 image (power-of-2 sizes appear to get a
+much faster FFT path). There is no universally safe choice -- benchmark
+`nthreads=0` against a few explicit values for your own image size before
+relying on it.
+
+This option is ignored by the C++-based solvers (`mfista_fft`, `mfista_nufft`).
+
+### Selecting L1 and Ltsv (parameter optimization)
+
+`SparseModelingImager.optimizeparameters()` searches for good `l1`/`ltsv`
+regularization weights from candidate lists. The search is controlled by
+two independent choices:
+
+* `criterion` -- how a given `(l1, ltsv)` is scored.
+  * `'cv'` (default): cross-validation MSE on held-out visibility subsets
+    (`num_fold` controls how many subsets).
+  * `'ellipsoid'`: the u-v-distance-grouped criterion from
+    [Ikeda et al. 2025](https://doi.org/10.1093/pasj/psae114) (section 3.4).
+    It evaluates two quantities from a single full-data MFISTA solve: C1,
+    the fraction of image power that falls inside the minimum covering
+    u-v ellipsoid of the sampled visibilities, and C2, the cosine
+    similarity (against `(1,1,1)`) of the weighted mean-squared residual
+    computed in three visibility groups split by distance from the u-v
+    origin. C1 and C2 are treated as soft constraints
+    (`C1 >= ellipse_th`, `C2 >= cos_th`, default `0.99` each); among the
+    `(l1, ltsv)` that satisfy both, the one with the smallest weighted
+    mean-squared residual is preferred. Because it needs only one solve
+    per candidate (no held-out subsets), it is substantially cheaper than
+    `'cv'` and combines efficiently with Bayesian Optimization.
+* `optimizer` -- how the `(l1, ltsv)` space is searched.
+  * `'classical'` (default): exhaustive grid search over `l1_list x ltsv_list`.
+  * `'bayesian'`: adaptive search over the same grid using
+    [Optuna](https://optuna.org/) (`bayesopt_maxiter` trials).
+
+All four combinations are available:
+
+```python
+>>> # cross-validation, exhaustive grid (the traditional default)
+>>> worker.optimizeparameters(L1_list, Ltsv_list, criterion='cv', optimizer='classical',
+...                           num_fold=10, imageprefix='result', summarize=True)
+
+>>> # cross-validation, Bayesian Optimization
+>>> worker.optimizeparameters(L1_list, Ltsv_list, criterion='cv', optimizer='bayesian',
+...                           num_fold=10, bayesopt_maxiter=15, imageprefix='result')
+
+>>> # u-v ellipsoid criterion, exhaustive grid
+>>> worker.optimizeparameters(L1_list, Ltsv_list, criterion='ellipsoid', optimizer='classical',
+...                           imageprefix='result')
+
+>>> # u-v ellipsoid criterion, Bayesian Optimization (cheapest combination)
+>>> worker.optimizeparameters(L1_list, Ltsv_list, criterion='ellipsoid', optimizer='bayesian',
+...                           bayesopt_maxiter=15, imageprefix='result',
+...                           ellipse_th=0.99, cos_th=0.99)
+```
+
+`crossvalidation()` and `cvforgridvis()` still work as deprecated aliases
+for `optimizeparameters(..., criterion='cv', ...)`, kept for backward
+compatibility with existing scripts; new code should call
+`optimizeparameters()` directly.
+
 ### Batch Processing
 `runner` module is prepared for batch processing using PRIISM module.
 Following commands obtain image for the specified MS (measurement set) data (visibility data). Input parameter is (field, SPW, channel) for input MS data and image/pixel size for output image. Parameters are set typical values as default.
@@ -309,5 +393,6 @@ We thank T. Tsukagoshi, M. Yamaguchi, K. Akiyama, and Y. Tamura among many other
 * [Nakazato, T., Ikeda, S., Kosugi, G., Honma, M., 2020, Proceedings of the SPIE, Volume 11453, id. 114532V 11 pp. (2020).](https://www.spiedigitallibrary.org/conference-proceedings-of-spie/11453/2560904/PRIISM--Synthesis-imaging-tool-based-on-the-sparse-modeling/10.1117/12.2560904.full) https://doi.org/10.1117/12.2560904
 * [Nakazato, T., Ikeda, S., Akiyama, K., Kosugi, G., Yamaguchi, M., and Honma, M., 2019, Astronomical Data Analysis Software and Systems XXVIII. ASP Conference Series, Vol. 523, p. 143](http://aspbooks.org/custom/publications/paper/523-0143.html)
 * [Nakazato, T. and Ikeda, S., 2020, Astrophysics Source Code Library, record ascl:2006.002](https://ui.adsabs.harvard.edu/abs/2020ascl.soft06002N/abstract)
+* [Ikeda, S. et al., 2025, Publications of the Astronomical Society of Japan, Volume 77, Issue 2, p.260-276](https://doi.org/10.1093/pasj/psae114) (u-v ellipsoid / cosine-similarity parameter selection criterion)
 
 EOF

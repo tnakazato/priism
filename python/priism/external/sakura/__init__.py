@@ -17,9 +17,14 @@
 from __future__ import absolute_import
 
 import atexit
+import logging
 
 from .reductionhelper import paraMap
 from . import libsakurapy
+
+
+logger = logging.getLogger(__name__)
+
 
 # libsakurapy is initialized when the module is imported
 # and is cleaned up at exit
@@ -28,12 +33,12 @@ try:
         pass
 except NameError:
     _SAKURA_INITIALIZED_ = True
-    print('LOG: initialize sakura...')
-    print(libsakurapy)
+    logger.debug('LOG: initialize sakura...')
+    logger.debug(libsakurapy)
     libsakurapy.initialize()
 
     def sakura_cleanup():
-        print('LOG: clean up sakura...')
+        logger.debug('LOG: clean up sakura...')
         libsakurapy.clean_up()
     atexit.register(sakura_cleanup)
 

@@ -19,8 +19,8 @@ from __future__ import print_function
 
 from argparse import ArgumentError
 import collections
-import functools
 import itertools
+import logging
 import math
 import os
 import pickle
@@ -36,6 +36,10 @@ from . import datacontainer
 from . import paramcontainer
 from . import mfista
 from . import cv
+from . import uvcriteria
+
+
+logger = logging.getLogger(__name__)
 
 
 def format_lambda(v):
@@ -154,14 +158,16 @@ class SparseModelingImager(object):
         self.solver = solver_cls(mfistaparam)
 
     def mfista(self, l1, ltsv, maxiter=50000, eps=1.0e-5, clean_box=None,
-               storeinitialimage=True, overwriteinitialimage=False, nonnegative=True):
-        print('***WARNING*** mfista will be deprecate in the future. Please use solve instead.')
+               storeinitialimage=True, overwriteinitialimage=False, nonnegative=True,
+               nthreads=1):
+        logger.warning('***WARNING*** mfista will be deprecate in the future. Please use solve instead.')
         self.solve(l1, ltsv, maxiter, eps, clean_box,
-                   storeinitialimage, overwriteinitialimage, nonnegative)
+                   storeinitialimage, overwriteinitialimage, nonnegative,
+                   nthreads=nthreads)
 
     def solve(self, l1, ltsv, maxiter=50000, eps=1.0e-5, clean_box=None,
               storeinitialimage=True, overwriteinitialimage=False, nonnegative=True,
-              scalehyperparam=True):
+              scalehyperparam=True, nthreads=1):
         """
         Run MFISTA algorithm on visibility data loaded on memory.
         gridvis or readvis must be executed beforehand.
@@ -178,6 +184,12 @@ class SparseModelingImager(object):
             scalehyperparam -- apply hyper-parameter scaling (L1 and Ltsv) to reproduce
                                the behavior compatible with previous version (earlier than
                                0.9.x). Default is True (backward-compatible).
+            nthreads -- number of threads finufft may use per NUFFT call, when
+                        solver='pymfista_nufft'. Default is 1 to avoid
+                        oversubscribing when multiple solves run concurrently
+                        (e.g. cross-validation grid search); raise it if a
+                        single solve has the machine to itself. Ignored by
+                        the C++-based solvers.
         """
         if scalehyperparam:
             # scaling factor for hyper-parameter
@@ -191,7 +203,8 @@ class SparseModelingImager(object):
         self.mfistaparam = paramcontainer.MfistaParamContainer(l1=internal_L1, ltsv=internal_Ltsv,
                                                                maxiter=maxiter, eps=eps,
                                                                clean_box=clean_box,
-                                                               nonnegative=nonnegative)
+                                                               nonnegative=nonnegative,
+                                                               nthreads=nthreads)
         arr = self._solve(self.mfistaparam, self.working_set,
                           storeinitialimage=storeinitialimage, overwriteinitialimage=overwriteinitialimage)
         self.imagearray = datacontainer.ResultingImageStorage(arr)
@@ -333,28 +346,52 @@ class SparseModelingImager(object):
         with open(imagename, 'rb') as f:
             data = pickle.load(f)
 
-        return datacontainer.ResultingImageStorage(data)
+        # exportimage() pickles self.imagearray, which is already a
+        # ResultingImageStorage instance -- return the unpickled object
+        # directly rather than wrapping it in a second ResultingImageStorage
+        # (that double-wrap left .data holding a ResultingImageStorage
+        # instead of a plain ndarray).
+        return data
 
     def cvforgridvis(self, l1_list, ltsv_list, num_fold=10, imageprefix='image', imagepolicy='full',
                      summarize=True, figfile=None, datafile=None, maxiter=50000, eps=1.0e-5, clean_box=None,
                      resultasinitialimage=True, nonnegative=True):
-        print('***WARNING*** cvforgridvis will be deprecate in the future. Please use crossvalidation instead.')
+        logger.warning('***WARNING*** cvforgridvis will be deprecate in the future. Please use optimizeparameters instead.')
         return self.crossvalidation(l1_list, ltsv_list, num_fold, imageprefix, imagepolicy,
                                     summarize, figfile, datafile, maxiter, eps, clean_box,
                                     resultasinitialimage, nonnegative=True, )
 
-    def crossvalidation(self, l1_list, ltsv_list, num_fold=10, imageprefix='image', imagepolicy='full',
+    def optimizeparameters(self, l1_list, ltsv_list, num_fold=10, imageprefix='image', imagepolicy='full',
                         summarize=True, figfile=None, datafile=None, maxiter=50000, eps=1.0e-5, clean_box=None,
-                        resultasinitialimage=True, nonnegative=True, scalehyperparam=True, optimizer='classical',
-                        bayesopt_maxiter=15):
+                        resultasinitialimage=True, nonnegative=True, scalehyperparam=True,
+                        criterion='cv', optimizer='classical',
+                        bayesopt_maxiter=15, ellipse_th=0.99, cos_th=0.99):
         """
-        Perform cross validation and search the best parameter for L1 and Ltsv from
-        the given list of these.
+        Search the best parameter for L1 and Ltsv from the given list of these.
+
+        The search is controlled by two independent choices:
+            criterion -- how a given (L1, Ltsv) is scored. 'cv' (default) uses
+                         cross-validation MSE on held-out visibility subsets.
+                         'ellipsoid' uses the u-v-distance-grouped criterion from
+                         Ikeda et al. 2025 (PASJ 77(2):260-276, section 3.4):
+                         the minimum covering u-v ellipsoid power ratio (C1) and
+                         grouped-residual cosine similarity (C2) are treated as
+                         soft constraints (C1 >= ellipse_th, C2 >= cos_th), and
+                         among (L1, Ltsv) satisfying both, the weighted mean-
+                         squared visibility residual is minimized. This is
+                         computed from a single full-data MFISTA solve per
+                         point, so no cross-validation subsetting is performed
+                         and num_fold is ignored.
+            optimizer -- how (L1, Ltsv) space is searched. 'classical' (default)
+                         is an exhaustive grid search over l1_list x ltsv_list.
+                         'bayesian' uses Optuna to adaptively pick points from
+                         the same grid (see bayesopt_maxiter).
 
         Inputs:
             l1_list -- list of L1 values to examine
             ltsv_list -- List of Ltsv values to examine
             num_fold -- number of visibility subsets for cross validation
+                        (only used when criterion='cv')
             imageprefix -- prefix for output image
                            imageprefix is used for the best image (<imageprefix>.fits)
             imagepolicy -- policy of output image ('full' or 'best')
@@ -373,8 +410,13 @@ class SparseModelingImager(object):
             scalehyperparam -- apply hyper-parameter scaling (L1 and Ltsv) to reproduce
                                the behavior compatible with previous version (earlier than
                                0.9.x). Default is True (backward-compatible).
-            optimizer -- optimization algorithm. 'classical' or 'bayesian'
-            bayesopt_maxiter -- (specific to bayesian optimization)
+            criterion -- evaluation criterion. 'cv' or 'ellipsoid'. See above.
+            optimizer -- search strategy. 'classical' or 'bayesian'. See above.
+            bayesopt_maxiter -- (specific to optimizer='bayesian')
+            ellipse_th -- (specific to criterion='ellipsoid') soft-constraint threshold
+                          for C1 (minimum covering u-v ellipsoid power ratio). Default 0.99.
+            cos_th -- (specific to criterion='ellipsoid') soft-constraint threshold for C2
+                      (grouped-residual cosine similarity). Default 0.99.
 
         Output:
             dictionary containing best L1 (key: L1), best Ltsv (key;Ltsv), and
@@ -385,13 +427,17 @@ class SparseModelingImager(object):
         # sanity check
         if imagepolicy not in ('best', 'full'):
             raise ArgumentError('imagepolicy must be best or full. {0} was provided.'.format(imagepolicy))
+        if criterion not in ('cv', 'ellipsoid'):
+            raise ArgumentError("criterion should be 'cv' or 'ellipsoid'")
+        if optimizer not in ('classical', 'bayesian'):
+            raise ArgumentError("optimizer should be 'classical' or 'bayesian'")
 
         try:
             np_l1_list = np.asarray(l1_list)
             np_ltsv_list = np.asarray(ltsv_list)
         except Exception as e:
-            print('Exception occurred')
-            print(str(e))
+            logger.error('Exception occurred')
+            logger.error(str(e))
             raise ArgumentError('l1_list or ltsv_list (or both) seems invalid.')
 
         if str(np_l1_list.dtype) == 'object':
@@ -405,8 +451,9 @@ class SparseModelingImager(object):
         sorted_l1_list = np_l1_list[L1_sort_index]
         sorted_ltsv_list = np_ltsv_list[Ltsv_sort_index]
 
-        # initialize CV
-        self.initializecv(num_fold=num_fold)
+        # initialize CV (not needed for criterion='ellipsoid', which evaluates on the full data)
+        if criterion == 'cv':
+            self.initializecv(num_fold=num_fold)
 
         # scaling factor for hyper-parameter
         if scalehyperparam:
@@ -414,25 +461,39 @@ class SparseModelingImager(object):
         else:
             hp_scale = 1.0
 
-        if optimizer == 'classical':
+        if criterion == 'cv' and optimizer == 'classical':
             result = self._cv_classical(
                 l1_list=sorted_l1_list, ltsv_list=sorted_ltsv_list, hp_scale=hp_scale,
                 imageprefix=imageprefix, maxiter=maxiter, eps=eps, clean_box=clean_box,
                 nonnegative=nonnegative, resultasinitialimage=resultasinitialimage,
             )
-        elif optimizer == 'bayesian':
+        elif criterion == 'cv' and optimizer == 'bayesian':
             result = self._cv_bayesian(
                 l1_list=sorted_l1_list, ltsv_list=sorted_ltsv_list, hp_scale=hp_scale,
                 imageprefix=imageprefix, maxiter=maxiter, eps=eps, clean_box=clean_box,
                 nonnegative=nonnegative, resultasinitialimage=resultasinitialimage,
                 bayesopt_maxiter=bayesopt_maxiter
             )
+        elif criterion == 'ellipsoid' and optimizer == 'classical':
+            result = self._ellipsoid_classical(
+                l1_list=sorted_l1_list, ltsv_list=sorted_ltsv_list, hp_scale=hp_scale,
+                imageprefix=imageprefix, maxiter=maxiter, eps=eps, clean_box=clean_box,
+                nonnegative=nonnegative, resultasinitialimage=resultasinitialimage,
+                ellipse_th=ellipse_th, cos_th=cos_th
+            )
+        elif criterion == 'ellipsoid' and optimizer == 'bayesian':
+            result = self._ellipsoid_bayesian(
+                l1_list=sorted_l1_list, ltsv_list=sorted_ltsv_list, hp_scale=hp_scale,
+                imageprefix=imageprefix, maxiter=maxiter, eps=eps, clean_box=clean_box,
+                nonnegative=nonnegative, resultasinitialimage=resultasinitialimage,
+                bayesopt_maxiter=bayesopt_maxiter, ellipse_th=ellipse_th, cos_th=cos_th
+            )
         else:
-            print(f'Unrecognized optimizer: {optimizer}')
-            raise ArgumentError("optimizer should be either 'classical' or 'bayesian'")
+            assert False, 'unreachable (criterion/optimizer already validated above)'
 
         # finalize CV
-        self.finalizecv()
+        if criterion == 'cv':
+            self.finalizecv()
 
         best_solution = np.argmin(result.mse)
         best_mse = result.mse[best_solution]
@@ -457,17 +518,17 @@ class SparseModelingImager(object):
         end_time = time.time()
 
         if best_mse >= 0.0:
-            print('Process completed. Optimal result is as follows')
-            L1str = '{}'.format('10^{}'.format(int(math.log10(best_L1))) if best_L1 > 0 else format_lambda(best_L1))
-            Ltsvstr = '{}'.format('10^{}'.format(int(math.log10(best_Ltsv))) if best_Ltsv > 0 else format_lambda(best_Ltsv))
-            print('    L1, Ltsv = {0}, {1}'.format(L1str, Ltsvstr))
-            print('    MSE = {0}'.format(best_mse))
-            print('    imagename = {0}'.format(best_image))
+            logger.info('Process completed. Optimal result is as follows')
+            L1str = '{}'.format(f'10^{int(math.log10(best_L1))}' if best_L1 > 0 else format_lambda(best_L1))
+            Ltsvstr = '{}'.format(f'10^{int(math.log10(best_Ltsv))}' if best_Ltsv > 0 else format_lambda(best_Ltsv))
+            logger.info(f'    L1, Ltsv = {L1str}, {Ltsvstr}')
+            logger.info(f'    MSE = {best_mse}')
+            logger.info(f'    imagename = {best_image}')
         else:
-            print('Process completed. Cross-validation was not performed.')
-            print('WARNING: Optimal solution will not be correct one since no CV was executed.')
+            logger.info('Process completed. Cross-validation was not performed.')
+            logger.warning('WARNING: Optimal solution will not be correct one since no CV was executed.')
 
-        print('Elapsed {0} sec'.format(end_time - start_time))
+        logger.info(f'Elapsed {end_time - start_time} sec')
 
         # copy the best image to final image
         shutil.copy2(best_image, imageprefix + '.' + self.imagesuffix)
@@ -484,6 +545,26 @@ class SparseModelingImager(object):
         # finally, return best L1 and Ltsv
         return {'L1': best_L1, 'Ltsv': best_Ltsv}
 
+    def crossvalidation(self, l1_list, ltsv_list, num_fold=10, imageprefix='image', imagepolicy='full',
+                        summarize=True, figfile=None, datafile=None, maxiter=50000, eps=1.0e-5, clean_box=None,
+                        resultasinitialimage=True, nonnegative=True, scalehyperparam=True, optimizer='classical',
+                        bayesopt_maxiter=15):
+        """
+        Deprecated. Use optimizeparameters(..., criterion='cv', optimizer=...) instead.
+        Kept as a thin wrapper with its original (pre-'ellipsoid'-criterion)
+        signature, always selecting criterion='cv'.
+        """
+        logger.warning(
+            '***WARNING*** crossvalidation will be deprecated in the future. '
+            'Please use optimizeparameters instead.'
+        )
+        return self.optimizeparameters(
+            l1_list, ltsv_list, num_fold, imageprefix, imagepolicy,
+            summarize, figfile, datafile, maxiter, eps, clean_box,
+            resultasinitialimage, nonnegative, scalehyperparam,
+            criterion='cv', optimizer=optimizer, bayesopt_maxiter=bayesopt_maxiter
+        )
+
     def initializecv(self, num_fold=10):
         assert self.working_set is not None
 
@@ -496,7 +577,12 @@ class SparseModelingImager(object):
     def _cv_exec(self, l1, ltsv, hp_scale, imageprefix='image',
                  maxiter=1000, eps=1.0e-5, clean_box=None, nonnegative=True,
                  resultasinitialimage=True, overwriteinitialimage=True):
-
+        """
+        Evaluate a single (l1, ltsv) point via cross-validation MSE.
+        Signature matches the "exec_fn(l1, ltsv, overwrite_initial=True) ->
+        (cost, imagename)" contract expected by _search_classical /
+        _search_bayesian.
+        """
         # get full visibility image first
         l1_str = format_lambda(l1)
         ltsv_str = format_lambda(ltsv)
@@ -516,13 +602,80 @@ class SparseModelingImager(object):
         # then evaluate MSE
         mse = self.computemse(internal_l1, internal_ltsv, maxiter, eps, clean_box, nonnegative=nonnegative)
 
-        print(f'L1 10^{l1_str} Ltsv 10^{ltsv_str}: MSE {mse} FITS {imagename}')
+        logger.info(f'L1 10^{l1_str} Ltsv 10^{ltsv_str}: MSE {mse} FITS {imagename}')
 
         return mse, imagename
 
-    def _cv_classical(self, l1_list, ltsv_list, hp_scale=1.0, imageprefix='image',
-                      maxiter=1000, eps=1.0e-5, clean_box=None, nonnegative=True,
-                      resultasinitialimage=True):
+    def _cv_exec_with_plateau_scaling(self, l1, ltsv, hp_scale, imageprefix='image',
+                                       maxiter=1000, eps=1.0e-5, clean_box=None, nonnegative=True,
+                                       resultasinitialimage=True):
+        """
+        Same as _cv_exec, but scales the MSE up when the resulting image is
+        empty (all-zero), to avoid Bayesian Optimization wasting trials on
+        the flat "empty image" MSE plateau caused by too strong an L1
+        constraint. Used by the 'bayesian' search only (the 'classical'
+        grid search has no such issue, since it visits every grid point
+        regardless).
+        """
+        mse, imagename = self._cv_exec(
+            l1, ltsv, hp_scale, imageprefix, maxiter,
+            eps, clean_box, nonnegative, resultasinitialimage
+        )
+
+        data_storage = self.getimage(imagename)
+        data = data_storage.data
+        if np.all(data == 0):
+            factor = 1 + max(2, math.log10(l1)) / 10
+            mse *= factor
+
+        return mse, imagename
+
+    def _ellipsoid_exec(self, l1, ltsv, hp_scale, imageprefix='image',
+                        maxiter=1000, eps=1.0e-5, clean_box=None, nonnegative=True,
+                        resultasinitialimage=True, overwriteinitialimage=True,
+                        evaluator=None, ellipse_th=0.99, cos_th=0.99):
+        """
+        Evaluate a single (l1, ltsv) point via the u-v-distance-grouped
+        criterion (uvcriteria.UvEllipsoidEvaluator), on the full (non-CV-
+        split) working set. Same "exec_fn" contract as _cv_exec.
+
+        C1 (u-v ellipsoid power ratio) and C2 (grouped-residual cosine
+        similarity) are treated as soft constraints (C1 >= ellipse_th,
+        C2 >= cos_th): among (L1, Ltsv) that satisfy both, the one with the
+        smallest weighted mean-squared visibility residual is preferred.
+        """
+        assert evaluator is not None
+
+        l1_str = format_lambda(l1)
+        ltsv_str = format_lambda(ltsv)
+        imagename = f'{imageprefix}_L1_{l1_str}_Ltsv_{ltsv_str}.{self.imagesuffix}'
+
+        self.solve(l1 * hp_scale, ltsv * hp_scale * hp_scale,
+                   maxiter=maxiter, eps=eps, clean_box=clean_box,
+                   nonnegative=nonnegative,
+                   storeinitialimage=resultasinitialimage,
+                   overwriteinitialimage=overwriteinitialimage,
+                   scalehyperparam=False)
+        self.exportimage(imagename, overwrite=True)
+
+        # Use the freshly-computed self.imagearray directly rather than
+        # round-tripping through getimage(imagename)/disk -- exportimage()
+        # is still called above so the FITS/pickle file exists on disk for
+        # the imagepolicy/best-image handling in optimizeparameters().
+        image_2d = np.squeeze(self.imagearray.data)
+        cost, c1, c2 = evaluator.evaluate(
+            self.working_set, image_2d, ellipse_th=ellipse_th, cos_th=cos_th
+        )
+
+        logger.info(f'L1 10^{l1_str} Ltsv 10^{ltsv_str}: cost {cost} (C1={c1}, C2={c2}) FITS {imagename}')
+
+        return cost, imagename
+
+    def _search_classical(self, l1_list, ltsv_list, exec_fn):
+        """
+        Exhaustive grid search over (l1_list, ltsv_list), evaluating each
+        point with exec_fn(l1, ltsv, overwrite_initial) -> (cost, imagename).
+        """
         result_L1 = []
         result_Ltsv = []
         result_mse = []
@@ -539,14 +692,10 @@ class SparseModelingImager(object):
                 result_L1.append(L1)
                 result_Ltsv.append(Ltsv)
 
-                mse, imagename = self._cv_exec(
-                    L1, Ltsv, hp_scale, imageprefix, maxiter,
-                    eps, clean_box, nonnegative, resultasinitialimage,
-                    overwrite_initial
-                )
+                cost, imagename = exec_fn(L1, Ltsv, overwrite_initial)
 
                 result_image.append(imagename)
-                result_mse.append(mse)
+                result_mse.append(cost)
 
                 overwrite_initial = False
 
@@ -555,9 +704,12 @@ class SparseModelingImager(object):
             L1=result_L1, Ltsv=result_Ltsv
         )
 
-    def _cv_bayesian(self, l1_list, ltsv_list, hp_scale=1.0, num_fold=10, imageprefix='image',
-                      maxiter=1000, eps=1.0e-5, clean_box=None, nonnegative=True,
-                      resultasinitialimage=True, bayesopt_maxiter=15):
+    def _search_bayesian(self, l1_list, ltsv_list, exec_fn, bayesopt_maxiter=15):
+        """
+        Bayesian Optimization (Optuna) search over indices into
+        (l1_list, ltsv_list), evaluating each trial with
+        exec_fn(l1, ltsv) -> (cost, imagename).
+        """
         result_L1 = []
         result_Ltsv = []
         result_mse = []
@@ -569,30 +721,17 @@ class SparseModelingImager(object):
             Ltsv_index = trial.suggest_int("Ltsv index", 0, len(ltsv_list) - 1)
             Ltsv = ltsv_list[Ltsv_index]
 
-            mse, imagename = self._cv_exec(
-                L1, Ltsv, hp_scale, imageprefix, maxiter,
-                eps, clean_box, nonnegative, resultasinitialimage
-            )
+            cost, imagename = exec_fn(L1, Ltsv)
 
             result_L1.append(L1)
             result_Ltsv.append(Ltsv)
-            result_mse.append(mse)
+            result_mse.append(cost)
             result_image.append(imagename)
 
-            # There are "plateau" MSE region that corresponds to empty image
-            # due to too large L1 constraint. To avoid redundant estimation
-            # on the plateau, return value is scaled with L1 value, which
-            # virtually produces slope on the plateau.
-            data_storage = self.getimage(imagename)
-            data = data_storage.data
-            if np.all(data == 0):
-                factor = 1 + max(2, math.log10(L1)) / 10
-                mse *= factor
-
-            return mse
+            return cost
 
         study = optuna.create_study()
-        study.optimize(objective, n_trials = bayesopt_maxiter)
+        study.optimize(objective, n_trials=bayesopt_maxiter)
         self.cv_bayes_result = study.best_params
 
         return self.CrossValidationResult(
@@ -600,6 +739,62 @@ class SparseModelingImager(object):
             L1=result_L1, Ltsv=result_Ltsv
         )
 
+    def _cv_classical(self, l1_list, ltsv_list, hp_scale=1.0, imageprefix='image',
+                      maxiter=1000, eps=1.0e-5, clean_box=None, nonnegative=True,
+                      resultasinitialimage=True):
+        def exec_fn(l1, ltsv, overwrite_initial):
+            return self._cv_exec(
+                l1, ltsv, hp_scale, imageprefix, maxiter,
+                eps, clean_box, nonnegative, resultasinitialimage,
+                overwrite_initial
+            )
+        return self._search_classical(l1_list, ltsv_list, exec_fn)
+
+    def _cv_bayesian(self, l1_list, ltsv_list, hp_scale=1.0, num_fold=10, imageprefix='image',
+                      maxiter=1000, eps=1.0e-5, clean_box=None, nonnegative=True,
+                      resultasinitialimage=True, bayesopt_maxiter=15):
+        def exec_fn(l1, ltsv):
+            return self._cv_exec_with_plateau_scaling(
+                l1, ltsv, hp_scale, imageprefix, maxiter,
+                eps, clean_box, nonnegative, resultasinitialimage
+            )
+        return self._search_bayesian(l1_list, ltsv_list, exec_fn, bayesopt_maxiter)
+
+    def _ellipsoid_classical(self, l1_list, ltsv_list, hp_scale=1.0, imageprefix='image',
+                             maxiter=1000, eps=1.0e-5, clean_box=None, nonnegative=True,
+                             resultasinitialimage=True, ellipse_th=0.99, cos_th=0.99):
+        evaluator = uvcriteria.UvEllipsoidEvaluator(
+            self.working_set, self.imparam.imsize[0], self.imparam.imsize[1]
+        )
+
+        def exec_fn(l1, ltsv, overwrite_initial):
+            return self._ellipsoid_exec(
+                l1, ltsv, hp_scale, imageprefix, maxiter, eps, clean_box, nonnegative,
+                resultasinitialimage, overwrite_initial, evaluator, ellipse_th, cos_th
+            )
+        return self._search_classical(l1_list, ltsv_list, exec_fn)
+
+    def _ellipsoid_bayesian(self, l1_list, ltsv_list, hp_scale=1.0, imageprefix='image',
+                             maxiter=1000, eps=1.0e-5, clean_box=None, nonnegative=True,
+                             resultasinitialimage=True, bayesopt_maxiter=15,
+                             ellipse_th=0.99, cos_th=0.99):
+        """
+        Select L1/Ltsv via Bayesian Optimization using the u-v-distance-grouped
+        criterion (uvcriteria.UvEllipsoidEvaluator) instead of cross-validation.
+        Each trial runs a single full-data MFISTA solve; no held-out visibility
+        subsets are used, so this needs far fewer MFISTA solves than CV-based
+        optimizers for a comparable number of BO trials.
+        """
+        evaluator = uvcriteria.UvEllipsoidEvaluator(
+            self.working_set, self.imparam.imsize[0], self.imparam.imsize[1]
+        )
+
+        def exec_fn(l1, ltsv):
+            return self._ellipsoid_exec(
+                l1, ltsv, hp_scale, imageprefix, maxiter, eps, clean_box, nonnegative,
+                resultasinitialimage, True, evaluator, ellipse_th, cos_th
+            )
+        return self._search_bayesian(l1_list, ltsv_list, exec_fn, bayesopt_maxiter)
 
     def _plot_cv_result(self, l1_list, ltsv_list, result, best_solution, figfile=None, optimizer='classical'):
         plotter_cls = None

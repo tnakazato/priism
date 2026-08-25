@@ -14,8 +14,14 @@
 # GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License
 # along with PRIISM.  If not, see <https://www.gnu.org/licenses/>.
+import logging
 import os
+
 import priism.alma
+
+
+logger = logging.getLogger(__name__)
+
 
 version = '2023-2-27'
 
@@ -91,12 +97,12 @@ class Session:
         self.p['bayesopt_maxiter'] = bayesopt_maxiter
 
         # Vis file check
-        print('#############################')
+        logger.info('#############################')
         if type(vis) == bool:
             raise TypeError("MS file should be specified with 'vis' parameter to start a session!")
 
         if os.path.exists(vis):
-            print('(runner.Session): vis = '+vis)
+            logger.info('(runner.Session): vis = '+vis)
         else:
             raise FileNotFoundError(vis)
 
@@ -105,16 +111,16 @@ class Session:
         Save parameters to a file.
         """
         while os.path.exists(paramFile) and not overwrite:
-            print('Parameter file '+paramFile+' alrady exists. Enter different file name. ')
+            logger.info('Parameter file '+paramFile+' already exists. Enter different file name. ')
 
             paramFile = ''
             while not paramFile:  # to avoid empty name
                 paramFile = input('## Enter parameter file name: ')
 
-        print('## Parameters are seved to '+paramFile)
+        logger.info('## Parameters are saved to '+paramFile)
 
         with open(paramFile, 'w') as pf:
-            print("# Parameter file for PRIISM runner.py", file=pf)
+            logger.info("# Parameter file for PRIISM runner.py", file=pf)
             kys = self.p.keys()
             for k in kys:
                 # formatting with tab
@@ -132,7 +138,7 @@ class Session:
         """
 
         if os.path.exists(paramFile):
-            print('## Reading parameter file : '+paramFile)
+            logger.info('## Reading parameter file : '+paramFile)
         else:
             raise FileNotFoundError(paramFile)
 
@@ -224,7 +230,7 @@ class Session:
             if solver in ['mfista_fft', 'mfista_nufft']:
                 self.p['solver'] = solver
             else:
-                print('## No such solver, '+solver+'. Set to default solver: mfista_nufft')
+                logger.info('## No such solver, '+solver+'. Set to default solver: mfista_nufft')
 
         if not type(l1) == bool:
             self.p['l1'] = l1
@@ -248,13 +254,13 @@ class Session:
             if imagePolicy in ['full', 'best']:
                 self.p['imagePolicy'] = imagePolicy
             else:
-                print('## No such imagePolicy, '+imagePolicy+'. Set to default policy: "full"')
+                logger.info('## No such imagePolicy, '+imagePolicy+'. Set to default policy: "full"')
 
         if not type(optimizer) == bool:
             if optimizer in ['classical', 'bayesian']:
                 self.p['optimizer'] = optimizer
             else:
-                print('## No such optimizer, '+optimizer+'. Set to default optimizer: "classical"')
+                logger.info('## No such optimizer, '+optimizer+'. Set to default optimizer: "classical"')
 
         if not type(bayesopt_maxiter) == bool:
             self.p['bayesopt_maxiter'] = bayesopt_maxiter
@@ -266,7 +272,7 @@ class Session:
         Check parameters
         """
 
-        print(self.p)
+        logger.info(self.p)
 
         pass
 
@@ -274,10 +280,10 @@ class Session:
         """
         Internal method for preparation of sparse modeling
         """
-        print('###### Start PRIISM')
+        logger.info('###### Start PRIISM')
         self.worker = priism.alma.AlmaSparseModelingImager(solver=self.p['solver'])
 
-        # print(type(self.p['ch']) )
+        logger.debug(type(self.p['ch']) )
         if type(self.p['ch']) == bool:
             spwch = str(self.p['spw'])
         else:
@@ -310,20 +316,19 @@ class Session:
             try:
                 self._setWorker()
             except Exception as err:
-                print('  ')
-                print("###### Failed to start PRIISM at run(). Please check parameters and data. ", str(err))
-                print('  ')
+                logger.error("\n###### Failed to start PRIISM at run(). Please check parameters and data. \n")
+                logger.error(f"###### error message: {err}")
                 raise err
 
         # Fix image name
         if not self.p['imname']:
             self.p['imname'] = input('## Enter image file name (FITS): ')
 
-        print('## Image name : '+self.p['imname'])
+        logger.info('## Image name : '+self.p['imname'])
 
         # File check for overwrite=False
         while os.path.exists(self.p['imname']) and not overwrite:
-            print('Output image alrady exists. Enter different image name. ')
+            logger.info('Output image alrady exists. Enter different image name. ')
 
             imname = ''
             while not imname:  # to avoid empty name
@@ -353,9 +358,8 @@ class Session:
             try:
                 self._setWorker()
             except Exception as err:
-                print('  ')
-                print("###### Failed to start PRIISM at crossValidation(). Please check parameters and data. ", str(err))
-                print('  ')
+                logger.error("\n###### Failed to start PRIISM at crossValidation(). Please check parameters and data. \n")
+                logger.error(f"###### error message: {err}")
                 raise err
 
         # Fix output file name
@@ -365,15 +369,15 @@ class Session:
 
         # File name check for overwrite=False
         while os.path.exists(self.p['cvname']) and not overwrite:
-            print('Output directory for CV, '+self.p['cvname']+', exists. Enter different cvname. ')
+            logger.info('Output directory for CV, '+self.p['cvname']+', exists. Enter different cvname. ')
             cvname = ''
             while not cvname:  # to avoid empty name
                 cvname = input('## Enter prefix for CV outputs: ')
             self.p['cvname'] = cvname
 
-        print('## File name prefix for cross validation: '+self.p['cvname'])
+        logger.info('## File name prefix for cross validation: '+self.p['cvname'])
 
-        self.worker.crossvalidation(self.p['l1List'], self.p['ltsvList'],
+        self.worker.optimizeparameters(self.p['l1List'], self.p['ltsvList'],
                                     num_fold=int(self.p['numFold']),
                                     imageprefix=self.p['cvname'],
                                     imagepolicy=self.p['imagePolicy'],
@@ -382,6 +386,7 @@ class Session:
                                     datafile=self.p['cvname']+'.cvresult.dat',
                                     maxiter=int(self.p['maxiter']),
                                     resultasinitialimage=False, scalehyperparam=False,
+                                    criterion='cv',
                                     optimizer=self.p['optimizer'],
                                     bayesopt_maxiter=int(self.p['bayesopt_maxiter']))
 
