@@ -245,8 +245,24 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
         spw_selected = None if len(mssel_index['spw']) == 0 else mssel_index['spw']
         imagemeta = paramcontainer.ImageMetaInfoContainer.fromvis(vis, field, spw_selected)
 
+        # ImageParamContainer.start's setter runs every string value --
+        # including a digit string like '0' and the unspecified default ''
+        # -- through qa.quantity(), which always returns a dict (e.g.
+        # qa.quantity('') == {'unit': '', 'value': 0.0}). So by the time we
+        # get here, self.imparam.start can never actually be a str, and the
+        # isdigit() check below is unreachable; a dict with an empty 'unit'
+        # is what a channel-index string (or the unspecified default) looks
+        # like instead. Detect that case too: leaving start/width at their
+        # defaults would otherwise silently produce a 0 Hz spectral
+        # increment in ImageWriter._setup_coordsys(), which CASA's WCS
+        # rejects as a singular transformation matrix.
+        start_is_unitless = (
+            isinstance(self.imparam.start, dict)
+            and self.imparam.start.get('unit', None) == ''
+        )
         if (isinstance(self.imparam.start, str) and self.imparam.start.isdigit()) \
-           or isinstance(self.imparam.start, int):
+           or isinstance(self.imparam.start, int) \
+           or start_is_unitless:
             assert self.imparam.nchan == 1
             lsrk_freq_min, lsrk_freq_max = 1e100, 0
             for visparam in self.visparams:

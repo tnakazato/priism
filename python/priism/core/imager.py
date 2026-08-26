@@ -533,8 +533,13 @@ class SparseModelingImager(object):
             # keep all intermediate images
             pass
         elif imagepolicy == 'best':
-            # remove all intermediate images
-            for imagename in result.image:
+            # remove all intermediate images. A single (L1, Ltsv) grid point
+            # can appear more than once in result.image -- optimizer='bayesian'
+            # can revisit the same point across trials, and each such trial
+            # writes to the same file (imagename is derived purely from
+            # L1/Ltsv) -- so remove each unique filename once instead of
+            # raising FileNotFoundError on the repeat.
+            for imagename in set(result.image):
                 os.remove(imagename)
         else:
             assert False
