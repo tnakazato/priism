@@ -50,7 +50,8 @@ def calc_costs_nufft(
         lambda_tsv: float,
         nonneg: bool,
         xvec: np.ndarray,
-        nthreads: int = 1
+        nthreads: int = 1,
+        eps: float = 1e-6
 ) -> tuple[float, float, int, float, float]:
     if xvec.dtype not in (complex, np.complex64, np.complex128):
         _xvec = xvec.astype(complex)
@@ -59,7 +60,14 @@ def calc_costs_nufft(
     # isign=+1 matches the C++ engine's NUFFT2d2 convention (NU_SIGN=-1 in
     # mfista.hpp); finufft's default isign=-1 for type-2 produces the
     # complex-conjugate visibility relative to the C++ engine.
-    model_vis = finufft.nufft2d2(u_dx, v_dy, _xvec, eps=1e-12, isign=+1, nthreads=nthreads) # / len(u_dx)
+    model_vis = finufft.nufft2d2(
+        u_dx,
+        v_dy,
+        _xvec,
+        eps=eps,
+        isign=+1,
+        nthreads=nthreads
+    ) # / len(u_dx)
     chisq: float = np.sum(
         (np.square(np.real(model_vis) - vis_r) + np.square(np.imag(model_vis) - vis_i))
         / np.square(vis_std)
@@ -204,7 +212,13 @@ def calc_Q_part(xvec1: np.ndarray, xvec2: np.ndarray, c: float, AyAz: np.ndarray
     return -term1 + c * term2 / 2
 
 
-def x2y_nufft(u: np.ndarray, v: np.ndarray, xvec: np.ndarray, nthreads: int = 1) -> np.ndarray:
+def x2y_nufft(
+        u: np.ndarray,
+        v: np.ndarray,
+        xvec: np.ndarray,
+        nthreads: int = 1,
+        eps: float = 1e-6
+    ) -> np.ndarray:
     """Forward-only NUFFT: model visibility from an image, with no residual
     or weighting applied. u/v must already be in the NUFFT radian convention
     (see sparseimagingnufft.SparseImagingInputsNUFFT.convert_uv), matching
@@ -219,6 +233,7 @@ def x2y_nufft(u: np.ndarray, v: np.ndarray, xvec: np.ndarray, nthreads: int = 1)
         v: v coordinates of visibilities (length M), NUFFT radian convention
         xvec: model image array (shape (Nx, Ny))
         nthreads: number of threads finufft may use
+        eps: precision required for NUFFT (default: 1e-6)
 
     Returns:
         model_vis: model visibility array (length M)
@@ -227,10 +242,18 @@ def x2y_nufft(u: np.ndarray, v: np.ndarray, xvec: np.ndarray, nthreads: int = 1)
         _xvec = xvec.astype(complex)
     else:
         _xvec = xvec
-    return finufft.nufft2d2(u, v, _xvec, eps=1e-12, isign=+1, nthreads=nthreads)
+    return finufft.nufft2d2(u, v, _xvec, eps=eps, isign=+1, nthreads=nthreads)
 
 
-def calc_F_part_nufft(u: np.ndarray, v: np.ndarray, vis: np.ndarray, weight: np.ndarray, xvec: np.ndarray, nthreads: int = 1) -> np.ndarray:
+def calc_F_part_nufft(
+        u: np.ndarray,
+        v: np.ndarray,
+        vis: np.ndarray,
+        weight: np.ndarray,
+        xvec: np.ndarray,
+        nthreads: int = 1,
+        eps: float = 1e-6
+    ) -> np.ndarray:
     """Calculate the F part of the cost function using NUFFT.
 
     Args:
@@ -240,6 +263,7 @@ def calc_F_part_nufft(u: np.ndarray, v: np.ndarray, vis: np.ndarray, weight: np.
         weight: visibility weights (length M)
         xvec: model image array (shape (Nx, Ny))
         nthreads: number of threads finufft may use
+        eps: precision required for NUFFT (default: 1e-6)
 
     Returns:
         yAx: visibility difference array (length M)
@@ -249,7 +273,14 @@ def calc_F_part_nufft(u: np.ndarray, v: np.ndarray, vis: np.ndarray, weight: np.
     else:
         _xvec = xvec
     # isign=+1 matches the C++ engine's NUFFT2d2 convention, see calc_costs_nufft
-    model_vis = finufft.nufft2d2(u, v, _xvec, eps=1e-12, isign=+1, nthreads=nthreads) # / len(u)
+    model_vis = finufft.nufft2d2(
+        u,
+        v,
+        _xvec,
+        eps=eps,
+        isign=+1,
+        nthreads=nthreads
+    ) # / len(u)
     logger.debug(
         "model_vis = %s, %s ~ %s, %s",
         model_vis.imag.min(), model_vis.real.min(), model_vis.imag.max(), model_vis.real.max()
@@ -263,7 +294,16 @@ def calc_F_part_nufft(u: np.ndarray, v: np.ndarray, vis: np.ndarray, weight: np.
     return yAx
 
 
-def dF_dx_nufft(u: np.ndarray, v: np.ndarray, weight: np.ndarray, yAx: np.ndarray, nx: int, ny: int, nthreads: int = 1) -> np.ndarray:
+def dF_dx_nufft(
+        u: np.ndarray,
+        v: np.ndarray,
+        weight: np.ndarray,
+        yAx: np.ndarray,
+        nx: int,
+        ny: int,
+        nthreads: int = 1,
+        eps: float = 1e-6
+    ) -> np.ndarray:
     """Compute the gradient of F part using NUFFT.
 
     Args:
@@ -274,6 +314,7 @@ def dF_dx_nufft(u: np.ndarray, v: np.ndarray, weight: np.ndarray, yAx: np.ndarra
         nx: image x dimension
         ny: image y dimension
         nthreads: number of threads finufft may use
+        eps: precision required for NUFFT (default: 1e-6)
 
     Returns:
         dfdx: gradient array in image domain (length Nx*Ny)
@@ -292,8 +333,15 @@ def dF_dx_nufft(u: np.ndarray, v: np.ndarray, weight: np.ndarray, yAx: np.ndarra
     weighted_yAx_full[len(weighted_yAx):] = np.conjugate(weighted_yAx)
     # isign=-1 here pairs as the true adjoint of the isign=+1 forward
     # transform in calc_F_part_nufft, matching the C++ engine's gradient
-    dfdx = finufft.nufft2d1(u_full, v_full, weighted_yAx_full, eps=1e-12, isign=-1, n_modes=(nx, ny), nthreads=nthreads) / 2
-    # dfdx = finufft.nufft2d1(u, v, weighted_yAx, eps=1e-12, n_modes=(nx, ny))
+    dfdx = finufft.nufft2d1(
+        u_full,
+        v_full,
+        weighted_yAx_full,
+        eps=eps,
+        isign=-1,
+        n_modes=(nx, ny),
+        nthreads=nthreads
+    ) / 2
     logger.debug("dfdx.imag min: %s, dfdx.real min: %s", dfdx.imag.min(), dfdx.real.min())
     logger.debug("dfdx.imag max: %s, dfdx.real max: %s", dfdx.imag.max(), dfdx.real.max())
     return dfdx.real
@@ -472,7 +520,7 @@ def mfista_L1_TSV_core_nufft(
     )
     logger.debug("u = %s ~ %s", u.min(), u.max())
     logger.debug("v = %s ~ %s", v.min(), v.max())
-    yAx = calc_F_part_nufft(u, v, vis, weight, xvec.reshape(imshape), nthreads=nthreads)
+    yAx = calc_F_part_nufft(u, v, vis, weight, xvec.reshape(imshape), nthreads=nthreads, eps=eps)
     logger.debug("yAx shape: %s", yAx.shape)
     costtmp = np.square(np.abs(yAx)).sum() / 2
     logger.debug("costtmp (initial): %s", costtmp)
@@ -526,7 +574,7 @@ def mfista_L1_TSV_core_nufft(
         #     M, Nx, Ny, dfdx, E1, E2x, E2y, E4, mx, my, y_neg, buf_ax,
         #     cvec, rvec, fftwplan_c2r, weight, yAx, mbuf_l, tile_boundary
         # )
-        dfdx = dF_dx_nufft(u, v, weight, yAx, Nx, Ny, nthreads=nthreads)
+        dfdx = dF_dx_nufft(u, v, weight, yAx, Nx, Ny, nthreads=nthreads, eps=eps)
         # looks like equivalent is
         #   1. compute visibility gradient: (model - observed) * weight**2
         #   1. perform adjoint NUFFT to get image domain gradient from yAx
@@ -667,7 +715,8 @@ def mfista_L1_TSV_core_nufft(
         lambda_tsv=lambda_tsv,
         nonneg=nonneg_flag,
         xvec=xvec.reshape(imshape),
-        nthreads=nthreads
+        nthreads=nthreads,
+        eps=eps
     )
     result = PyMfistaResults(
             M=M,
