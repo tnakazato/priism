@@ -12,9 +12,6 @@ from . import sparseimagingnufft
 
 logger = logging.getLogger(__name__)
 
-# MSP = 6
-# MSP2 = MSP * 2
-# MSP4 = MSP * 4
 MAXITER = 50000
 MINITER = 100
 TD = 50
@@ -50,7 +47,8 @@ def calc_costs_nufft(
         lambda_tsv: float,
         nonneg: bool,
         xvec: np.ndarray,
-        nthreads: int = 1
+        nthreads: int = 1,
+        eps: float = 1e-6
 ) -> tuple[float, float, int, float, float]:
     if xvec.dtype not in (complex, np.complex64, np.complex128):
         _xvec = xvec.astype(complex)
@@ -59,7 +57,14 @@ def calc_costs_nufft(
     # isign=+1 matches the C++ engine's NUFFT2d2 convention (NU_SIGN=-1 in
     # mfista.hpp); finufft's default isign=-1 for type-2 produces the
     # complex-conjugate visibility relative to the C++ engine.
-    model_vis = finufft.nufft2d2(u_dx, v_dy, _xvec, eps=1e-12, isign=+1, nthreads=nthreads) # / len(u_dx)
+    model_vis = finufft.nufft2d2(
+        u_dx,
+        v_dy,
+        _xvec,
+        eps=eps,
+        isign=+1,
+        nthreads=nthreads
+    )
     chisq: float = np.sum(
         (np.square(np.real(model_vis) - vis_r) + np.square(np.imag(model_vis) - vis_i))
         / np.square(vis_std)
@@ -68,28 +73,6 @@ def calc_costs_nufft(
     n_active: int = np.sum(np.where(xvec > 0, 1, 0))
     tsvcost: float = TSV(xvec)
     final_cost: float = chisq / 2 + lambda_l1 * l1cost + lambda_tsv * tsvcost
-    # results = PyMfistaResults(
-    #     M=M,
-    #     N=Nx * Ny,
-    #     NX=Nx,
-    #     NY=Ny,
-    #     maxiter=0,
-    #     ITER=0,
-    #     nonneg=0,
-    #     lambda_l1=lambda_l1,
-    #     lambda_tsv=lambda_tsv,
-    #     lambda_tv=lambda_tv,
-    #     sq_error=chisq,
-    #     mean_sq_error=chisq / M,
-    #     l1cost=l1cost,
-    #     tsvcost=tsvcost,
-    #     tvcost=0,
-    #     N_active=n_active,
-    #     finalcost=chisq / 2 + lambda_l1 * l1cost + lambda_tsv * tsvcost,
-    #     comp_time=0.0,
-    #     residual=0.0,
-    #     Lip_const=0.0
-    # )
     return chisq, l1cost, n_active, tsvcost, final_cost
 
 
@@ -204,7 +187,13 @@ def calc_Q_part(xvec1: np.ndarray, xvec2: np.ndarray, c: float, AyAz: np.ndarray
     return -term1 + c * term2 / 2
 
 
-def x2y_nufft(u: np.ndarray, v: np.ndarray, xvec: np.ndarray, nthreads: int = 1) -> np.ndarray:
+def x2y_nufft(
+        u: np.ndarray,
+        v: np.ndarray,
+        xvec: np.ndarray,
+        nthreads: int = 1,
+        eps: float = 1e-6
+    ) -> np.ndarray:
     """Forward-only NUFFT: model visibility from an image, with no residual
     or weighting applied. u/v must already be in the NUFFT radian convention
     (see sparseimagingnufft.SparseImagingInputsNUFFT.convert_uv), matching
@@ -219,6 +208,7 @@ def x2y_nufft(u: np.ndarray, v: np.ndarray, xvec: np.ndarray, nthreads: int = 1)
         v: v coordinates of visibilities (length M), NUFFT radian convention
         xvec: model image array (shape (Nx, Ny))
         nthreads: number of threads finufft may use
+        eps: precision required for NUFFT (default: 1e-6)
 
     Returns:
         model_vis: model visibility array (length M)
@@ -227,10 +217,18 @@ def x2y_nufft(u: np.ndarray, v: np.ndarray, xvec: np.ndarray, nthreads: int = 1)
         _xvec = xvec.astype(complex)
     else:
         _xvec = xvec
-    return finufft.nufft2d2(u, v, _xvec, eps=1e-12, isign=+1, nthreads=nthreads)
+    return finufft.nufft2d2(u, v, _xvec, eps=eps, isign=+1, nthreads=nthreads)
 
 
-def calc_F_part_nufft(u: np.ndarray, v: np.ndarray, vis: np.ndarray, weight: np.ndarray, xvec: np.ndarray, nthreads: int = 1) -> np.ndarray:
+def calc_F_part_nufft(
+        u: np.ndarray,
+        v: np.ndarray,
+        vis: np.ndarray,
+        weight: np.ndarray,
+        xvec: np.ndarray,
+        nthreads: int = 1,
+        eps: float = 1e-6
+    ) -> np.ndarray:
     """Calculate the F part of the cost function using NUFFT.
 
     Args:
@@ -240,6 +238,7 @@ def calc_F_part_nufft(u: np.ndarray, v: np.ndarray, vis: np.ndarray, weight: np.
         weight: visibility weights (length M)
         xvec: model image array (shape (Nx, Ny))
         nthreads: number of threads finufft may use
+        eps: precision required for NUFFT (default: 1e-6)
 
     Returns:
         yAx: visibility difference array (length M)
@@ -249,7 +248,14 @@ def calc_F_part_nufft(u: np.ndarray, v: np.ndarray, vis: np.ndarray, weight: np.
     else:
         _xvec = xvec
     # isign=+1 matches the C++ engine's NUFFT2d2 convention, see calc_costs_nufft
-    model_vis = finufft.nufft2d2(u, v, _xvec, eps=1e-12, isign=+1, nthreads=nthreads) # / len(u)
+    model_vis = finufft.nufft2d2(
+        u,
+        v,
+        _xvec,
+        eps=eps,
+        isign=+1,
+        nthreads=nthreads
+    )
     logger.debug(
         "model_vis = %s, %s ~ %s, %s",
         model_vis.imag.min(), model_vis.real.min(), model_vis.imag.max(), model_vis.real.max()
@@ -263,7 +269,16 @@ def calc_F_part_nufft(u: np.ndarray, v: np.ndarray, vis: np.ndarray, weight: np.
     return yAx
 
 
-def dF_dx_nufft(u: np.ndarray, v: np.ndarray, weight: np.ndarray, yAx: np.ndarray, nx: int, ny: int, nthreads: int = 1) -> np.ndarray:
+def dF_dx_nufft(
+        u: np.ndarray,
+        v: np.ndarray,
+        weight: np.ndarray,
+        yAx: np.ndarray,
+        nx: int,
+        ny: int,
+        nthreads: int = 1,
+        eps: float = 1e-6
+    ) -> np.ndarray:
     """Compute the gradient of F part using NUFFT.
 
     Args:
@@ -274,11 +289,12 @@ def dF_dx_nufft(u: np.ndarray, v: np.ndarray, weight: np.ndarray, yAx: np.ndarra
         nx: image x dimension
         ny: image y dimension
         nthreads: number of threads finufft may use
+        eps: precision required for NUFFT (default: 1e-6)
 
     Returns:
         dfdx: gradient array in image domain (length Nx*Ny)
     """
-    # TODO: add complex conjugate to the visibility
+    # TODO: not add complex conjugate to the visibility
     weighted_yAx = yAx * weight
     # yAx containing complex conjugate
     u_full = np.empty(len(u) * 2, dtype=float)
@@ -292,8 +308,15 @@ def dF_dx_nufft(u: np.ndarray, v: np.ndarray, weight: np.ndarray, yAx: np.ndarra
     weighted_yAx_full[len(weighted_yAx):] = np.conjugate(weighted_yAx)
     # isign=-1 here pairs as the true adjoint of the isign=+1 forward
     # transform in calc_F_part_nufft, matching the C++ engine's gradient
-    dfdx = finufft.nufft2d1(u_full, v_full, weighted_yAx_full, eps=1e-12, isign=-1, n_modes=(nx, ny), nthreads=nthreads) / 2
-    # dfdx = finufft.nufft2d1(u, v, weighted_yAx, eps=1e-12, n_modes=(nx, ny))
+    dfdx = finufft.nufft2d1(
+        u_full,
+        v_full,
+        weighted_yAx_full,
+        eps=eps,
+        isign=-1,
+        n_modes=(nx, ny),
+        nthreads=nthreads
+    ) / 2
     logger.debug("dfdx.imag min: %s, dfdx.real min: %s", dfdx.imag.min(), dfdx.real.min())
     logger.debug("dfdx.imag max: %s, dfdx.real max: %s", dfdx.imag.max(), dfdx.real.max())
     return dfdx.real
@@ -366,30 +389,11 @@ def mfista_L1_TSV_core_nufft(
     weight = np.reciprocal(vis_std, dtype=float)
 
     # allocate arrays corresponding to the C++ Eigen vectors
-    # rvec = np.zeros(4 * NN, dtype=float)
     cost = np.zeros(maxiter, dtype=float)
-    # dfdx = np.zeros(NN, dtype=float)
     xnew = np.zeros(NN, dtype=float)
     xtmp = np.zeros(NN, dtype=float)
     dtmp = np.zeros(NN, dtype=float)
     box = np.zeros(NN, dtype=float)
-
-    # complex arrays
-    # yAx = np.zeros(M, dtype=complex)
-    # cvec = np.zeros(2 * Nx * (Ny + 1), dtype=complex)
-    # buf_ax = np.zeros(2 * Nx, dtype=complex)
-
-    # E arrays and index arrays (placeholders -- preNUFFT will fill them)
-    # mx = np.zeros(M, dtype=int)
-    # my = np.zeros(M, dtype=int)
-    # y_neg = np.zeros(M, dtype=int)
-    # E1 = np.zeros(M, dtype=float)
-    # E2x = np.zeros((MSP2, M), dtype=float)
-    # E2y = np.zeros((MSP2, M), dtype=float)
-    # E4 = np.zeros(NN, dtype=float)
-
-    # mbuf_l = np.zeros((2 * Nx + MSP2, Ny + MSP2 + 1), dtype=complex)
-    # mbuf_h = np.zeros((Ny + MSP2 + 1, 2 * Nx + MSP2), dtype=complex)
 
     # copy initial x
     # shape is (NN,)
@@ -401,37 +405,9 @@ def mfista_L1_TSV_core_nufft(
     else:
         box = np.zeros(NN, dtype=float)
 
-    # sort input (kept as C++ name, expects Python binding)
-    # sort_input(
-    #     M,
-    #     Nx,
-    #     Ny,
-    #     u,
-    #     v,
-    #     vis.real,
-    #     vis.imag,
-    #     vis_std
-    # )
-
     logger.debug("Memory allocation and preparations.")
 
-    # tile boundary container
-    # tile_boundary = []
-
     logger.debug("Preparation for FFT.")
-
-    # prepare for nufft (keeps same call)
-    # preNUFFT: TBD
-    # fills E1, E2x, E2y, E4, mx, my, y_neg
-    # preNUFFT(M, Nx, Ny, u, v, E1, E2x, E2y, E4, mx, my, y_neg)
-
-    # # configure tiles (use available CPU count)
-    # try:
-    #     nthreads = multiprocessing.cpu_count()
-    # except Exception:
-    #     nthreads = 1
-    # # call configure_tile as in C++ (expects mbuf_l.cols() equivalent)
-    # configure_tile(mbuf_l.shape[1], nthreads, Ny, my, tile_boundary)
 
     # placeholders for FFTW plans
     # (C++ creates and executes plans;
@@ -462,21 +438,9 @@ def mfista_L1_TSV_core_nufft(
     # output:
     #   yAx: visibility diff, (model - observed) * weight
     #   return value: Chi-square term (1/2 * norm of yAx)
-    # costtmp = calc_F_part_nufft(
-    #     M, Nx, Ny, yAx, E1, E2x, E2y, E4, mx, my, y_neg,
-    #     rvec, cvec, fftwplan_r2c, vis, weight, xvec, mbuf_h
-    # )
-    logger.debug(
-        "len(u) = %d, len(v) = %d, abs(vis).min = %s, abs(vis).max = %s, weight.min = %s, weight.max = %s",
-        len(u), len(v), np.abs(vis).min(), np.abs(vis).max(), weight.min(), weight.max()
-    )
-    logger.debug("u = %s ~ %s", u.min(), u.max())
-    logger.debug("v = %s ~ %s", v.min(), v.max())
-    yAx = calc_F_part_nufft(u, v, vis, weight, xvec.reshape(imshape), nthreads=nthreads)
-    logger.debug("yAx shape: %s", yAx.shape)
+    yAx = calc_F_part_nufft(u, v, vis, weight, xvec.reshape(imshape), nthreads=nthreads, eps=eps)
     costtmp = np.square(np.abs(yAx)).sum() / 2
     logger.debug("costtmp (initial): %s", costtmp)
-
     # looks like equivalent is
     #   1. perform NUFFT to get model visibilities from xvec
     #   2. compute (model - observed) * weight
@@ -508,10 +472,6 @@ def mfista_L1_TSV_core_nufft(
         # output:
         #   yAx: visibility diff, (model - observed) * weight
         #   return value: Chi-square term (1/2 * norm of yAx)
-        # Qcore = calc_F_part_nufft(
-        #     M, Nx, Ny, yAx, E1, E2x, E2y, E4, mx, my, y_neg,
-        #     rvec, cvec, fftwplan_r2c, vis, weight, zvec, mbuf_h
-        # )
         yAx = calc_F_part_nufft(u, v, vis, weight, zvec.reshape(imshape), nthreads=nthreads)
         Qcore = np.square(np.abs(yAx)).sum() / 2
         logger.debug("Qcore: %s", Qcore)
@@ -522,11 +482,7 @@ def mfista_L1_TSV_core_nufft(
         # output:
         #   dfdx: Fourier transform of visibility gradient, (model - observed) * weight**2
         #         shape is (Nx, Ny)
-        # dF_dx_nufft(
-        #     M, Nx, Ny, dfdx, E1, E2x, E2y, E4, mx, my, y_neg, buf_ax,
-        #     cvec, rvec, fftwplan_c2r, weight, yAx, mbuf_l, tile_boundary
-        # )
-        dfdx = dF_dx_nufft(u, v, weight, yAx, Nx, Ny, nthreads=nthreads)
+        dfdx = dF_dx_nufft(u, v, weight, yAx, Nx, Ny, nthreads=nthreads, eps=eps)
         # looks like equivalent is
         #   1. compute visibility gradient: (model - observed) * weight**2
         #   1. perform adjoint NUFFT to get image domain gradient from yAx
@@ -555,10 +511,6 @@ def mfista_L1_TSV_core_nufft(
             logger.debug("    xnew = %s ~ %s", xnew.min(), xnew.max())
 
             # compute cost at xnew
-            # Fval = calc_F_part_nufft(
-            #     M, Nx, Ny, yAx, E1, E2x, E2y, E4, mx, my, y_neg,
-            #     rvec, cvec, fftwplan_r2c, vis, weight, xnew, mbuf_h
-            # )
             yAx = calc_F_part_nufft(u, v, vis, weight, xnew.reshape(imshape), nthreads=nthreads)
             Fval = np.square(np.abs(yAx)).sum() / 2
 
@@ -667,7 +619,8 @@ def mfista_L1_TSV_core_nufft(
         lambda_tsv=lambda_tsv,
         nonneg=nonneg_flag,
         xvec=xvec.reshape(imshape),
-        nthreads=nthreads
+        nthreads=nthreads,
+        eps=eps
     )
     result = PyMfistaResults(
             M=M,

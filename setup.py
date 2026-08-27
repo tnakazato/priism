@@ -220,13 +220,13 @@ class priism_build(build):
     ]
 
     def initialize_options(self):
-        super(priism_build, self).initialize_options()
+        super().initialize_options()
         self.fftw3_root_dir = None
         initialize_attr_for_user_options(self)
         overwrite_attr_for_user_options_by_environ(self)
 
     def finalize_options(self):
-        super(priism_build, self).finalize_options()
+        super().finalize_options()
         if self.python_root_dir is None:
             # assuming python executable path to PYTHON_ROOT_DIR/bin/python
             executable_path = sys.executable
@@ -241,7 +241,7 @@ class priism_build(build):
         print('fftw3-root-dir={}'.format(self.fftw3_root_dir))
 
     def run(self):
-        super(priism_build, self).run()
+        super().run()
         for cmd in self.get_sub_commands():
             self.run_command(cmd)
 
@@ -252,13 +252,13 @@ class priism_build_ext(build_ext):
     user_options = priism_build.user_options
 
     def initialize_options(self):
-        super(priism_build_ext, self).initialize_options()
+        super().initialize_options()
         self.fftw3_root_dir = None
         self.priism_build_dir = 'build_ext'
         initialize_attr_for_user_options(self)
 
     def finalize_options(self):
-        super(priism_build_ext, self).finalize_options()
+        super().finalize_options()
         self.set_undefined_options(
             'build',
             *arg_for_set_undefined_options(self)
@@ -266,7 +266,7 @@ class priism_build_ext(build_ext):
         debug_print_user_options(self)
 
     def run(self):
-        super(priism_build_ext, self).run()
+        super().run()
         for cmd in self.get_sub_commands():
             self.run_command(cmd)
 
@@ -292,7 +292,7 @@ class download_smili(build):
     user_options = []
 
     def initialize_options(self):
-        super(download_smili, self).initialize_options()
+        super().initialize_options()
 
         package = 'sparseimaging'
         commit = '46268c1c66be33a8b09c2ebe4f59a841e3d3b21e'
@@ -316,10 +316,10 @@ class download_smili(build):
         self.package_directory = package
 
     def finalize_options(self):
-        super(download_smili, self).finalize_options()
+        super().finalize_options()
 
     def run(self):
-        super(download_smili, self).run()
+        super().run()
 
         if not os.path.exists(self.package_directory):
             self.download_cmd()
@@ -329,7 +329,7 @@ class download_sakura(build):
     user_options = []
 
     def initialize_options(self):
-        super(download_sakura, self).initialize_options()
+        super().initialize_options()
 
         package = 'sakura'
         target = 'libsakura'
@@ -355,10 +355,10 @@ class download_sakura(build):
         self.target_directory = target
 
     def finalize_options(self):
-        super(download_sakura, self).finalize_options()
+        super().finalize_options()
 
     def run(self):
-        super(download_sakura, self).run()
+        super().run()
 
         if not os.path.exists(self.package_directory):
             self.download_cmd()
@@ -375,7 +375,7 @@ class download_eigen(build):
     user_options = []
 
     def run(self):
-        super(download_eigen, self).run()
+        super().run()
 
         package_directory = f'{self.PACKAGE_NAME}-{self.PACKAGE_VERSION}'
         if not os.path.exists(package_directory):

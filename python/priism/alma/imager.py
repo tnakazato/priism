@@ -89,7 +89,7 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
                       'mfista_fft'    MFISTA algorithm with FFT by S. Ikeda.
                       'mfista_nufft'  MFISTA algorithm with NUFFT by S. Ikeda
         """
-        super(AlmaSparseModelingImager, self).__init__(solver)
+        super().__init__(solver)
 
     def selectdata(self, vis, field='', spw='', timerange='', uvrange='', antenna='',
                    scan='', observation='', intent='', datacolumn='corrected'):
@@ -152,18 +152,9 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
         self.gridparam = paramcontainer.GridParamContainer.CreateContainer(**locals())
 
     @casa.adjust_casalog_level('WARN')
-    def gridvis(self, parallel=False, with_gain_metadata=False):
+    def gridvis(self, parallel=False):
         """
         Grid visibility data on uv-plane.
-
-        with_gain_metadata -- if True, additionally read antenna1/antenna2/
-                               time per visibility and populate them on
-                               self.working_set, for external
-                               self-calibration use (see
-                               VisibilityConverter.__init__). Adds a couple
-                               of extra columns to the same MS scan; does
-                               not perform a second read. Default False
-                               leaves plain imaging use unaffected.
         """
         # gridvis consists of several steps:
         #     1. select and read data according to data selection
@@ -178,18 +169,13 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
         for visparam in self.visparams:
             reader = visreader.VisibilityReader(visparam)
             converter = visconverter.VisibilityConverter(visparam, self.imparam)
-            items = visconverter.VisibilityConverter.required_columns
-            if with_gain_metadata:
-                items = items + visconverter.VisibilityConverter.gain_metadata_columns
             if parallel:
-                for working_set in sakura.paraMap(
-                    self.num_threads,
-                    converter.generate_working_set,
-                    reader.readvis(items=items, interval=interval)
-                ):
+                for working_set in sakura.paraMap(self.num_threads,
+                                                  converter.generate_working_set,
+                                                  reader.readvis(interval=interval)):
                     visgridder.grid(working_set)
             else:
-                for chunk in reader.readvis(items=items, interval=interval):
+                for chunk in reader.readvis(interval=interval):
                     working_set = converter.generate_working_set(chunk)
                     visgridder.grid(working_set)
         self.griddedvis = visgridder.get_result()

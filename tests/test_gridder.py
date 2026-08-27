@@ -48,7 +48,7 @@ class GridderTest(utils.TestBase):
     test_multi_ws -- test gridding multiple ws
     """
     def setUp(self):
-        super(GridderTest, self).setUp()
+        super().setUp()
 
         self.standard_imparam = paramcontainer.ImageParamContainer(nchan=1,
                                                          imsize=[5, 7])
@@ -63,7 +63,7 @@ class GridderTest(utils.TestBase):
                                                                     gridfunction=gridfunction)
 
     def tearDown(self):
-        super(GridderTest, self).tearDown()
+        super().tearDown()
 
         del self.standard_imparam
         del self.standard_gridparam
