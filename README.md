@@ -324,7 +324,7 @@ two independent choices:
 
 All four combinations are available:
 
-```
+```python
 >>> # cross-validation, exhaustive grid (the traditional default)
 >>> worker.optimizeparameters(L1_list, Ltsv_list, criterion='cv', optimizer='classical',
 ...                           num_fold=10, imageprefix='result', summarize=True)

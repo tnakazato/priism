@@ -16,11 +16,16 @@
 # along with PRIISM.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import absolute_import
 
+import logging
+
 import numpy as np
 
 from . import pysparseimaging
 from . import sparseimagingfft
 from . import sparseimagingnufft
+
+
+logger = logging.getLogger(__name__)
 
 
 class MfistaSolverBase:
@@ -196,7 +201,7 @@ class MfistaSolverFFT(MfistaSolverTemplate):
         nx = image_data.nx
         ny = image_data.ny
         factor = 1.0 / np.sqrt(nx * ny)
-        print('Normalization factor is {}'.format(factor))
+        logger.info(f'Normalization factor is {factor}')
         image_data.xout *= factor
 
 

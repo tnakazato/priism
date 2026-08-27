@@ -19,8 +19,8 @@ from __future__ import print_function
 
 from argparse import ArgumentError
 import collections
-import functools
 import itertools
+import logging
 import math
 import os
 import pickle
@@ -37,6 +37,9 @@ from . import paramcontainer
 from . import mfista
 from . import cv
 from . import uvcriteria
+
+
+logger = logging.getLogger(__name__)
 
 
 def format_lambda(v):
@@ -157,7 +160,7 @@ class SparseModelingImager(object):
     def mfista(self, l1, ltsv, maxiter=50000, eps=1.0e-5, clean_box=None,
                storeinitialimage=True, overwriteinitialimage=False, nonnegative=True,
                nthreads=1):
-        print('***WARNING*** mfista will be deprecate in the future. Please use solve instead.')
+        logger.warning('***WARNING*** mfista will be deprecate in the future. Please use solve instead.')
         self.solve(l1, ltsv, maxiter, eps, clean_box,
                    storeinitialimage, overwriteinitialimage, nonnegative,
                    nthreads=nthreads)
@@ -353,7 +356,7 @@ class SparseModelingImager(object):
     def cvforgridvis(self, l1_list, ltsv_list, num_fold=10, imageprefix='image', imagepolicy='full',
                      summarize=True, figfile=None, datafile=None, maxiter=50000, eps=1.0e-5, clean_box=None,
                      resultasinitialimage=True, nonnegative=True):
-        print('***WARNING*** cvforgridvis will be deprecate in the future. Please use optimizeparameters instead.')
+        logger.warning('***WARNING*** cvforgridvis will be deprecate in the future. Please use optimizeparameters instead.')
         return self.crossvalidation(l1_list, ltsv_list, num_fold, imageprefix, imagepolicy,
                                     summarize, figfile, datafile, maxiter, eps, clean_box,
                                     resultasinitialimage, nonnegative=True, )
@@ -442,8 +445,8 @@ class SparseModelingImager(object):
             np_l1_list = np.asarray(l1_list)
             np_ltsv_list = np.asarray(ltsv_list)
         except Exception as e:
-            print('Exception occurred')
-            print(str(e))
+            logger.error('Exception occurred')
+            logger.error(str(e))
             raise ArgumentError('l1_list or ltsv_list (or both) seems invalid.')
 
         if str(np_l1_list.dtype) == 'object':
@@ -526,17 +529,17 @@ class SparseModelingImager(object):
         end_time = time.time()
 
         if best_mse >= 0.0:
-            print('Process completed. Optimal result is as follows')
-            L1str = '{}'.format('10^{}'.format(int(math.log10(best_L1))) if best_L1 > 0 else format_lambda(best_L1))
-            Ltsvstr = '{}'.format('10^{}'.format(int(math.log10(best_Ltsv))) if best_Ltsv > 0 else format_lambda(best_Ltsv))
-            print('    L1, Ltsv = {0}, {1}'.format(L1str, Ltsvstr))
-            print('    MSE = {0}'.format(best_mse))
-            print('    imagename = {0}'.format(best_image))
+            logger.info('Process completed. Optimal result is as follows')
+            L1str = '{}'.format(f'10^{int(math.log10(best_L1))}' if best_L1 > 0 else format_lambda(best_L1))
+            Ltsvstr = '{}'.format(f'10^{int(math.log10(best_Ltsv))}' if best_Ltsv > 0 else format_lambda(best_Ltsv))
+            logger.info(f'    L1, Ltsv = {L1str}, {Ltsvstr}')
+            logger.info(f'    MSE = {best_mse}')
+            logger.info(f'    imagename = {best_image}')
         else:
-            print('Process completed. Cross-validation was not performed.')
-            print('WARNING: Optimal solution will not be correct one since no CV was executed.')
+            logger.info('Process completed. Cross-validation was not performed.')
+            logger.warning('WARNING: Optimal solution will not be correct one since no CV was executed.')
 
-        print('Elapsed {0} sec'.format(end_time - start_time))
+        logger.info(f'Elapsed {end_time - start_time} sec')
 
         # copy the best image to final image
         shutil.copy2(best_image, imageprefix + '.' + self.imagesuffix)
@@ -567,8 +570,10 @@ class SparseModelingImager(object):
         Kept as a thin wrapper with its original (pre-'ellipsoid'-criterion)
         signature, always selecting criterion='cv'.
         """
-        print('***WARNING*** crossvalidation will be deprecated in the future. '
-              'Please use optimizeparameters instead.')
+        logger.warning(
+            '***WARNING*** crossvalidation will be deprecated in the future. '
+            'Please use optimizeparameters instead.'
+        )
         return self.optimizeparameters(
             l1_list, ltsv_list, num_fold, imageprefix, imagepolicy,
             summarize, figfile, datafile, maxiter, eps, clean_box,
@@ -613,7 +618,7 @@ class SparseModelingImager(object):
         # then evaluate MSE
         mse = self.computemse(internal_l1, internal_ltsv, maxiter, eps, clean_box, nonnegative=nonnegative)
 
-        print(f'L1 10^{l1_str} Ltsv 10^{ltsv_str}: MSE {mse} FITS {imagename}')
+        logger.info(f'L1 10^{l1_str} Ltsv 10^{ltsv_str}: MSE {mse} FITS {imagename}')
 
         return mse, imagename
 
@@ -678,7 +683,7 @@ class SparseModelingImager(object):
             self.working_set, image_2d, ellipse_th=ellipse_th, cos_th=cos_th
         )
 
-        print(f'L1 10^{l1_str} Ltsv 10^{ltsv_str}: cost {cost} (C1={c1}, C2={c2}) FITS {imagename}')
+        logger.info(f'L1 10^{l1_str} Ltsv 10^{ltsv_str}: cost {cost} (C1={c1}, C2={c2}) FITS {imagename}')
 
         return cost, imagename
 

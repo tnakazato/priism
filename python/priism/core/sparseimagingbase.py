@@ -17,10 +17,15 @@
 from __future__ import absolute_import
 from __future__ import print_function
 
-import os
-import numpy as np
 import ctypes
-import pylab as pl
+import logging
+import os
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+
+logger = logging.getLogger(__name__)
 
 
 class CTypesUtilMixIn(object):
@@ -234,18 +239,14 @@ class SparseImagingInputs(CTypesUtilMixIn):
 
     def export(self, filename):
         with open(filename, 'w') as f:
-            print('M = {0}'.format(self.m), file=f)
-            print('NX = {0}'.format(self.nx), file=f)
-            print('NY = {0}'.format(self.ny), file=f)
+            print(f'M = {self.m}', file=f)
+            print(f'NX = {self.nx}', file=f)
+            print(f'NY = {self.ny}', file=f)
             print('', file=f)
             print(self.header, file=f)
             print('', file=f)
             for i in range(self.m):
-                print('{0}, {1}, {2:e}, {3:e}, {4:e}'.format(self.u[i],
-                                                             self.v[i],
-                                                             self.yreal[i],
-                                                             self.yimag[i],
-                                                             self.noise[i]), file=f)
+                print(f'{self.u[i]}, {self.v[i]}, {self.yreal[i]:e}, {self.yimag[i]:e}, {self.noise[i]:e}', file=f)
 
 
 class SparseImagingResults(CTypesUtilMixIn):
@@ -320,14 +321,13 @@ class SparseImagingExecutor(object):
                  struct RESULT *mfista_result)
         """
         # input summary
-        print('lambda_l1 = {0}'.format(self.lambda_L1))
-        print('lambda_tv = {0}'.format(self.lambda_TV))
-        print('lambda_tsv = {0}'.format(self.lambda_TSV))
-        print('c = {0:g}'.format(self.cinit))
-        print('')
-        print('number of u-v points: {0}'.format(inputs.m))
-        print('X-dim of image:       {0}'.format(inputs.nx))
-        print('Y-dim of image:       {0}'.format(inputs.ny))
+        logger.info(f'lambda_l1 = {self.lambda_L1}')
+        logger.info(f'lambda_tv = {self.lambda_TV}')
+        logger.info(f'lambda_tsv = {self.lambda_TSV}')
+        logger.info(f'c = {self.cinit:g}')
+        logger.info(f'\nnumber of u-v points: {inputs.m}')
+        logger.info(f'X-dim of image:       {inputs.nx}')
+        logger.info(f'Y-dim of image:       {inputs.ny}')
 
         # inputs
         u_idx = ctypes.pointer(inputs.as_carray('u'))
@@ -377,70 +377,52 @@ class SparseImagingExecutor(object):
 
     def _show_io_info(self, inputs, initialimage=None):
         # show IO filenames
-        print('')
-        print('')
-        print('IO files of {0}.'.format(self.libname))
-        print('')
-        print('')
-        print(' FFTW file:              {0}'.format(inputs.infile))
+        logger.info(f'\n\nIO files of {self.libname}.\n\n')
+
+        logger.info(f' FFTW file:              {inputs.infile}')
         if initialimage is None:
-            print(' x was initialized with 0.0')
+            logger.info(' x was initialized with 0.0')
         else:
-            print(' x was initialize by the user')
-        #print ' x is saved to:          xout'
-        print('')
+            logger.info(' x was initialize by the user\n')
 
     def _show_result(self, mfista_result):
         # show results
-        print('')
-        print('')
-        print('Output of {0}.'.format(self.libname))
-        print('')
-        print('')
-        print(' Size of the problem:')
-        print('')
-        print('')
-        print(' size of input vector:  {0}'.format(mfista_result.M))
-        print(' size of output vector: {0}'.format(mfista_result.N))
-        if mfista_result.NX != 0:
-            print('size of image:          {0} x {1}'.format(mfista_result.NX,
-                                                             mfista_result.NY))
-        print('')
-        print('')
-        print(' Problem Setting:')
-        print('')
-        print('')
-        if mfista_result.nonneg == 1:
-            print(' x is a nonnegative vector.')
-        elif mfista_result.nonneg == 0:
-            print(' x is a real vector (takes 0, positive, and negative value).')
-        print('')
-        print('')
-        if mfista_result.lambda_l1 != 0:
-            print(' Lambda_l1: {0:e}'.format(mfista_result.lambda_l1))
-        if mfista_result.lambda_tsv != 0:
-            print(' Lambda_tsv: {0:e}'.format(mfista_result.lambda_tsv))
-        if mfista_result.lambda_tv != 0:
-            print(' Lambda_tv: {0:e}'.format(mfista_result.lambda_tv))
-        print(' MAXITER: {0}'.format(mfista_result.maxiter))
+        logger.info(f'\n\nOutput of {self.libname}.\n\n')
+        logger.info(' Size of the problem:\n\n')
 
-        print(' Results:')
-        print('')
-        print(' # of iterations:       {0}'.format(mfista_result.ITER))
-        print(' cost:                  {0:e}'.format(mfista_result.finalcost))
-        print(' computation time[sec]: {0:e}'.format(mfista_result.comp_time))
-        print('')
-        print(' # of nonzero pixels:   {0}'.format(mfista_result.N_active))
-        print(' Squared Error (SE):    {0:e}'.format(mfista_result.sq_error))
-        print(' Mean SE:               {0:e}'.format(mfista_result.mean_sq_error))
+        logger.info(f' size of input vector:  {mfista_result.M}')
+        logger.info(f' size of output vector: {mfista_result.N}')
+        if mfista_result.NX != 0:
+            logger.info(f'size of image:          {mfista_result.NX} x {mfista_result.NY}')
+        logger.info('\n\n Problem Setting:\n\n')
+        if mfista_result.nonneg == 1:
+            logger.info(' x is a nonnegative vector.\n\n')
+        elif mfista_result.nonneg == 0:
+            logger.info(' x is a real vector (takes 0, positive, and negative value).\n\n')
+
         if mfista_result.lambda_l1 != 0:
-            print(' L1 cost:               {0:e}'.format(mfista_result.l1cost))
+            logger.info(f' Lambda_l1: {mfista_result.lambda_l1:e}')
         if mfista_result.lambda_tsv != 0:
-            print(' TSV cost:              {0:e}'.format(mfista_result.tsvcost))
+            logger.info(f' Lambda_tsv: {mfista_result.lambda_tsv:e}')
         if mfista_result.lambda_tv != 0:
-            print(' TV cost:               {0:e}'.format(mfista_result.tvcost))
-        print('')
-        print(' LOOE:    Could not be computed because Hessian was not positive definite.')
+            logger.info(f' Lambda_tv: {mfista_result.lambda_tv:e}')
+        logger.info(f' MAXITER: {mfista_result.maxiter}')
+
+        logger.info(' Results:\n')
+        logger.info(f' # of iterations:       {mfista_result.ITER}')
+        logger.info(f' cost:                  {mfista_result.finalcost:e}')
+        logger.info(f' computation time[sec]: {mfista_result.comp_time:e}\n')
+        logger.info(f' # of nonzero pixels:   {mfista_result.N_active}')
+        logger.info(f' Squared Error (SE):    {mfista_result.sq_error:e}')
+        logger.info(f' Mean SE:               {mfista_result.mean_sq_error:e}')
+        if mfista_result.lambda_l1 != 0:
+            logger.info(f' L1 cost:               {mfista_result.l1cost:e}')
+        if mfista_result.lambda_tsv != 0:
+            logger.info(f' TSV cost:              {mfista_result.tsvcost:e}')
+        if mfista_result.lambda_tv != 0:
+            logger.info(f' TV cost:               {mfista_result.tvcost:e}')
+
+        logger.info('\n LOOE:    Could not be computed because Hessian was not positive definite.')
 
     def _exec_line(self, f, varname):
         line = f.readline()
@@ -501,22 +483,71 @@ class SparseImagingExecutor(object):
 
 
 # utility
-def plot_inputs(inputs, interpolation='nearest', coverage=False):
-    areal = np.zeros((inputs.nx, inputs.ny,), dtype=np.float)
-    aimag = np.zeros_like(areal)
-    for i in range(inputs.m):
-        areal[inputs.u[i], inputs.v[i]] = inputs.yreal[i]
-        aimag[inputs.u[i], inputs.v[i]] = inputs.yimag[i]
+def plot_inputs(inputs, interpolation='nearest', mode="rectangular"):
+    """Plot input visibility data.
 
-    if coverage:
-        areal[areal.nonzero()] = 1.0
-        aimag[areal.nonzero()] = 1.0
+    Args:
+        inputs: Inputs instance.
+        interpolation: Interpolation method for plot. Defaults to 'nearest'.
+        mode: Plot mode. Options are "rectangular" (real and imagingary),
+              "polar" (amplitude and phase), and "coverage" (uv-coverage).
+              Defaults to "rectangular".
 
-    pl.figure('REAL')
-    pl.clf()
-    pl.imshow(areal, interpolation=interpolation)
-    pl.colorbar()
-    pl.figure('IMAG')
-    pl.clf()
-    pl.imshow(aimag, interpolation=interpolation)
-    pl.colorbar()
+    Raises:
+        ValueError: _description_
+    """
+    data1 = np.zeros((inputs.nx, inputs.ny,), dtype=np.float32)
+    data2 = np.zeros_like(data1)
+
+    if inputs.u.dtype in (np.float64, np.float32):
+        offset_u = inputs.nx // 2
+        du = 2 * np.pi / (inputs.nx + 1)
+        u = (inputs.u / du + offset_u).astype(np.int_)
+        offset_v = inputs.ny // 2
+        dv = 2 * np.pi / (inputs.ny + 1)
+        v = (inputs.v / dv + offset_v).astype(np.int_)
+    else:
+        u = inputs.u
+        v = inputs.v
+
+    if mode == "coverage":
+        for i in range(inputs.m):
+            data1[u[i], v[i]] = 1
+            data2[u[i], v[i]] = 1
+        title1 = "COVERAGE"
+        title2 = ""
+    elif mode == "rectangular":
+        for i in range(inputs.m):
+            data1[u[i], v[i]] = inputs.yreal[i]
+            data2[u[i], v[i]] = inputs.yimag[i]
+        title1 = "REAL"
+        title2 = "IMAG"
+    elif mode == "polar":
+        for i in range(inputs.m):
+            data1[u[i], v[i]] = inputs.yreal[i]
+            data2[u[i], v[i]] = inputs.yimag[i]
+        data_complex = data1.astype(np.complex64)
+        data_complex.imag = data2
+        data1 = np.absolute(data_complex)
+        data2 = np.angle(data_complex)
+        title1 = "AMPLITUDE"
+        title2 = "PHASE"
+    else:
+        raise ValueError(f"invalid mode: {mode}")
+
+    if mode == "coverage":
+        plt.figure()
+        plt.clf()
+        plt.imshow(data1, interpolation=interpolation)
+        plt.title(title1)
+    else:
+        plt.figure(figsize=(12.8, 4.8))
+        plt.clf()
+        plt.subplot(121)
+        plt.imshow(data1, interpolation=interpolation)
+        plt.colorbar()
+        plt.title(title1)
+        plt.subplot(122)
+        plt.imshow(data2, interpolation=interpolation)
+        plt.colorbar()
+        plt.title(title2)

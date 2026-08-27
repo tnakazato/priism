@@ -17,11 +17,15 @@
 from __future__ import absolute_import
 from __future__ import print_function
 
+import logging
 import sys
 
 from . import paramcontainer
 from . import visconverter
 import priism.external.casa as casa
+
+
+logger = logging.getLogger(__name__)
 
 
 class VisibilityReader(object):
@@ -120,4 +124,5 @@ class VisibilityReader(object):
                 if chunk_id % 100 == 0:
                     print('\rread {0} visibility chunks'.format(chunk_id), end='', file=sys.stderr)
             print('\rread {0} visibility chunks'.format(chunk_id), file=sys.stderr)
-            print('DONE reading visibility chunks')
+            logger.info(f'read {chunk_id} visibility chunks')
+            logger.info('DONE reading visibility chunks')

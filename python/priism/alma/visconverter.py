@@ -16,14 +16,19 @@
 # along with PRIISM.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import absolute_import
 
+import logging
 import os
+import re
+
 import numpy as np
 import scipy.interpolate as interpolate
-import re
 
 import priism.external.casa as casa
 import priism.external.sakura as sakura
 from . import gridder
+
+
+logger = logging.getLogger(__name__)
 
 
 class VisibilityConverter(object):
@@ -555,7 +560,7 @@ class VisibilityConverter(object):
                              + 'Please specify field ID instead.')
 
     def _warn_refocus(self):
-        print('***WARN*** refocusing is disabled even if distance to the source is known.')
+        logger.warning('***WARN*** refocusing is disabled even if distance to the source is known.')
 
     def fill_uvw(self, ws, chunk, lsr_edge_frequency):
         """
@@ -716,7 +721,7 @@ class VisibilityConverter(object):
                                            antenna1=antenna1 if has_gain_metadata else None,
                                            antenna2=antenna2 if has_gain_metadata else None,
                                            time=gain_time if has_gain_metadata else None)
-            #print('yielding channelized working set from channels {}'.format(vischans))
+            logger.debug(f'yielding channelized working set from channels {vischans}')
             yield ws
 
     def generate_working_set(self, chunk):
@@ -754,12 +759,12 @@ class VisibilityConverter(object):
         # - all chunk entry should have same spw (mitigate in future?)
         assert np.all(chunk['data_desc_id'] == chunk['data_desc_id'][0])
 
-        #print 'Chunk ID {0} is valid'.format(chunk['chunk_id'])
+        logger.debug(f'Chunk ID {chunk["chunk_id"]} is valid')
 
         # working set to be filled in
         chunk_id = chunk['chunk_id']
         working_set = gridder.GridderWorkingSet(data_id=chunk_id)
-        #print('LOG: generate working set for visibility chunk #{0}'.format(chunk_id))
+        logger.debug(f'LOG: generate working set for visibility chunk #{chunk_id}')
 
         # 1. visibility frequency conversion
         # get LSRK frequency at channel boundary
