@@ -47,9 +47,11 @@ class GridderWorkingSet(datacontainer.VisibilityWorkingSet):
     def __init__(self, data_id=None, u=0.0, v=0.0, rdata=None, idata=None,
                  flag=None, weight=None, row_flag=None, channel_map=None,
                  pol_map=None, antenna1=None, antenna2=None, time=None):
-        super(GridderWorkingSet, self).__init__(data_id, u, v, rdata, idata, weight,
-                                                antenna1=antenna1, antenna2=antenna2,
-                                                time=time)
+        super().__init__(
+            data_id, u, v, rdata, idata, weight,
+            antenna1=antenna1, antenna2=antenna2,
+            time=time
+        )
         self.flag = flag
         self.row_flag = row_flag
         self.channel_map = channel_map
@@ -437,7 +439,7 @@ class CrossValidationVisibilityGridder(VisibilityGridder):
     for cross validation.
     """
     def __init__(self, gridparam, imageparam, num_ws, num_fold=10):
-        super(CrossValidationVisibilityGridder, self).__init__(gridparam, imageparam)
+        super().__init__(gridparam, imageparam)
         self.num_ws = num_ws
         self.num_fold = num_fold
 
@@ -455,7 +457,7 @@ class CrossValidationVisibilityGridder(VisibilityGridder):
         if ws.data_id in subset_index:
             self.visibility_cache.append(ws)
         else:
-            super(CrossValidationVisibilityGridder).grid(ws)
+            super().grid(ws)
 
     def get_visibility_cache(self):
         return self.visibility_cache

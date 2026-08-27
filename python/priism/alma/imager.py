@@ -89,7 +89,7 @@ class AlmaSparseModelingImager(core_imager.SparseModelingImager):
                       'mfista_fft'    MFISTA algorithm with FFT by S. Ikeda.
                       'mfista_nufft'  MFISTA algorithm with NUFFT by S. Ikeda
         """
-        super(AlmaSparseModelingImager, self).__init__(solver)
+        super().__init__(solver)
 
     def selectdata(self, vis, field='', spw='', timerange='', uvrange='', antenna='',
                    scan='', observation='', intent='', datacolumn='corrected'):

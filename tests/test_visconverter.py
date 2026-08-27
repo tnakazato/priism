@@ -477,7 +477,7 @@ class VisibilityConverterTest(utils.TestBase):
 
 #     def assertTrue(self, expr, msg=None):
 #         try:
-#             super(VisibilityConverterTest, self).assertTrue(expr, msg)
+#             super().assertTrue(expr, msg)
 #         except Exception, e:
 #             import pydevd
 #             pydevd.settrace()
