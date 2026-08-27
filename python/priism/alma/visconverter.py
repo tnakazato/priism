@@ -38,6 +38,12 @@ class VisibilityConverter(object):
     """
     required_columns = ['time', 'uvw', 'field_id', 'data_desc_id',
                         'data', 'flag', 'weight']
+    # extra columns needed only when a caller opts into gain metadata
+    # (antenna1/antenna2/time per row), e.g. for external self-calibration.
+    # Not part of required_columns so that plain imaging use (the
+    # overwhelming majority of callers) reads exactly the same columns,
+    # at exactly the same cost, as before this was added.
+    gain_metadata_columns = ['antenna1', 'antenna2']
     frequency_reference = ['REST',
                            'LSRK',
                            'LSRD',
@@ -48,22 +54,84 @@ class VisibilityConverter(object):
                            'LGROUP',
                            'CMB']
 
-    def __init__(self, visparam, imageparam):
+    def __init__(self, visparam, imageparam, with_gain_metadata=False):
+        """
+        with_gain_metadata -- if True, generate_working_set() additionally
+                               fills antenna1/antenna2/time on the returned
+                               working sets, sourced from the same chunk
+                               (no extra MS read), for external
+                               self-calibration use. Default False leaves
+                               plain imaging use completely unaffected.
+        """
         self.visparam = visparam
         self.imageparam = imageparam
+        self.with_gain_metadata = with_gain_metadata
 
         self._warn_refocus()
 
         self.inspect_data()
 
-    def _to_stokesI(self, data_in, flag_in, weight_in, weight_factor,
-                    real_out, imag_out, flag_out, weight_out):
-        """
-        Convert XXYY (or RRLL) correlations into Stokes Visibility I_v.
-        Formula for conversion is,
+    # CASA correlation/Stokes type codes (from Stokes.h), used to tell
+    # genuine full-Stokes data apart from four raw correlations when
+    # npol==4 -- see _to_stokesI.
+    _CORR_TYPE_STOKES = frozenset((1, 2, 3, 4))         # I, Q, U, V
+    _CORR_TYPE_CIRCULAR = frozenset((5, 6, 7, 8))       # RR, RL, LR, LL
+    _CORR_TYPE_LINEAR = frozenset((9, 10, 11, 12))      # XX, XY, YX, YY
 
-            I_v = (XX + YY) / 2
+    def _combine_parallel_hand(self, data_in, flag_in, weight_in, weight_factor,
+                               real_out, imag_out, flag_out, weight_out,
+                               idx1, idx2):
+        """
+        Combine the two parallel-hand correlations at positions idx1/idx2
+        of the polarization axis (XX & YY, or RR & LL) into Stokes I:
+
+            I_v = (P1 + P2) / 2
+            W_I = 4 W_P1 W_P2 / (W_P1 + W_P2)
+
+        Shares the exact same combination logic used for genuine
+        dual-polarization (npol==2) data; only the choice of which two
+        polarization-axis entries to combine differs.
+        """
+        nrow = data_in.shape[2]
+        sel = [idx1, idx2]
+        data_sel = data_in[sel]
+        flag_sel = flag_in[sel]
+
+        mask = np.where(flag_sel == False, 0.5, 0.0)
+        data_out = (data_sel * mask).sum(axis=0)
+        real_out[:, 0, :] = data_out.real.transpose((1, 0))
+        imag_out[:, 0, :] = data_out.imag.transpose((1, 0))
+
+        flag_out[:] = True
+        for f in flag_sel:
+            flag_out[:] = np.logical_and(flag_out, f[np.newaxis, :, :].transpose((2, 0, 1)))
+
+        for irow in range(nrow):
+            w1 = weight_in[idx1, irow] * weight_factor
+            w2 = weight_in[idx2, irow] * weight_factor
+            weight_out[irow] = 4.0 * w1 * w2 / (w1 + w2)
+
+    def _to_stokesI(self, data_in, flag_in, weight_in, weight_factor,
+                    real_out, imag_out, flag_out, weight_out, corr_type=None):
+        """
+        Convert raw correlations into Stokes Visibility I_v.
+
+        For dual polarization (XX/YY or RR/LL) and for four correlations
+        (XX,XY,YX,YY or RR,RL,LR,LL), the parallel-hand pair is combined as
+
+            I_v = (XX + YY) / 2   (or RR + LL)
             W_I = 4 W_XX W_YY / (W_XX + W_YY)
+
+        For genuine full-Stokes (I,Q,U,V) data, the first polarization-axis
+        entry already *is* Stokes I and is copied through as-is.
+
+        corr_type -- CASA correlation/Stokes type codes (POLARIZATION
+                     subtable's CORR_TYPE column) for the polarization
+                     axis, length npol. Required when npol==4, since data
+                     with four polarization-axis entries can be either
+                     four raw correlations or genuine full Stokes, and
+                     these require different handling (see below);
+                     ignored for npol in (1, 2).
 
         NOTE:
            shape of input data are (npol, nchan, nrow)
@@ -81,41 +149,45 @@ class VisibilityConverter(object):
                 weight_out[irow] = weight_in[irow] * weight_factor
             return
         elif npol == 4:
-            # data might be full Stokes parameters (IQUV)
-            # pick up Stokes I (first polarization component)
-            # TODO: differentiate Stokes parameter and four correlations (XX,XY,YX,YY)
-            real_out[:] = data_in.real.transpose((2, 0, 1))[:, :1, :]
-            imag_out[:] = data_in.imag.transpose((2, 0, 1))[:, :1, :]
-            flag_out[:] = flag_in.transpose((2, 0, 1))[:, :1, :]
-            #print weight_in.shape
-            for irow in range(nrow):
-                weight_out[irow] = weight_in[0, irow] * weight_factor
+            if corr_type is None:
+                raise ValueError(
+                    'corr_type is required to interpret 4-polarization data '
+                    '(it may be four correlations XX,XY,YX,YY / RR,RL,LR,LL, '
+                    'or genuine full Stokes I,Q,U,V -- these need different '
+                    'handling and cannot be told apart from shape alone).'
+                )
+            corr_type = list(corr_type)
+            corr_set = frozenset(corr_type)
+            if corr_set <= self._CORR_TYPE_STOKES:
+                # genuine full Stokes: first polarization-axis entry is
+                # already Stokes I
+                real_out[:] = data_in.real.transpose((2, 0, 1))[:, :1, :]
+                imag_out[:] = data_in.imag.transpose((2, 0, 1))[:, :1, :]
+                flag_out[:] = flag_in.transpose((2, 0, 1))[:, :1, :]
+                for irow in range(nrow):
+                    weight_out[irow] = weight_in[0, irow] * weight_factor
+                return
+            elif corr_set <= self._CORR_TYPE_LINEAR:
+                idx1, idx2 = corr_type.index(9), corr_type.index(12)  # XX, YY
+            elif corr_set <= self._CORR_TYPE_CIRCULAR:
+                idx1, idx2 = corr_type.index(5), corr_type.index(8)  # RR, LL
+            else:
+                raise NotImplementedError(
+                    'Unsupported 4-polarization correlation type combination '
+                    '{0}. Expected full Stokes (I,Q,U,V; codes 1-4), linear '
+                    '(XX,XY,YX,YY; codes 9-12), or circular (RR,RL,LR,LL; '
+                    'codes 5-8).'.format(corr_type)
+                )
+            self._combine_parallel_hand(data_in, flag_in, weight_in, weight_factor,
+                                        real_out, imag_out, flag_out, weight_out,
+                                        idx1, idx2)
             return
 
         # here npol should be 2 (dual polarization XXYY or RRLL)
         assert npol == 2
-
-        # data
-        mask = np.where(flag_in == False, 0.5, 0.0)
-        data_out = (data_in * mask).sum(axis=0)
-        real_out[:, 0, :] = data_out.real.transpose((1, 0))
-        imag_out[:, 0, :] = data_out.imag.transpose((1, 0))
-        del mask
-        del data_out
-
-        # flag
-        flag_out[:] = True
-        for ipol in range(npol):
-            flag_out[:] = np.logical_and(flag_out,
-                                            flag_in[ipol:ipol + 1, :, :].transpose((2, 0, 1)))
-
-        # weight
-        # weight_in.shape = (npol, nrow)
-        # weight_out.shape = (nrow, nchan)
-        for irow in range(nrow):
-            w1 = weight_in[0, irow] * weight_factor
-            w2 = weight_in[1, irow] * weight_factor
-            weight_out[irow] = 4.0 * w1 * w2 / (w1 + w2)
+        self._combine_parallel_hand(data_in, flag_in, weight_in, weight_factor,
+                                    real_out, imag_out, flag_out, weight_out,
+                                    0, 1)
 
     def freq_ref_string(self, type_id):
         if type_id < 0 or len(self.frequency_reference) <= type_id:
@@ -133,6 +205,14 @@ class VisibilityConverter(object):
         with casa.OpenTableForRead(os.path.join(vis, 'DATA_DESCRIPTION')) as tb:
             self.dd_spw_map = tb.getcol('SPECTRAL_WINDOW_ID')
             self.dd_pol_map = tb.getcol('POLARIZATION_ID')
+
+        # read polarization setup (correlation/Stokes type per POLARIZATION_ID),
+        # needed by _to_stokesI to interpret 4-entry polarization axes
+        # (four correlations vs. genuine full Stokes)
+        with casa.OpenTableForRead(os.path.join(vis, 'POLARIZATION')) as tb:
+            self.corr_type = {}
+            for irow in range(tb.nrows()):
+                self.corr_type[irow] = tb.getcell('CORR_TYPE', irow)
 
         # read spw information (channel freq, channel width, freq_ref)
         with casa.OpenTableForRead(os.path.join(vis, 'SPECTRAL_WINDOW')) as tb:
@@ -276,6 +356,7 @@ class VisibilityConverter(object):
         # info from chunk
         field_id = chunk['field_id'][0]
         data_desc_id = chunk['data_desc_id'][0]
+        corr_type = self.corr_type[self.dd_pol_map[data_desc_id]]
 
         # get spectral channel selection parameter
         start = self.imageparam.start
@@ -388,7 +469,8 @@ class VisibilityConverter(object):
                 _flag = chunk['flag']
 
             _weight = chunk['weight']
-            self._to_stokesI(_data, _flag, _weight, weight_factor, real, imag, flag, weight)
+            self._to_stokesI(_data, _flag, _weight, weight_factor, real, imag, flag, weight,
+                             corr_type=corr_type)
         else:
             #print 'LOG: do channel mapping'
             # channel mapping
@@ -435,7 +517,8 @@ class VisibilityConverter(object):
                 _weight = chunk['weight']
                 self._to_stokesI(_data, _flag, _weight, weight_factor,
                                  real[:, :, ichan:ichan + 1], imag[:, :, ichan:ichan + 1],
-                                 flag[:, :, ichan:ichan + 1], weight[:, ichan:ichan + 1])
+                                 flag[:, :, ichan:ichan + 1], weight[:, ichan:ichan + 1],
+                                 corr_type=corr_type)
 
         # row_flag
         row_flag[:] = np.all(flag == True, axis=(1, 2,))
@@ -566,6 +649,20 @@ class VisibilityConverter(object):
         ws.u = u
         ws.v = v
 
+    def fill_gain_metadata(self, ws, chunk):
+        """
+        Fill antenna1/antenna2/time for self-calibration use.
+
+        Unlike u/v these don't depend on frequency, so they're kept as
+        one value per row (no nchan axis) and simply carried through
+        flatten()'s row-block duplication unchanged.
+
+        ws -- working set to be filled
+        chunk -- input data chunk (same one already used by fill_data/fill_uvw)
+        """
+        ws.antenna1 = np.array(chunk['antenna1'], dtype=np.int32, copy=True)
+        ws.antenna2 = np.array(chunk['antenna2'], dtype=np.int32, copy=True)
+        ws.time = np.full(ws.antenna1.shape, chunk['time'][0], dtype=np.float64)
 
     def flatten(self, working_set):
         """
@@ -589,6 +686,11 @@ class VisibilityConverter(object):
             channel_map = sakura.empty_aligned((1,), dtype=working_set.channel_map.dtype)
             u = sakura.empty_aligned((nrow,), dtype=working_set.u.dtype)
             v = sakura.empty_like_aligned(u)
+            has_gain_metadata = working_set.antenna1 is not None
+            if has_gain_metadata:
+                antenna1 = sakura.empty_aligned((nrow,), dtype=working_set.antenna1.dtype)
+                antenna2 = sakura.empty_like_aligned(antenna1)
+                gain_time = sakura.empty_aligned((nrow,), dtype=working_set.time.dtype)
             row_start = 0
             for ichan in vischans:
                 row_end = row_start + nrow_ws
@@ -600,12 +702,25 @@ class VisibilityConverter(object):
                 channel_map[0] = imchan
                 u[row_start:row_end] = working_set.u[:, ichan]
                 v[row_start:row_end] = working_set.v[:, ichan]
+                if has_gain_metadata:
+                    # antenna1/antenna2/time don't vary with channel, so
+                    # every vischan block gets the same (row-indexed) values
+                    # -- this deliberately mirrors u/v's row-block tiling
+                    # above so that the same `valid` mask/index used
+                    # downstream to filter/select u/v selects matching
+                    # antenna/time entries too.
+                    antenna1[row_start:row_end] = working_set.antenna1[:]
+                    antenna2[row_start:row_end] = working_set.antenna2[:]
+                    gain_time[row_start:row_end] = working_set.time[:]
                 row_start = row_end
 
             ws = gridder.GridderWorkingSet(data_id=working_set.data_id, u=u, v=v,
                                            rdata=real, idata=imag, flag=flag,
                                            weight=weight, row_flag=row_flag,
-                                           channel_map=channel_map)
+                                           channel_map=channel_map,
+                                           antenna1=antenna1 if has_gain_metadata else None,
+                                           antenna2=antenna2 if has_gain_metadata else None,
+                                           time=gain_time if has_gain_metadata else None)
             logger.debug(f'yielding channelized working set from channels {vischans}')
             yield ws
 
@@ -633,6 +748,12 @@ class VisibilityConverter(object):
                 assert any(col in chunk for col in candidate_datacolumns)
             else:
                 assert column in chunk
+        if self.with_gain_metadata:
+            for column in self.gain_metadata_columns:
+                assert column in chunk, \
+                    'with_gain_metadata=True requires {0} in the chunk; ' \
+                    'pass items=required_columns+gain_metadata_columns to ' \
+                    'VisibilityReader.readvis()'.format(column)
         # - all chunk entry should have same timestamp (mitigate in future?)
         assert np.all(chunk['time'] == chunk['time'][0])
         # - all chunk entry should have same spw (mitigate in future?)
@@ -662,6 +783,12 @@ class VisibilityConverter(object):
 
         # 3~5. UVW manipulation
         self.fill_uvw(working_set, chunk, lsr_frequency)
+
+        # optional. gain metadata (antenna1/antenna2/time) for external
+        #           self-calibration use; skipped entirely for plain
+        #           imaging use (with_gain_metadata=False, the default)
+        if self.with_gain_metadata:
+            self.fill_gain_metadata(working_set, chunk)
 
         # EXTRA. convert channelized working set into a set of
         #        single-channel working set

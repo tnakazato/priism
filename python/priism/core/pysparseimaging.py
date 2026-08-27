@@ -204,6 +204,32 @@ def calc_Q_part(xvec1: np.ndarray, xvec2: np.ndarray, c: float, AyAz: np.ndarray
     return -term1 + c * term2 / 2
 
 
+def x2y_nufft(u: np.ndarray, v: np.ndarray, xvec: np.ndarray, nthreads: int = 1) -> np.ndarray:
+    """Forward-only NUFFT: model visibility from an image, with no residual
+    or weighting applied. u/v must already be in the NUFFT radian convention
+    (see sparseimagingnufft.SparseImagingInputsNUFFT.convert_uv), matching
+    calc_F_part_nufft's internal call to finufft.nufft2d2 below.
+
+    Used by external self-calibration code (priism-selfcal) to compute the
+    model visibility for the current image estimate, mirroring the C++
+    engine's x2y_nufft.
+
+    Args:
+        u: u coordinates of visibilities (length M), NUFFT radian convention
+        v: v coordinates of visibilities (length M), NUFFT radian convention
+        xvec: model image array (shape (Nx, Ny))
+        nthreads: number of threads finufft may use
+
+    Returns:
+        model_vis: model visibility array (length M)
+    """
+    if xvec.dtype not in (complex, np.complex64, np.complex128):
+        _xvec = xvec.astype(complex)
+    else:
+        _xvec = xvec
+    return finufft.nufft2d2(u, v, _xvec, eps=1e-12, isign=+1, nthreads=nthreads)
+
+
 def calc_F_part_nufft(u: np.ndarray, v: np.ndarray, vis: np.ndarray, weight: np.ndarray, xvec: np.ndarray, nthreads: int = 1) -> np.ndarray:
     """Calculate the F part of the cost function using NUFFT.
 

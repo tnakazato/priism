@@ -365,7 +365,8 @@ class SparseModelingImager(object):
                         summarize=True, figfile=None, datafile=None, maxiter=50000, eps=1.0e-5, clean_box=None,
                         resultasinitialimage=True, nonnegative=True, scalehyperparam=True,
                         criterion='cv', optimizer='classical',
-                        bayesopt_maxiter=15, ellipse_th=0.99, cos_th=0.99):
+                        bayesopt_maxiter=15, ellipse_th=0.99, cos_th=0.99,
+                        bayesopt_n_startup_trials=None):
         """
         Search the best parameter for L1 and Ltsv from the given list of these.
 
@@ -413,6 +414,14 @@ class SparseModelingImager(object):
             criterion -- evaluation criterion. 'cv' or 'ellipsoid'. See above.
             optimizer -- search strategy. 'classical' or 'bayesian'. See above.
             bayesopt_maxiter -- (specific to optimizer='bayesian')
+            bayesopt_n_startup_trials -- (specific to optimizer='bayesian') number
+                          of purely-random trials before Optuna's TPE sampler
+                          starts using its surrogate model (Optuna's own default
+                          is 10). If bayesopt_maxiter is close to or smaller than
+                          this, the search is effectively random with no real
+                          Bayesian guidance ever applied -- for a small
+                          bayesopt_maxiter budget, consider lowering this too.
+                          None (default) keeps Optuna's own default.
             ellipse_th -- (specific to criterion='ellipsoid') soft-constraint threshold
                           for C1 (minimum covering u-v ellipsoid power ratio). Default 0.99.
             cos_th -- (specific to criterion='ellipsoid') soft-constraint threshold for C2
@@ -472,7 +481,8 @@ class SparseModelingImager(object):
                 l1_list=sorted_l1_list, ltsv_list=sorted_ltsv_list, hp_scale=hp_scale,
                 imageprefix=imageprefix, maxiter=maxiter, eps=eps, clean_box=clean_box,
                 nonnegative=nonnegative, resultasinitialimage=resultasinitialimage,
-                bayesopt_maxiter=bayesopt_maxiter
+                bayesopt_maxiter=bayesopt_maxiter,
+                bayesopt_n_startup_trials=bayesopt_n_startup_trials
             )
         elif criterion == 'ellipsoid' and optimizer == 'classical':
             result = self._ellipsoid_classical(
@@ -486,7 +496,8 @@ class SparseModelingImager(object):
                 l1_list=sorted_l1_list, ltsv_list=sorted_ltsv_list, hp_scale=hp_scale,
                 imageprefix=imageprefix, maxiter=maxiter, eps=eps, clean_box=clean_box,
                 nonnegative=nonnegative, resultasinitialimage=resultasinitialimage,
-                bayesopt_maxiter=bayesopt_maxiter, ellipse_th=ellipse_th, cos_th=cos_th
+                bayesopt_maxiter=bayesopt_maxiter, ellipse_th=ellipse_th, cos_th=cos_th,
+                bayesopt_n_startup_trials=bayesopt_n_startup_trials
             )
         else:
             assert False, 'unreachable (criterion/optimizer already validated above)'
@@ -536,8 +547,13 @@ class SparseModelingImager(object):
             # keep all intermediate images
             pass
         elif imagepolicy == 'best':
-            # remove all intermediate images
-            for imagename in result.image:
+            # remove all intermediate images. A single (L1, Ltsv) grid point
+            # can appear more than once in result.image -- optimizer='bayesian'
+            # can revisit the same point across trials, and each such trial
+            # writes to the same file (imagename is derived purely from
+            # L1/Ltsv) -- so remove each unique filename once instead of
+            # raising FileNotFoundError on the repeat.
+            for imagename in set(result.image):
                 os.remove(imagename)
         else:
             assert False
@@ -704,11 +720,21 @@ class SparseModelingImager(object):
             L1=result_L1, Ltsv=result_Ltsv
         )
 
-    def _search_bayesian(self, l1_list, ltsv_list, exec_fn, bayesopt_maxiter=15):
+    def _search_bayesian(self, l1_list, ltsv_list, exec_fn, bayesopt_maxiter=15,
+                         bayesopt_n_startup_trials=None):
         """
         Bayesian Optimization (Optuna) search over indices into
         (l1_list, ltsv_list), evaluating each trial with
         exec_fn(l1, ltsv) -> (cost, imagename).
+
+        bayesopt_n_startup_trials -- number of purely-random trials Optuna's
+                     default TPESampler runs before it starts using its
+                     surrogate model to guide sampling (Optuna's own
+                     TPESampler default is 10). If bayesopt_maxiter is close
+                     to or smaller than this, the search degenerates to
+                     random sampling with no actual Bayesian guidance ever
+                     applied. None (the default here) keeps Optuna's own
+                     default unchanged.
         """
         result_L1 = []
         result_Ltsv = []
@@ -730,7 +756,11 @@ class SparseModelingImager(object):
 
             return cost
 
-        study = optuna.create_study()
+        if bayesopt_n_startup_trials is not None:
+            sampler = optuna.samplers.TPESampler(n_startup_trials=bayesopt_n_startup_trials)
+        else:
+            sampler = None
+        study = optuna.create_study(sampler=sampler)
         study.optimize(objective, n_trials=bayesopt_maxiter)
         self.cv_bayes_result = study.best_params
 
@@ -752,13 +782,15 @@ class SparseModelingImager(object):
 
     def _cv_bayesian(self, l1_list, ltsv_list, hp_scale=1.0, num_fold=10, imageprefix='image',
                       maxiter=1000, eps=1.0e-5, clean_box=None, nonnegative=True,
-                      resultasinitialimage=True, bayesopt_maxiter=15):
+                      resultasinitialimage=True, bayesopt_maxiter=15,
+                      bayesopt_n_startup_trials=None):
         def exec_fn(l1, ltsv):
             return self._cv_exec_with_plateau_scaling(
                 l1, ltsv, hp_scale, imageprefix, maxiter,
                 eps, clean_box, nonnegative, resultasinitialimage
             )
-        return self._search_bayesian(l1_list, ltsv_list, exec_fn, bayesopt_maxiter)
+        return self._search_bayesian(l1_list, ltsv_list, exec_fn, bayesopt_maxiter,
+                                     bayesopt_n_startup_trials)
 
     def _ellipsoid_classical(self, l1_list, ltsv_list, hp_scale=1.0, imageprefix='image',
                              maxiter=1000, eps=1.0e-5, clean_box=None, nonnegative=True,
@@ -777,7 +809,7 @@ class SparseModelingImager(object):
     def _ellipsoid_bayesian(self, l1_list, ltsv_list, hp_scale=1.0, imageprefix='image',
                              maxiter=1000, eps=1.0e-5, clean_box=None, nonnegative=True,
                              resultasinitialimage=True, bayesopt_maxiter=15,
-                             ellipse_th=0.99, cos_th=0.99):
+                             ellipse_th=0.99, cos_th=0.99, bayesopt_n_startup_trials=None):
         """
         Select L1/Ltsv via Bayesian Optimization using the u-v-distance-grouped
         criterion (uvcriteria.UvEllipsoidEvaluator) instead of cross-validation.
@@ -794,7 +826,8 @@ class SparseModelingImager(object):
                 l1, ltsv, hp_scale, imageprefix, maxiter, eps, clean_box, nonnegative,
                 resultasinitialimage, True, evaluator, ellipse_th, cos_th
             )
-        return self._search_bayesian(l1_list, ltsv_list, exec_fn, bayesopt_maxiter)
+        return self._search_bayesian(l1_list, ltsv_list, exec_fn, bayesopt_maxiter,
+                                     bayesopt_n_startup_trials)
 
     def _plot_cv_result(self, l1_list, ltsv_list, result, best_solution, figfile=None, optimizer='classical'):
         plotter_cls = None

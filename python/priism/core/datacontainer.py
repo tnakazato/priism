@@ -162,9 +162,15 @@ class VisibilityWorkingSet(paramcontainer.ParamContainer):
     rdata --- real part of visibility data (nrow, npol, nchan)
     idata --- imaginary part of visibility data (nrow, npol, nchan)
     weight --- visibility weight (nrow, nchan)
+    antenna1, antenna2 --- antenna indices (nrow), only populated when
+                            gain metadata was requested at read time
+                            (e.g. for external self-calibration); None
+                            otherwise
+    time --- MS TIME per row (nrow), same population condition as
+              antenna1/antenna2
     """
     def __init__(self, data_id=None, u=0.0, v=0.0, rdata=None, idata=None,
-                 weight=None):
+                 weight=None, antenna1=None, antenna2=None, time=None):
         self.InitContainer(locals())
 
     def __len__(self):

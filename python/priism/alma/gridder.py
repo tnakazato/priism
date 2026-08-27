@@ -41,11 +41,15 @@ class GridderWorkingSet(datacontainer.VisibilityWorkingSet):
                     and gridded visibility (nchan)
     pol_map --- polarization mapping between raw visibility
                 and gridded visibility (npol)
+    antenna1, antenna2, time --- see VisibilityWorkingSet; only populated
+                                  when gain metadata was requested
     """
     def __init__(self, data_id=None, u=0.0, v=0.0, rdata=None, idata=None,
                  flag=None, weight=None, row_flag=None, channel_map=None,
-                 pol_map=None):
-        super(GridderWorkingSet, self).__init__(data_id, u, v, rdata, idata, weight)
+                 pol_map=None, antenna1=None, antenna2=None, time=None):
+        super(GridderWorkingSet, self).__init__(data_id, u, v, rdata, idata, weight,
+                                                antenna1=antenna1, antenna2=antenna2,
+                                                time=time)
         self.flag = flag
         self.row_flag = row_flag
         self.channel_map = channel_map
