@@ -26,7 +26,8 @@ class RandomIndexGenerator(object):
         assert self.num_fold <= self.num_ws
 
         self.random_index = np.arange(self.num_ws, dtype=np.int64)
-        np.random.shuffle(self.random_index)
+        rng = np.random.default_rng(111)
+        rng.shuffle(self.random_index)
 
         self.num_subws = np.zeros(self.num_fold, dtype=np.int64)
         ndiv = self.num_ws // self.num_fold
