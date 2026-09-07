@@ -153,9 +153,6 @@ def _min_ellipsoid_sub(u, v, s, t, w, active):
                     if np.all(contour <= 0):
                         candidates.append((a, b, c, [idx[i], idx[j], idx[k]]))
 
-    if len(candidates) == 0:
-        return None
-
     best = min(candidates, key=lambda cand: _ellipsoid_area(cand[0], cand[1], cand[2]))
     return best
 
@@ -197,12 +194,7 @@ def min_ellipsoid(u, v):
         active[top[contour[top] > 0]] = True
         active[critical] = True
 
-        ret = _min_ellipsoid_sub(u, v, s, t, w, active)
-
-        if ret is None:
-            break
-
-        A, B, C, supporting = ret
+        A, B, C, supporting = _min_ellipsoid_sub(u, v, s, t, w, active)
 
     return A, B, C
 
