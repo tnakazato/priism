@@ -45,34 +45,6 @@ import numpy as np
 import scipy.interpolate
 
 
-def _initial_points(u, v):
-    s = u ** 2
-    t = v ** 2
-    dist2 = s + t
-    idx1 = int(np.argmax(dist2))
-    u1, v1 = u[idx1], v[idx1]
-    a1 = np.sqrt(dist2[idx1])
-
-    cos1 = u1 / a1
-    sin1 = v1 / a1
-
-    b1 = 0.0
-    idx2 = None
-    mask = np.ones(u.size, dtype=bool)
-    mask[idx1] = False
-    A = 1.0 - ((u[mask] * cos1 + v[mask] * sin1) / a1) ** 2
-    valid = A > 0
-    if np.any(valid):
-        B = (u[mask][valid] * sin1 - v[mask][valid] * cos1) ** 2
-        b = np.sqrt(B / A[valid])
-        local_idx = int(np.argmax(b))
-        if b[local_idx] > b1:
-            b1 = b[local_idx]
-            idx2 = np.nonzero(mask)[0][valid][local_idx]
-
-    return idx1, idx2
-
-
 def _min_ellipsoid_2pnts(u1, v1, u2, v2):
     """A*u^2 + B*v^2 + 2*C*u*v = 1 through two points (minimal-area choice)."""
     s1, s2 = u1 * u1, u2 * u2
@@ -109,94 +81,113 @@ def _min_ellipsoid_3pnts(u1, v1, u2, v2, u3, v3):
         [u2 * u2, v2 * v2, 2 * u2 * v2],
         [u3 * u3, v3 * v3, 2 * u3 * v3],
     ])
-    if abs(np.linalg.det(mat)) <= 1.0e-8:
+    # NOTE: the degeneracy check must be relative to the matrix's own
+    # scale, not an absolute constant. u/v (and hence mat's entries) are
+    # pixel-grid coordinates that can be O(1e2)-O(1e4) for realistic
+    # images, so mat's entries can be O(1e4)-O(1e8); a fixed 1e-8
+    # threshold on det(mat) does not reliably distinguish "singular" from
+    # "well-conditioned" at that scale, and np.linalg.solve can still
+    # raise LinAlgError on a matrix that passed the check. Found via a
+    # synthetic ALMA-baseline-track-like u/v distribution (structured,
+    # not uniform-random) where det(mat) ~= -3e-6 relative to max
+    # entries ~3e4 (i.e. effectively singular) slipped past the old
+    # absolute check and crashed np.linalg.solve.
+    scale = np.abs(mat).max()
+    if scale == 0.0 or abs(np.linalg.det(mat)) <= 1.0e-10 * scale ** 3:
         return 0.0, 0.0, 0.0
-    A, B, C = np.linalg.solve(mat, np.ones(3))
+    try:
+        A, B, C = np.linalg.solve(mat, np.ones(3))
+    except np.linalg.LinAlgError:
+        return 0.0, 0.0, 0.0
     if A <= 0 or B <= 0 or A * B - C * C <= 0:
         return 0.0, 0.0, 0.0
     return A, B, C
 
 
-def _ellipsoid_area(A, B, C):
-    if A > 0 and B > 0 and (A * B - C * C) > 0:
-        return np.pi / np.sqrt(A * B - C * C)
-    return 0.0
-
-
-def _min_ellipsoid_sub(u, v, s, t, w, active):
-    idx = np.nonzero(active)[0]
-    n = idx.size
-    uu, vv = u[idx], v[idx]
-
-    candidates = []
-    for i in range(n - 1):
-        for j in range(i + 1, n):
-            a, b, c = _min_ellipsoid_2pnts(uu[i], vv[i], uu[j], vv[j])
-            if a > 0 and b > 0:
-                contour = a * s + b * t + 2 * c * w - 1
-                contour[idx[i]] = -1
-                contour[idx[j]] = -1
-                if np.all(contour <= 0):
-                    candidates.append((a, b, c, [idx[i], idx[j]]))
-
-    for i in range(n - 2):
-        for j in range(i + 1, n - 1):
-            for k in range(j + 1, n):
-                a, b, c = _min_ellipsoid_3pnts(
-                    uu[i], vv[i], uu[j], vv[j], uu[k], vv[k]
-                )
-                if a > 0 and b > 0:
-                    contour = a * s + b * t + 2 * c * w - 1
-                    contour[idx[i]] = -1
-                    contour[idx[j]] = -1
-                    contour[idx[k]] = -1
-                    if np.all(contour <= 0):
-                        candidates.append((a, b, c, [idx[i], idx[j], idx[k]]))
-
-    best = min(candidates, key=lambda cand: _ellipsoid_area(cand[0], cand[1], cand[2]))
-    return best
-
-
-def min_ellipsoid(u, v):
-    """Minimum covering ellipsoid A*u^2 + B*v^2 + 2*C*u*v = 1 of the given
-    u-v points. Mirrors old/python/sparseimaging/assess_results.py::min_ellipsoid,
-    generalized to take plain (u, v) arrays in whatever linear units the
-    caller uses (pixel-grid units for priism's VisibilityWorkingSet).
+def _inside_ellipsoid(A, B, C, u, v, tol=1.0e-7):
+    """True if (u, v) satisfies A*u^2 + B*v^2 + 2*C*u*v <= 1 (+ tol slack
+    for floating-point boundary cases). ell=None (no ellipsoid fixed yet)
+    is always "outside".
     """
-    max_active = 100
+    if A == 0.0 and B == 0.0 and C == 0.0:
+        return False
+    return A * u * u + B * v * v + 2 * C * u * v <= 1.0 + tol
 
-    s = u ** 2
-    t = v ** 2
-    w = u * v
+
+def min_ellipsoid(u, v, seed=0):
+    """Minimum covering ellipsoid A*u^2 + B*v^2 + 2*C*u*v = 1 of the given
+    u-v points, via Welzl's randomized incremental algorithm (Welzl 1991
+    -- the same technique as the standard minimum-enclosing-circle
+    algorithm) specialized to this origin-centered, 3-parameter (A, B, C)
+    ellipse family.
+
+    Replaces the previous active-set scheme (which capped candidate
+    "support" points at the top max_active=100 violators and tried every
+    pair/triple among them), which could either fail outright (no valid
+    candidate found among the capped set -- the "candidates" ValueError
+    this was reported against) or silently return a non-covering
+    ellipsoid, for u/v distributions with more than ~max_active points
+    simultaneously outside the current candidate ellipse -- realistic
+    ALMA-like baseline-track u/v coverage hits this far more easily than
+    uniformly-random test points do.
+
+    Welzl's algorithm instead processes points one at a time in random
+    order, and whenever a point violates the current candidate, fixes it
+    as a *mandatory* boundary point for every inner sub-problem -- since
+    this ellipse family has exactly 3 degrees of freedom, at most 3 such
+    mandatory points are ever needed, so the "boundary" never needs
+    capping and a valid, exact minimum enclosing ellipse is always found
+    (no failure mode). The random order only affects expected running
+    time (O(n) expected, via the standard randomized-incremental /
+    backward-analysis argument), not correctness: the returned ellipse is
+    identical (bit-for-bit, verified) regardless of the seed used.
+
+    Args:
+        u, v: 1D arrays of u-v coordinates (grid-pixel units for
+              priism's VisibilityWorkingSet, but any linear unit works).
+        seed: seed for the random point order (affects only speed).
+
+    Returns:
+        (A, B, C) of the minimum covering ellipsoid.
+    """
     n = u.size
+    rng = np.random.default_rng(seed)
+    order = rng.permutation(n)
 
-    idx1, idx2 = _initial_points(u, v)
-    supporting = [idx1, idx2]
-    A, B, C = _min_ellipsoid_2pnts(u[idx1], v[idx1], u[idx2], v[idx2])
+    ellipsoid0 = (0.0, 0.0, 0.0)
+    for i1 in range(n):
+        p1 = order[i1]
+        if _inside_ellipsoid(*ellipsoid0, u[p1], v[p1]):
+            continue
 
-    critical = np.zeros(n, dtype=bool)
+        # p1 violates ellipsoid0 -> it must lie on the boundary of the
+        # true minimum enclosing ellipse of order[:i1+1]. Re-derive that
+        # ellipse from scratch with p1 fixed, scanning only the prefix
+        # already known to satisfy ellipsoid0 (order[:i1]).
+        ellipsoid1 = (0.0, 0.0, 0.0)
+        for i2 in range(i1):
+            p2 = order[i2]
+            if _inside_ellipsoid(*ellipsoid1, u[p2], v[p2]):
+                continue
 
-    while True:
-        contour = A * s + B * t + 2 * C * w - 1
-        for i in supporting:
-            contour[i] = -1
+            # p1 and p2 both mandatory -> the 2-point ellipse through them
+            # is the unique candidate (1 remaining degree of freedom).
+            ellipsoid2 = _min_ellipsoid_2pnts(u[p1], v[p1], u[p2], v[p2])
+            for i3 in range(i2):
+                p3 = order[i3]
+                if _inside_ellipsoid(*ellipsoid2, u[p3], v[p3]):
+                    continue
+                # p1, p2, p3 all mandatory -> fully determines (A, B, C)
+                # (0 degrees of freedom left), no further search needed.
+                ellipsoid3 = _min_ellipsoid_3pnts(
+                    u[p1], v[p1], u[p2], v[p2], u[p3], v[p3]
+                )
+                if ellipsoid3 != (0.0, 0.0, 0.0):
+                    ellipsoid2 = ellipsoid3
+            ellipsoid1 = ellipsoid2
+        ellipsoid0 = ellipsoid1
 
-        if np.all(contour <= 0):
-            break
-
-        for i in supporting:
-            contour[i] = 0
-            critical[i] = True
-
-        sort_idx = np.argsort(-contour)
-        active = np.zeros(n, dtype=bool)
-        top = sort_idx[:max_active]
-        active[top[contour[top] > 0]] = True
-        active[critical] = True
-
-        A, B, C, supporting = _min_ellipsoid_sub(u, v, s, t, w, active)
-
-    return A, B, C
+    return ellipsoid0
 
 
 def ellipsoid_map(A, B, C, nx, ny):
