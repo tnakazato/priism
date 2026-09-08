@@ -48,23 +48,28 @@ def calc_costs_nufft(
         nonneg: bool,
         xvec: np.ndarray,
         nthreads: int = 1,
-        eps: float = 1e-6
+        eps: float = 1e-6,
+        plan_image_to_vis: finufft.Plan | None = None
 ) -> tuple[float, float, int, float, float]:
     if xvec.dtype not in (complex, np.complex64, np.complex128):
         _xvec = xvec.astype(complex)
     else:
         _xvec = xvec
+
     # isign=+1 matches the C++ engine's NUFFT2d2 convention (NU_SIGN=-1 in
     # mfista.hpp); finufft's default isign=-1 for type-2 produces the
     # complex-conjugate visibility relative to the C++ engine.
-    model_vis = finufft.nufft2d2(
-        u_dx,
-        v_dy,
-        _xvec,
-        eps=eps,
-        isign=+1,
-        nthreads=nthreads
-    )
+    if plan_image_to_vis is not None:
+        model_vis = plan_image_to_vis.execute(_xvec)
+    else:
+        model_vis = finufft.nufft2d2(
+            u_dx,
+            v_dy,
+            _xvec,
+            eps=eps,
+            isign=+1,
+            nthreads=nthreads
+        )
     chisq: float = np.sum(
         (np.square(np.real(model_vis) - vis_r) + np.square(np.imag(model_vis) - vis_i))
         / np.square(vis_std)
@@ -192,7 +197,8 @@ def x2y_nufft(
         v: np.ndarray,
         xvec: np.ndarray,
         nthreads: int = 1,
-        eps: float = 1e-6
+        eps: float = 1e-6,
+        plan_image_to_vis: finufft.Plan | None = None
     ) -> np.ndarray:
     """Forward-only NUFFT: model visibility from an image, with no residual
     or weighting applied. u/v must already be in the NUFFT radian convention
@@ -209,6 +215,7 @@ def x2y_nufft(
         xvec: model image array (shape (Nx, Ny))
         nthreads: number of threads finufft may use
         eps: precision required for NUFFT (default: 1e-6)
+        plan_image_to_vis: NUFFT plan for image-to-vis conversion
 
     Returns:
         model_vis: model visibility array (length M)
@@ -217,7 +224,16 @@ def x2y_nufft(
         _xvec = xvec.astype(complex)
     else:
         _xvec = xvec
-    return finufft.nufft2d2(u, v, _xvec, eps=eps, isign=+1, nthreads=nthreads)
+
+    if plan_image_to_vis is not None:
+        model_vis = plan_image_to_vis.execute(_xvec)
+    else:
+        model_vis = finufft.nufft2d2(
+            u, v, _xvec, eps=eps, isign=+1,
+            nthreads=nthreads
+        )
+
+    return model_vis
 
 
 def calc_F_part_nufft(
@@ -227,7 +243,8 @@ def calc_F_part_nufft(
         weight: np.ndarray,
         xvec: np.ndarray,
         nthreads: int = 1,
-        eps: float = 1e-6
+        eps: float = 1e-6,
+        plan_image_to_vis: finufft.Plan | None = None
     ) -> np.ndarray:
     """Calculate the F part of the cost function using NUFFT.
 
@@ -239,6 +256,7 @@ def calc_F_part_nufft(
         xvec: model image array (shape (Nx, Ny))
         nthreads: number of threads finufft may use
         eps: precision required for NUFFT (default: 1e-6)
+        plan_image_to_vis: NUFFT plan for image-to-vis conversion
 
     Returns:
         yAx: visibility difference array (length M)
@@ -248,14 +266,17 @@ def calc_F_part_nufft(
     else:
         _xvec = xvec
     # isign=+1 matches the C++ engine's NUFFT2d2 convention, see calc_costs_nufft
-    model_vis = finufft.nufft2d2(
-        u,
-        v,
-        _xvec,
-        eps=eps,
-        isign=+1,
-        nthreads=nthreads
-    )
+    if plan_image_to_vis is not None:
+        model_vis = plan_image_to_vis.execute(_xvec)
+    else:
+        model_vis = finufft.nufft2d2(
+            u,
+            v,
+            _xvec,
+            eps=eps,
+            isign=+1,
+            nthreads=nthreads
+        )
     logger.debug(
         "model_vis = %s, %s ~ %s, %s",
         model_vis.imag.min(), model_vis.real.min(), model_vis.imag.max(), model_vis.real.max()
@@ -277,7 +298,8 @@ def dF_dx_nufft(
         nx: int,
         ny: int,
         nthreads: int = 1,
-        eps: float = 1e-6
+        eps: float = 1e-6,
+        plan_vis_to_image: finufft.Plan | None = None
     ) -> np.ndarray:
     """Compute the gradient of F part using NUFFT.
 
@@ -290,6 +312,7 @@ def dF_dx_nufft(
         ny: image y dimension
         nthreads: number of threads finufft may use
         eps: precision required for NUFFT (default: 1e-6)
+        plan_vis_to_image: NUFFT plan for vis-to-image conversion
 
     Returns:
         dfdx: gradient array in image domain (length Nx*Ny)
@@ -308,15 +331,18 @@ def dF_dx_nufft(
     weighted_yAx_full[len(weighted_yAx):] = np.conjugate(weighted_yAx)
     # isign=-1 here pairs as the true adjoint of the isign=+1 forward
     # transform in calc_F_part_nufft, matching the C++ engine's gradient
-    dfdx = finufft.nufft2d1(
-        u_full,
-        v_full,
-        weighted_yAx_full,
-        eps=eps,
-        isign=-1,
-        n_modes=(nx, ny),
-        nthreads=nthreads
-    ) / 2
+    if plan_vis_to_image is not None:
+        dfdx = plan_vis_to_image.execute(weighted_yAx_full) / 2
+    else:
+        dfdx = finufft.nufft2d1(
+            u_full,
+            v_full,
+            weighted_yAx_full,
+            eps=eps,
+            isign=-1,
+            n_modes=(nx, ny),
+            nthreads=nthreads
+        ) / 2
     logger.debug("dfdx.imag min: %s, dfdx.real min: %s", dfdx.imag.min(), dfdx.real.min())
     logger.debug("dfdx.imag max: %s, dfdx.real max: %s", dfdx.imag.max(), dfdx.real.max())
     return dfdx.real
@@ -341,7 +367,9 @@ def mfista_L1_TSV_core_nufft(
         box_flag: bool,
         cl_box: np.ndarray,
         restart_flag: bool = True,
-        nthreads: int = 1
+        nthreads: int = 1,
+        plan_image_to_vis: finufft.Plan | None = None,
+        plan_vis_to_image: finufft.Plan | None = None
 ) -> tuple[PyMfistaResults, np.ndarray]:
     """Python translation of the C++ mfista_L1_TSV_core_nufft.
 
@@ -371,6 +399,8 @@ def mfista_L1_TSV_core_nufft(
             concurrently (e.g. cross-validation grid search); pass a higher
             value to speed up a single solve if you know it is not sharing
             the machine with other parallel work.
+        plan_image_to_vis: NUFFT plan for image-to-vis conversion
+        plan_vis_to_image: NUFFT plan for vis-to-image conversion
 
     Returns:
         Result tuple (PyMfistaResults) and final image array
@@ -409,12 +439,6 @@ def mfista_L1_TSV_core_nufft(
 
     logger.debug("Preparation for FFT.")
 
-    # placeholders for FFTW plans
-    # (C++ creates and executes plans;
-    # leave as None/placeholders)
-    fftwplan_c2r = None
-    fftwplan_r2c = None
-
     # choose soft-threshold function
     if nonneg_flag == 0:
         soft_th_box = partial(soft_threshold_box, threshold_func=soft_thresold)
@@ -438,7 +462,11 @@ def mfista_L1_TSV_core_nufft(
     # output:
     #   yAx: visibility diff, (model - observed) * weight
     #   return value: Chi-square term (1/2 * norm of yAx)
-    yAx = calc_F_part_nufft(u, v, vis, weight, xvec.reshape(imshape), nthreads=nthreads, eps=eps)
+    yAx = calc_F_part_nufft(
+        u, v, vis, weight, xvec.reshape(imshape),
+        nthreads=nthreads, eps=eps,
+        plan_image_to_vis=plan_image_to_vis
+    )
     costtmp = np.square(np.abs(yAx)).sum() / 2
     logger.debug("costtmp (initial): %s", costtmp)
     # looks like equivalent is
@@ -472,7 +500,11 @@ def mfista_L1_TSV_core_nufft(
         # output:
         #   yAx: visibility diff, (model - observed) * weight
         #   return value: Chi-square term (1/2 * norm of yAx)
-        yAx = calc_F_part_nufft(u, v, vis, weight, zvec.reshape(imshape), nthreads=nthreads)
+        yAx = calc_F_part_nufft(
+            u, v, vis, weight, zvec.reshape(imshape),
+            nthreads=nthreads, eps=eps,
+            plan_image_to_vis=plan_image_to_vis
+        )
         Qcore = np.square(np.abs(yAx)).sum() / 2
         logger.debug("Qcore: %s", Qcore)
 
@@ -482,7 +514,11 @@ def mfista_L1_TSV_core_nufft(
         # output:
         #   dfdx: Fourier transform of visibility gradient, (model - observed) * weight**2
         #         shape is (Nx, Ny)
-        dfdx = dF_dx_nufft(u, v, weight, yAx, Nx, Ny, nthreads=nthreads, eps=eps)
+        dfdx = dF_dx_nufft(
+            u, v, weight, yAx, Nx, Ny,
+            nthreads=nthreads, eps=eps,
+            plan_vis_to_image=plan_vis_to_image
+        )
         # looks like equivalent is
         #   1. compute visibility gradient: (model - observed) * weight**2
         #   1. perform adjoint NUFFT to get image domain gradient from yAx
@@ -511,7 +547,11 @@ def mfista_L1_TSV_core_nufft(
             logger.debug("    xnew = %s ~ %s", xnew.min(), xnew.max())
 
             # compute cost at xnew
-            yAx = calc_F_part_nufft(u, v, vis, weight, xnew.reshape(imshape), nthreads=nthreads)
+            yAx = calc_F_part_nufft(
+                u, v, vis, weight, xnew.reshape(imshape),
+                nthreads=nthreads, eps=eps,
+                plan_image_to_vis=plan_image_to_vis
+            )
             Fval = np.square(np.abs(yAx)).sum() / 2
 
             if lambda_tsv > 0.0:
@@ -620,7 +660,8 @@ def mfista_L1_TSV_core_nufft(
         nonneg=nonneg_flag,
         xvec=xvec.reshape(imshape),
         nthreads=nthreads,
-        eps=eps
+        eps=eps,
+        plan_image_to_vis=plan_image_to_vis
     )
     result = PyMfistaResults(
             M=M,
@@ -702,6 +743,24 @@ class SparseImagingExecutor:
         logger.debug(f'X-dim of image:       {inputs.nx}')
         logger.debug(f'Y-dim of image:       {inputs.ny}')
 
+        # creating NUFFT plans
+        plan_image_to_vis = finufft.Plan(
+            2, (inputs.nx, inputs.ny),
+            eps=eps, isign=+1, nthreads=nthreads
+        )
+        plan_image_to_vis.setpts(inputs.u, inputs.v)
+        plan_vis_to_image = finufft.Plan(
+            1, (inputs.nx, inputs.ny),
+            eps=eps, isign=-1, nthreads=nthreads
+        )
+        u_full = np.empty(inputs.m * 2, dtype=float)
+        v_full = np.empty(inputs.m * 2, dtype=float)
+        u_full[:inputs.m] = inputs.u
+        u_full[inputs.m:] = -inputs.u
+        v_full[:inputs.m] = inputs.v
+        v_full[inputs.m:] = -inputs.v
+        plan_vis_to_image.setpts(u_full, v_full)
+
         # run MFISTA
         result = PySparseImagingResults(inputs.nx, inputs.ny, initialimage=initialimage)
         chisq_initial, l1cost_initial, n_active_initial, tsvcost_initial, final_cost_initial = calc_costs_nufft(
@@ -718,7 +777,8 @@ class SparseImagingExecutor:
             lambda_tsv=self.lambda_TSV,
             nonneg=self.nonnegative,
             xvec=result.xinit.reshape((inputs.nx, inputs.ny)),
-            nthreads=nthreads
+            nthreads=nthreads,
+            plan_image_to_vis=plan_image_to_vis
         )
 
         mfista_result, xout = mfista_L1_TSV_core_nufft(
@@ -740,6 +800,8 @@ class SparseImagingExecutor:
             box_flag=cl_box is not None,
             cl_box=cl_box if cl_box is not None else np.array([]),
             nthreads=nthreads,
+            plan_image_to_vis=plan_image_to_vis,
+            plan_vis_to_image=plan_vis_to_image
         )
 
         result.mfista_result = mfista_result
