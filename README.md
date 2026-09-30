@@ -1,7 +1,6 @@
 # PRIISM: Python Module for Radio Interferometry Imaging with Sparse Modeling
 
-PRIISM is an imaging tool for radio interferometry based on the sparse modeling technique. Here, installation procedure and general description of PRIISM are provided. Please see [Notebook Tutorial](./tutorial_hltau.ipynb,
-tutorial_twhya.ipynb) on how to use PRIISM. Recommended way to install PRIISM is a combination with CASA 6 modular release. For quick start, please check [Prerequisites](#prerequisites) and then, run the command below. You might want to set up venv for priism.
+PRIISM is an imaging tool for radio interferometry based on the sparse modeling technique. Here, installation procedure and general description of PRIISM are provided. Please see, e.g., [Notebook tutorial for basic usage](./tutorials/tutorial_cv_twhya.ipynb) on how to use PRIISM. Recommended way to install PRIISM is a combination with CASA 6 modular release. For quick start, please check [Prerequisites](#prerequisites) and then, run the command below. You might want to set up venv for priism.
 
 > [!IMPORTANT]
 > The latest `requirements.txt` intends to support CASA 6.6.4 or higher. For older version of CASA, please use `requirements-old.txt` instead. If you already have PRIISM installation based on CASA 6.6.3 or lower, it is advisable to configure new environment from scratch when you update PRIISM to the latest version, which will be based on CASA 6.6.4 or higher.
