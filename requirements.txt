@@ -1,6 +1,6 @@
 cmake<4.0.0
-casatasks>=6.6.4.0,!=6.7.6.14
-casatools>=6.6.4.0,!=6.7.6.14
+casatasks>=6.7.2.0,!=6.7.6.14
+casatools>=6.7.2.0,!=6.7.6.14
 pip >= 26.2.2
 certifi >= 2026.10.19
 optuna
