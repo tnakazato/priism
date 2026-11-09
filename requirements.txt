@@ -1,7 +1,8 @@
 cmake<4.0.0
 casatasks>=6.6.4.0,!=6.7.6.14
 casatools>=6.6.4.0,!=6.7.6.14
-certifi
+pip >= 26.2.2
+certifi >= 2026.10.19
 optuna
 setuptools
 finufft
