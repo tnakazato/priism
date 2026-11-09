@@ -11,7 +11,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CASA_RELEASE: casa-6.7.0-31-py3.10.el8
+  CASA_RELEASE: casa-6.7.2-42-py3.12.el8
 
 jobs:
   build:
@@ -39,6 +39,7 @@ jobs:
 
     - name: Install dependencies
       run: |
+        ./$CASA_RELEASE/bin/python3 -m pip install --index-url=https://pypi.org/simple https://files.pythonhosted.org/packages/3f/06/3e4420302363fbb71be3c7f35ce042f54bfca330e3e66b3a2e3c4cca579f/pip-26.2.2-py3-none-any.whl#sha256=fd7f4dfa8190e014013b9f08f3e973f4e4c26ffd179a204895533a7254813a70
         ./$CASA_RELEASE/bin/python3 -m pip install --upgrade pip wheel
         ./$CASA_RELEASE/bin/python3 -m pip install -r requirements.txt
 
