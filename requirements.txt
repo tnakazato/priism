@@ -6,3 +6,4 @@ certifi >= 2026.10.19
 optuna
 setuptools
 finufft
+six
